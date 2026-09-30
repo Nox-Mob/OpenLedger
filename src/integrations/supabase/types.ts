@@ -300,6 +300,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          currency: string
+          fiscal_year_start_month: number
           id: string
           name: string
           org_type: Database["public"]["Enums"]["org_type"]
@@ -307,6 +309,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          currency?: string
+          fiscal_year_start_month?: number
           id?: string
           name: string
           org_type?: Database["public"]["Enums"]["org_type"]
@@ -314,6 +318,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          currency?: string
+          fiscal_year_start_month?: number
           id?: string
           name?: string
           org_type?: Database["public"]["Enums"]["org_type"]
