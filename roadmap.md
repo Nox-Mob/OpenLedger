@@ -18,3 +18,9 @@
 ## Deferred (from plan)
 - Accrual basis switching, invoices/bills, bank feeds API, receipt attachments, budgets module, reconciliation UI, exports
 - [x] 11. Second demo account (nonprofit, "Riverside Community Kitchen") with restricted funds + donation/grant sample data; dev-only sign-in button; "/onboarding" exposed as "New organization" in the sidebar for all users
+
+## Org settings depth (from competitor screenshot)
+- [ ] Settings area with sections: Organization Profile, Users & Roles, Preferences
+- [ ] Org profile fields: name, type, currency, fiscal year start
+- [ ] Users & Roles: list members, change roles (admin-only)
+- [ ] Verify current org settings save flow in browser (in progress)
