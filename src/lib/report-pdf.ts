@@ -108,7 +108,7 @@ export async function exportIncomePdf(p: {
 
 export async function exportBalancePdf(p: {
   org: OrgInfo; terms: Terms; pref: Terminology; asOf: string;
-  data: { assets: Row[]; liabilities: Row[]; equity: Row[]; netIncomeCents: number; totalAssetsCents: number; totalLiabilitiesCents: number; totalEquityCents: number };
+  data: { assets: Row[]; liabilities: Row[]; equity: Row[]; netIncomeCents: number; retainedEarningsCents: number; totalAssetsCents: number; totalLiabilitiesCents: number; totalEquityCents: number };
 }) {
   const { org, terms, pref, data } = p;
   const { doc, autoTable, footer } = await setup(org, terms.balanceSheet, `As of ${prettyDate(p.asOf)}`, pref);
@@ -117,7 +117,7 @@ export async function exportBalancePdf(p: {
   let y = section(autoTable, doc, 142, assetsL, data.assets, `Total ${assetsL.toLowerCase()}`, data.totalAssetsCents, org.currency);
   y = section(autoTable, doc, y, liabL, data.liabilities, `Total ${liabL.toLowerCase()}`, data.totalLiabilitiesCents, org.currency);
   y = section(autoTable, doc, y, terms.equity, data.equity, `Total ${terms.equity.toLowerCase()}`, data.totalEquityCents, org.currency,
-    [{ name: `${terms.netIncome} (all time)`, totalCents: data.netIncomeCents }]);
+    [{ name: org.orgType === "nonprofit" ? "Net assets from prior years" : "Retained earnings (prior years)", totalCents: data.retainedEarningsCents }, { name: `${terms.netIncome} (this fiscal year)`, totalCents: data.netIncomeCents }]);
   const label = terms.levels.liabilities === "accounting" ? `Total ${liabL.toLowerCase()} & ${terms.equity.toLowerCase()}` : `What you owe + ${terms.equity.toLowerCase()}`;
   const sum = data.totalLiabilitiesCents + data.totalEquityCents;
   y = totalBar(doc, y, label, money(sum, org.currency), sum < 0);

@@ -1,3 +1,4 @@
+import { addDays, daysBetween } from "./dates";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -14,11 +15,10 @@ const MATCH_WINDOW_DAYS = 5;
 type Supa = any;
 
 function dayDiff(a: string, b: string) {
-  return Math.abs((Date.parse(a) - Date.parse(b)) / 86_400_000);
+  return Math.abs(daysBetween(a, b));
 }
 function shiftDate(d: string, days: number) {
-  const t = new Date(Date.parse(d) + days * 86_400_000);
-  return t.toISOString().slice(0, 10);
+  return addDays(d, days);
 }
 
 async function audit(supabase: Supa, orgId: string, userId: string, action: string, id: string, before: unknown, after: unknown) {

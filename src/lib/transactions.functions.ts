@@ -140,17 +140,41 @@ export const voidTransaction = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: before } = await supabase
       .from("transactions")
-      .select("id, description, status")
+      .select("id, description, status, entries(id, reconciliation_id, reconciliations(status))")
       .eq("id", data.transactionId)
       .eq("org_id", data.orgId)
       .single();
     if (!before) throw new Error("Transaction not found");
+    // Voiding twice (double-click, two tabs) is a harmless no-op.
+    if (before.status === "void") return { ok: true, alreadyVoid: true };
 
-    const { error } = await supabase
+    const entries = ((before as any).entries ?? []) as any[];
+    if (entries.some((e) => e.reconciliations?.status === "completed")) {
+      throw new Error(
+        "This transaction is part of a finished statement check. Reopen that statement check before voiding it.",
+      );
+    }
+
+    // Only flip posted -> void, so a concurrent void can't run the side effects twice.
+    const { data: updated, error } = await supabase
       .from("transactions")
       .update({ status: "void" })
-      .eq("id", data.transactionId);
+      .eq("id", data.transactionId)
+      .eq("status", "posted")
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!updated?.length) return { ok: true, alreadyVoid: true };
+
+    // Un-tick from any in-progress statement check, and return linked bank rows to "unmatched".
+    const stamped = entries.filter((e) => e.reconciliation_id).map((e) => e.id as string);
+    if (stamped.length) {
+      await supabase.from("entries").update({ reconciliation_id: null }).in("id", stamped);
+    }
+    const { data: unlinked } = await supabase
+      .from("bank_transactions")
+      .update({ transaction_id: null })
+      .eq("transaction_id", data.transactionId)
+      .select("id");
 
     await supabase.from("audit_log").insert({
       org_id: data.orgId,
@@ -158,8 +182,8 @@ export const voidTransaction = createServerFn({ method: "POST" })
       action: "void",
       entity: "transaction",
       entity_id: data.transactionId,
-      before,
-      after: { status: "void" },
+      before: { id: before.id, description: before.description, status: before.status },
+      after: { status: "void", unmatchedBankRows: (unlinked ?? []).length, unticked: stamped.length },
     });
     return { ok: true };
   });
