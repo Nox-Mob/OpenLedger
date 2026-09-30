@@ -32,3 +32,4 @@
 - [x] Migration: organizations.currency + fiscal_year_start_month
 - Deferred from competitor screenshot: branding, custom domain, locations, taxes, automation, subscriptions — revisit per-user demand
 - [x] Money In type picker for nonprofits: Donation vs Fundraising Sale vs Other; auto-selects matching revenue account; "Fundraising Sales" added to default nonprofit chart + demo org
+- [x] Wording (plain vs accounting) is now an organization-wide setting: organizations.terminology column, admin-editable under Settings > Organization profile; AppShell + PDFs use org terminology; Acme demo set to accounting

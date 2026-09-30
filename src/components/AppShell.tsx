@@ -32,7 +32,9 @@ export function useOrgContext() {
 
   const orgs = orgsQuery.data ?? [];
   const org = orgs.find((o) => o.id === currentOrgId) ?? orgs[0] ?? null;
-  const terminology: Terminology = profileQuery.data?.terminology ?? "simplified";
+  // Wording is an organization-wide setting; the personal preference is only a fallback.
+  const terminology: Terminology =
+    (org as any)?.terminology ?? profileQuery.data?.terminology ?? "simplified";
   const terms = getTerms((org?.orgType ?? "business") as OrgType, terminology);
 
   return {

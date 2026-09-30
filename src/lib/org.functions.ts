@@ -39,7 +39,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, terminology)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -49,6 +49,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         orgType: row.organizations?.org_type as "nonprofit" | "business",
         currency: (row.organizations?.currency ?? "USD") as string,
         fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
+        terminology: (row.organizations?.terminology ?? "simplified") as "simplified" | "accounting",
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -103,6 +104,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         orgType: z.enum(["nonprofit", "business"]),
         currency: z.string().regex(/^[A-Z]{3}$/),
         fiscalYearStartMonth: z.number().int().min(1).max(12),
+        terminology: z.enum(["simplified", "accounting"]),
       })
       .parse(input),
   )
@@ -112,7 +114,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type, currency, fiscal_year_start_month")
+      .select("name, org_type, currency, fiscal_year_start_month, terminology")
       .eq("id", data.orgId)
       .single();
 
@@ -123,6 +125,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         org_type: data.orgType,
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
+        terminology: data.terminology,
       })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
@@ -139,6 +142,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         org_type: data.orgType,
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
+        terminology: data.terminology,
       },
     });
 
