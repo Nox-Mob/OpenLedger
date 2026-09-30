@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { BookOpen, Building2, HeartHandshake } from "lucide-react";
 import { createOrganization } from "@/lib/org.functions";
@@ -22,6 +23,7 @@ function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,6 +32,7 @@ function OnboardingPage() {
     try {
       const { id } = await createOrganization({ data: { name, orgType } });
       setStoredOrgId(id);
+      await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       navigate({ to: "/" });
     } catch (err: any) {
       setError(err.message ?? "Could not create organization");

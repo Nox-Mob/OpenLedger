@@ -97,6 +97,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
 
+        <div className="px-5 pb-3">
+          <Link
+            to="/onboarding"
+            className="text-xs text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground"
+          >
+            + New organization
+          </Link>
+        </div>
+
         <nav className="flex-1 space-y-0.5 px-3">
           {NAV.map((item) => (
             <Link
