@@ -30,6 +30,7 @@ function OnboardingPage() {
     try {
       const { id } = await createOrganization({ data: { name, orgType } });
       setStoredOrgId(id);
+      await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       navigate({ to: "/" });
     } catch (err: any) {
       setError(err.message ?? "Could not create organization");
