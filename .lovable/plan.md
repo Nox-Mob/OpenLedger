@@ -3,7 +3,7 @@
 Follows the reviewer's suggested order. Each phase ends with a check before the next starts.
 
 ## Phase A — Quick, high-risk (items 1–3)
-1. **Demo data out of production.** Remove the two demo users, their orgs and all d0e00000-* rows from the shared backend. Move demo seeding to a repeatable dev-only seed script (not a migration) so it can be recreated on a separate test backend. Remove demo buttons/credentials from the sign-in page and confirm nothing credential-like ships in the app bundle.
+1. **One sample-data account.** Keep the sample data. Replace the two demo logins with a single dummy account, demo@demo.org, that is a member of both sample organizations (Acme Demo Co and Riverside Community Kitchen) and nothing else. Remove the old demo@openledger.dev logins. The sample account gets no admin rights over anything real, and the tenant tests in item 2 confirm it can't see real organizations. Confirm no password is baked into the app itself; the sign-in page just pre-fills the email on preview links.
 2. **Tenant isolation proof.** Automated tests that sign in as a user of org A and try to read, change, void and delete org B's transactions, entries, bank rows, reconciliations, members and audit log — all must fail. Review every server function using the admin client for an explicit membership check, and every SECURITY DEFINER function. Confirm audit log has no change/delete permissions at all.
 3. **.env hygiene.** Add .env to .gitignore, stop tracking it, scan history for secret-looking values; report anything that needs rotating.
 
@@ -36,4 +36,5 @@ Invites/member removal/ownership transfer/deletion (16), budgets entry (18), MFA
 - Report math extracted from `reports.functions.ts` into a pure module for unit tests.
 - New columns: `transactions.idempotency_key` (unique per org), `organizations.books_locked_through`, `accounts.is_active` reused for archive.
 - Last-admin and closed-period rules live in database triggers so direct API calls can't bypass them.
-- Decision needed: removing demo accounts means no one-click demo on preview anymore unless a separate test backend is set up.
+- The sign-in system requires passwords of at least 6 characters, so "demo" will be rejected; the plan uses "demo1234" unless you pick another.
+- Because the sample account is shared and publicly known, anyone could log in to it on the published app and see or change the sample data (never real data). A nightly reset of the sample data can be added later.
