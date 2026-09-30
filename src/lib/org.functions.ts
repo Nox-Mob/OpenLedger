@@ -78,6 +78,57 @@ export const setTerminology = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateOrganization = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        orgId: z.string().uuid(),
+        name: z.string().min(1).max(120),
+        orgType: z.enum(["nonprofit", "business"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Explicit admin check — the RLS policy also enforces this, but we want a
+    // clear error message instead of a silent no-op update.
+    const { data: roleRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("org_id", data.orgId)
+      .maybeSingle();
+    if ((roleRow as any)?.role !== "admin") {
+      throw new Error("Only organization admins can change these settings.");
+    }
+
+    const { data: before } = await supabase
+      .from("organizations")
+      .select("name, org_type")
+      .eq("id", data.orgId)
+      .single();
+
+    const { error } = await supabase
+      .from("organizations")
+      .update({ name: data.name, org_type: data.orgType })
+      .eq("id", data.orgId);
+    if (error) throw new Error(error.message);
+
+    await supabase.from("audit_log").insert({
+      org_id: data.orgId,
+      user_id: userId,
+      action: "update",
+      entity: "organization",
+      entity_id: data.orgId,
+      before: before ?? null,
+      after: { name: data.name, org_type: data.orgType },
+    });
+
+    return { ok: true };
+  });
+
 export const createOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
