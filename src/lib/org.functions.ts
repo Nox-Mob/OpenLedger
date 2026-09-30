@@ -1,4 +1,5 @@
-import { normalizeTerminology } from "./terminology";
+import { normalizeTerminology, cleanOverrides } from "./terminology";
+const overridesSchema = z.record(z.string(), z.enum(["simplest", "simple", "accounting"])).transform(cleanOverrides);
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -40,7 +41,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, terminology)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, terminology, term_overrides)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -51,6 +52,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         currency: (row.organizations?.currency ?? "USD") as string,
         fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
         terminology: normalizeTerminology(row.organizations?.terminology),
+        termOverrides: cleanOverrides(row.organizations?.term_overrides),
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -61,24 +63,23 @@ export const getMyProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("profiles")
-      .select("display_name, terminology")
+      .select("display_name, terminology, term_overrides")
       .eq("id", context.userId)
       .maybeSingle();
     return {
       displayName: (data as any)?.display_name ?? null,
       terminology: normalizeTerminology((data as any)?.terminology),
+      termOverrides: cleanOverrides((data as any)?.term_overrides),
     };
   });
 
-export const setTerminology = createServerFn({ method: "POST" })
+export const setMyTermOverrides = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ terminology: z.enum(["simplest", "simple", "accounting"]) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ termOverrides: overridesSchema }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("profiles")
-      .upsert({ id: context.userId, terminology: data.terminology });
+      .upsert({ id: context.userId, term_overrides: data.termOverrides as any });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -106,6 +107,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         currency: z.string().regex(/^[A-Z]{3}$/),
         fiscalYearStartMonth: z.number().int().min(1).max(12),
         terminology: z.enum(["simplest", "simple", "accounting"]),
+        termOverrides: overridesSchema,
       })
       .parse(input),
   )
@@ -115,7 +117,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type, currency, fiscal_year_start_month, terminology")
+      .select("name, org_type, currency, fiscal_year_start_month, terminology, term_overrides")
       .eq("id", data.orgId)
       .single();
 
@@ -127,6 +129,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
         terminology: data.terminology,
+        term_overrides: data.termOverrides as any,
       })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
@@ -144,6 +147,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
         terminology: data.terminology,
+        term_overrides: data.termOverrides,
       },
     });
 

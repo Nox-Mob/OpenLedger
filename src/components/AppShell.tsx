@@ -36,13 +36,19 @@ export function useOrgContext() {
   // Wording is an organization-wide setting; the personal preference is only a fallback.
   const terminology: Terminology =
     normalizeTerminology((org as any)?.terminology ?? profileQuery.data?.terminology);
-  const terms = getTerms((org?.orgType ?? "business") as OrgType, terminology);
+  const orgType = (org?.orgType ?? "business") as OrgType;
+  const orgOverrides = (org as any)?.termOverrides ?? {};
+  // Reports and PDFs always use the org's wording; screens layer the user's personal choices on top.
+  const reportTerms = getTerms(orgType, terminology, orgOverrides);
+  const terms = getTerms(orgType, terminology, { ...orgOverrides, ...(profileQuery.data?.termOverrides ?? {}) });
 
   return {
     org,
     orgs,
     terms,
+    reportTerms,
     terminology,
+    userOverrides: profileQuery.data?.termOverrides ?? {},
     isLoading: orgsQuery.isLoading || profileQuery.isLoading,
   };
 }
