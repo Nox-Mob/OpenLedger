@@ -31,3 +31,4 @@
 - [x] Users & roles: member list with roles, admin-only role changes (can't demote yourself)
 - [x] Migration: organizations.currency + fiscal_year_start_month
 - Deferred from competitor screenshot: branding, custom domain, locations, taxes, automation, subscriptions — revisit per-user demand
+- [x] Money In type picker for nonprofits: Donation vs Fundraising Sale vs Other; auto-selects matching revenue account; "Fundraising Sales" added to default nonprofit chart + demo org
