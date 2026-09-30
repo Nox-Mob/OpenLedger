@@ -91,11 +91,12 @@ export const createOrganization = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: org, error: orgError } = await supabase
+    // Generate the id here: reading the row back (insert().select()) would be
+    // blocked by RLS because the user isn't a member until user_roles exists.
+    const org = { id: crypto.randomUUID() };
+    const { error: orgError } = await supabase
       .from("organizations")
-      .insert({ name: data.name, org_type: data.orgType, created_by: userId })
-      .select("id")
-      .single();
+      .insert({ id: org.id, name: data.name, org_type: data.orgType, created_by: userId });
     if (orgError) throw new Error(orgError.message);
 
     const { error: roleError } = await supabase
