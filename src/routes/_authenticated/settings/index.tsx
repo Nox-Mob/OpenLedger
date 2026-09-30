@@ -117,7 +117,7 @@ function OrgProfileSettings() {
             <p className="mt-1 text-xs text-muted-foreground">
               How the app and reports talk to everyone in this organization. The books underneath are always proper double-entry — this only changes the words.
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-3">
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {([
                 { id: "simplest", label: "Simplest", hint: '"Money you have", "Money you owe", "Money in / out"' },
                 { id: "simple", label: "Simple", hint: '"Accounts", "Income", "Expenses", "Transfers"' },
