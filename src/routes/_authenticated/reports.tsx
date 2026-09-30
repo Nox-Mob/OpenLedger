@@ -42,7 +42,7 @@ function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; 
 }
 
 function ReportsPage() {
-  const { org, terms, terminology } = useOrgContext();
+  const { org, reportTerms: terms, terminology } = useOrgContext();
   const [tab, setTab] = useState<"income" | "balance">("income");
   const yearStart = todayISO().slice(0, 4) + "-01-01";
   const [from, setFrom] = useState(yearStart);

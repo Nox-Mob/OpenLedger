@@ -112,20 +112,20 @@ export async function exportBalancePdf(p: {
 }) {
   const { org, terms, pref, data } = p;
   const { doc, autoTable, footer } = await setup(org, terms.balanceSheet, `As of ${prettyDate(p.asOf)}`, pref);
-  const assetsL = accountTypeLabel("asset", pref);
-  const liabL = accountTypeLabel("liability", pref);
+  const assetsL = accountTypeLabel("asset", terms);
+  const liabL = accountTypeLabel("liability", terms);
   let y = section(autoTable, doc, 142, assetsL, data.assets, `Total ${assetsL.toLowerCase()}`, data.totalAssetsCents, org.currency);
   y = section(autoTable, doc, y, liabL, data.liabilities, `Total ${liabL.toLowerCase()}`, data.totalLiabilitiesCents, org.currency);
   y = section(autoTable, doc, y, terms.equity, data.equity, `Total ${terms.equity.toLowerCase()}`, data.totalEquityCents, org.currency,
     [{ name: `${terms.netIncome} (all time)`, totalCents: data.netIncomeCents }]);
-  const label = pref === "accounting" ? `Total ${liabL.toLowerCase()} & ${terms.equity.toLowerCase()}` : `What you owe + ${terms.equity.toLowerCase()}`;
+  const label = terms.levels.liabilities === "accounting" ? `Total ${liabL.toLowerCase()} & ${terms.equity.toLowerCase()}` : `What you owe + ${terms.equity.toLowerCase()}`;
   const sum = data.totalLiabilitiesCents + data.totalEquityCents;
   y = totalBar(doc, y, label, money(sum, org.currency), sum < 0);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
   const ok = sum === data.totalAssetsCents;
-  doc.text(ok ? (pref === "accounting" ? "Balanced: assets equal liabilities plus equity." : "Everything adds up: what you have equals what you owe plus what's yours.") : "Warning: totals do not balance.", 56, y);
+  doc.text(ok ? (terms.levels.assets === "accounting" ? "Balanced: assets equal liabilities plus equity." : "Everything adds up: what you have equals what you owe plus what's yours.") : "Warning: totals do not balance.", 56, y);
   footer();
   doc.save(`${org.name} - ${terms.balanceSheet} ${p.asOf}.pdf`);
 }

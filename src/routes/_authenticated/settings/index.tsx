@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { TermSliders } from "@/components/TermSliders";
+import type { TermOverrides } from "@/lib/terminology";
 import { useOrgContext } from "@/components/AppShell";
 import { updateOrganization } from "@/lib/org.functions";
 import { toast } from "sonner";
@@ -31,12 +33,13 @@ function OrgProfileSettings() {
   const [currency, setCurrency] = useState<string | null>(null);
   const [fyMonth, setFyMonth] = useState<number | null>(null);
   const [term, setTerm] = useState<"simplest" | "simple" | "accounting" | null>(null);
+  const [overrides, setOverrides] = useState<TermOverrides | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!org) return null;
 
   const isAdmin = org.role === "admin";
-  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || term !== null;
+  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || term !== null || overrides !== null;
 
   async function saveOrg() {
     if (!org) return;
@@ -50,6 +53,7 @@ function OrgProfileSettings() {
           currency: currency ?? org.currency,
           fiscalYearStartMonth: fyMonth ?? org.fiscalYearStartMonth,
           terminology: term ?? (org as any).terminology ?? "simplest",
+          termOverrides: overrides ?? (org as any).termOverrides ?? {},
         },
       });
       queryClient.invalidateQueries({ queryKey: ["orgs"] });
@@ -58,6 +62,7 @@ function OrgProfileSettings() {
       setCurrency(null);
       setFyMonth(null);
       setTerm(null);
+      setOverrides(null);
       toast.success("Organization settings saved");
     } catch (err: any) {
       toast.error(err.message ?? "Could not save");
@@ -125,7 +130,7 @@ function OrgProfileSettings() {
               ] as const).map((o) => (
                 <button
                   key={o.id}
-                  onClick={() => isAdmin && setTerm(o.id)}
+                  onClick={() => { if (isAdmin) { setTerm(o.id); setOverrides({}); } }}
                   disabled={!isAdmin}
                   className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
                     (term ?? (org as any).terminology ?? "simplest") === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
@@ -135,6 +140,18 @@ function OrgProfileSettings() {
                   <div className="text-xs text-muted-foreground">{o.hint}</div>
                 </button>
               ))}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Fine-tune each term — drag a slider to choose what it's called. Picking a level above resets every term to that level.
+            </p>
+            <div className="mt-2">
+              <TermSliders
+                orgType={orgType ?? org.orgType}
+                base={() => term ?? (org as any).terminology ?? "simplest"}
+                value={overrides ?? (org as any).termOverrides ?? {}}
+                onChange={setOverrides}
+                disabled={!isAdmin}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

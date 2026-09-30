@@ -24,7 +24,7 @@ const inputCls =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function AccountsPage() {
-  const { org, terminology } = useOrgContext();
+  const { org, terms } = useOrgContext();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -100,11 +100,11 @@ function AccountsPage() {
           <div>
             <label className="text-sm font-medium">Type</label>
             <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-              <option value="asset">{accountTypeLabel("asset", terminology)}</option>
-              <option value="liability">{accountTypeLabel("liability", terminology)}</option>
-              <option value="equity">{accountTypeLabel("equity", terminology)}</option>
-              <option value="revenue">{accountTypeLabel("revenue", terminology)}</option>
-              <option value="expense">{accountTypeLabel("expense", terminology)}</option>
+              <option value="asset">{accountTypeLabel("asset", terms)}</option>
+              <option value="liability">{accountTypeLabel("liability", terms)}</option>
+              <option value="equity">{accountTypeLabel("equity", terms)}</option>
+              <option value="revenue">{accountTypeLabel("revenue", terms)}</option>
+              <option value="expense">{accountTypeLabel("expense", terms)}</option>
             </select>
           </div>
           <div>
@@ -121,7 +121,7 @@ function AccountsPage() {
         {groups.map((g) => (
           <div key={g.type}>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {accountTypeLabel(g.type, terminology)}
+              {accountTypeLabel(g.type, terms)}
             </h2>
             <div className="mt-2 overflow-hidden rounded-lg border bg-card">
               <table className="w-full text-sm">

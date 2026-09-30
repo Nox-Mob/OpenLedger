@@ -179,7 +179,7 @@ function NewTransactionPage() {
             }`}
           >
             <m.icon className="h-4 w-4" />
-            {m.id === "advanced" && terminology === "accounting" ? terms.journal : m.label}
+            {m.id === "advanced" && terms.levels.journal === "accounting" ? terms.journal : m.label}
           </button>
         ))}
       </div>
