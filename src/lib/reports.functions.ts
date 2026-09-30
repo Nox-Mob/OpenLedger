@@ -9,17 +9,27 @@ import { addDays, fiscalYearStart, todayISO } from "./dates";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const LEDGER_PAGE = 1000;
+
 // Only posted transactions — voided ones are excluded from every report.
-async function fetchLedger(supabase: any, orgId: string, to?: string): Promise<LedgerRow[]> {
-  let query = supabase
-    .from("entries")
-    .select("amount_cents, project_id, accounts(name, type), transactions!inner(org_id, status, transaction_date)")
-    .eq("transactions.org_id", orgId)
-    .eq("transactions.status", "posted");
-  if (to) query = query.lte("transactions.transaction_date", to);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as any[]).map((e) => ({
+// Paged: the database caps one response at 1,000 rows, so without this loop
+// reports would silently under-count past ~1,000 entry lines.
+export async function fetchLedger(supabase: any, orgId: string, to?: string): Promise<LedgerRow[]> {
+  const all: any[] = [];
+  for (let from = 0; ; from += LEDGER_PAGE) {
+    let query = supabase
+      .from("entries")
+      .select("amount_cents, project_id, accounts(name, type), transactions!inner(org_id, status, transaction_date)")
+      .eq("transactions.org_id", orgId)
+      .eq("transactions.status", "posted")
+      .order("id");
+    if (to) query = query.lte("transactions.transaction_date", to);
+    const { data, error } = await query.range(from, from + LEDGER_PAGE - 1);
+    if (error) throw new Error(error.message);
+    all.push(...(data ?? []));
+    if (!data || data.length < LEDGER_PAGE) break;
+  }
+  return all.map((e) => ({
     amountCents: e.amount_cents,
     accountName: e.accounts?.name ?? "",
     accountType: e.accounts?.type,

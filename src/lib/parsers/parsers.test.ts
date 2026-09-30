@@ -12,6 +12,37 @@ describe("csv", () => {
     expect(parseAmount("(10.00)")).toBe(-1000);
     expect(parseAmount("abc")).toBeNull();
   });
+  it("parses dot-locale amounts strictly", () => {
+    expect(parseAmount("1234")).toBe(123400);
+    expect(parseAmount("1,234,567.89")).toBe(123456789);
+    expect(parseAmount("-5.00")).toBe(-500);
+    expect(parseAmount("5.00-")).toBe(-500);
+    expect(parseAmount("25.00 CR")).toBe(2500);
+    expect(parseAmount("25.00 DR")).toBe(-2500);
+    expect(parseAmount("+7.5")).toBe(750);
+  });
+  it("rejects hex, scientific notation, and 3+ decimals", () => {
+    expect(parseAmount("0x10")).toBeNull();
+    expect(parseAmount("1e3")).toBeNull();
+    expect(parseAmount("1.234")).toBeNull();
+    expect(parseAmount("")).toBeNull();
+    expect(parseAmount("1.2.3")).toBeNull();
+    expect(parseAmount("12,34.56")).toBeNull(); // broken thousands grouping
+  });
+  it("parses comma-locale amounts", () => {
+    expect(parseAmount("1.234,56", "comma")).toBe(123456);
+    expect(parseAmount("1.234", "comma")).toBe(123400); // thousands, not decimals
+    expect(parseAmount("(1.234,56)", "comma")).toBe(-123456);
+    expect(parseAmount("0,05", "comma")).toBe(5);
+    expect(parseAmount("1,234", "comma")).toBeNull(); // 3 digits after comma is ambiguous
+    expect(parseAmount("1,234.56", "comma")).toBeNull(); // dot-locale value rejected
+  });
+  it("guesses the decimal separator from the file", () => {
+    // comma-decimal amounts are quoted in a comma-delimited file
+    const eu = tokenizeCsv('Date,Description,Amount\n2026-09-01,Rent,"1234,56"\n2026-09-02,Sale,"50,00"\n');
+    expect(guessMapping(eu).decimalSeparator).toBe("comma");
+    expect(guessMapping(tokenizeCsv("Date,Description,Amount\n2026-09-01,Rent,1234.56\n2026-09-02,Sale,50.00\n")).decimalSeparator).toBe("dot");
+  });
   it("parses dates", () => {
     expect(parseDate("09/03/2026", "MDY")).toBe("2026-09-03");
     expect(parseDate("09/03/2026", "DMY")).toBe("2026-03-09");

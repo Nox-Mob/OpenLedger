@@ -29,6 +29,8 @@ export function tokenizeCsv(text: string, delimiter = ","): string[][] {
 
 export type DateFormat = "auto" | "MDY" | "DMY" | "YMD";
 
+export type DecimalSeparator = "dot" | "comma";
+
 export interface CsvMapping {
   hasHeader: boolean;
   dateCol: number;
@@ -39,6 +41,7 @@ export interface CsvMapping {
   creditCol: number; // money in
   dateFormat: DateFormat;
   flipSign: boolean;
+  decimalSeparator?: DecimalSeparator | undefined; // default "dot"
   externalIdCol?: number | undefined;
 }
 
@@ -74,20 +77,51 @@ export function parseDate(raw: string, fmt: DateFormat): string | null {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-export function parseAmount(raw: string): number | null {
+/**
+ * Strict amount parser. Rejects hex/scientific notation and more than 2
+ * decimal places. `decimalSeparator` says which mark is the decimal point;
+ * the other mark is treated as a thousands separator and must appear in
+ * valid groups of three.
+ */
+export function parseAmount(raw: string, decimalSeparator: DecimalSeparator = "dot"): number | null {
   let v = (raw ?? "").trim();
   if (!v) return null;
   let neg = false;
-  if (/^\(.*\)$/.test(v)) { neg = true; v = v.slice(1, -1); }
-  if (v.endsWith("-")) { neg = true; v = v.slice(0, -1); }
-  if (/\bCR$/i.test(v)) v = v.replace(/CR$/i, "");
-  if (/\bDR$/i.test(v)) { neg = true; v = v.replace(/DR$/i, ""); }
-  v = v.replace(/[$€£¥\s,]/g, "");
+  if (/^\(.*\)$/.test(v)) { neg = true; v = v.slice(1, -1).trim(); }
+  if (v.endsWith("-")) { neg = true; v = v.slice(0, -1).trim(); }
+  if (/\bCR$/i.test(v)) v = v.replace(/CR$/i, "").trim();
+  if (/\bDR$/i.test(v)) { neg = true; v = v.replace(/DR$/i, "").trim(); }
+  v = v.replace(/[$€£¥\s]/g, "");
   if (v.startsWith("-")) { neg = !neg; v = v.slice(1); }
   if (v.startsWith("+")) v = v.slice(1);
-  if (!/^\d*\.?\d+$/.test(v)) return null;
-  const cents = Math.round(parseFloat(v) * 100);
+  if (!v) return null;
+
+  const dec = decimalSeparator === "comma" ? "," : ".";
+  const thou = decimalSeparator === "comma" ? "." : ",";
+  // Either plain digits, or digits with properly grouped thousands separators,
+  // optionally followed by one decimal mark and 1-2 decimal digits.
+  const grouped = `\\d{1,3}(?:\\${thou}\\d{3})+`;
+  const re = new RegExp(`^(?:${grouped}|\\d+)(\\${dec}(\\d{1,2}))?$`);
+  const m = v.match(re);
+  if (!m) return null;
+  const decimals = m[2] ?? "";
+  const intPart = v.slice(0, m[1] ? -m[1].length : undefined).replaceAll(thou, "");
+  const cents = Number(intPart) * 100 + (decimals ? Number(decimals.padEnd(2, "0")) : 0);
+  if (!Number.isSafeInteger(cents)) return null;
   return neg ? -cents : cents;
+}
+
+/** Guess the decimal separator by sampling the amount column(s). */
+export function guessDecimalSeparator(rows: string[][], cols: number[]): DecimalSeparator {
+  let comma = 0, dot = 0;
+  for (const r of rows.slice(0, 50)) {
+    for (const c of cols) {
+      const v = (r[c] ?? "").trim().replace(/[($€£¥\s)]/g, "").replace(/(CR|DR|-)$/i, "");
+      if (/,\d{2}$/.test(v) && !/\.\d{2}$/.test(v)) comma++;
+      else if (/\.\d{2}$/.test(v) && !/,\d{2}$/.test(v)) dot++;
+    }
+  }
+  return comma > dot ? "comma" : "dot";
 }
 
 export function guessMapping(rows: string[][]): CsvMapping {
@@ -100,16 +134,19 @@ export function guessMapping(rows: string[][]): CsvMapping {
   const debitCol = header.findIndex((h) => /debit|withdraw|money out/.test(h));
   const creditCol = header.findIndex((h) => /credit|deposit|money in/.test(h));
   const split = hasHeader && debitCol >= 0 && creditCol >= 0 && !header.some((h) => h === "amount");
+  const amountCol = hasHeader ? find(/amount/, 2) : 2;
+  const sampleRows = hasHeader ? rows.slice(1) : rows;
   return {
     hasHeader,
     dateCol: hasHeader ? find(/date/, 0) : 0,
     descCol: hasHeader ? find(/desc|memo|payee|name|details/, 1) : 1,
     amountMode: split ? "split" : "single",
-    amountCol: hasHeader ? find(/amount/, 2) : 2,
+    amountCol,
     debitCol: debitCol >= 0 ? debitCol : 2,
     creditCol: creditCol >= 0 ? creditCol : 3,
     dateFormat: "auto",
     flipSign: false,
+    decimalSeparator: guessDecimalSeparator(sampleRows, split ? [debitCol, creditCol] : [amountCol]),
   };
 }
 
@@ -120,11 +157,12 @@ export function applyMapping(rows: string[][], m: CsvMapping): ParsedRow[] {
     const line = i + 1;
     const date = parseDate(cols[m.dateCol] ?? "", m.dateFormat);
     const description = (cols[m.descCol] ?? "").trim() || "Bank transaction";
+    const dec = m.decimalSeparator ?? "dot";
     let amount: number | null;
-    if (m.amountMode === "single") amount = parseAmount(cols[m.amountCol] ?? "");
+    if (m.amountMode === "single") amount = parseAmount(cols[m.amountCol] ?? "", dec);
     else {
-      const out_ = parseAmount(cols[m.debitCol] ?? "");
-      const in_ = parseAmount(cols[m.creditCol] ?? "");
+      const out_ = parseAmount(cols[m.debitCol] ?? "", dec);
+      const in_ = parseAmount(cols[m.creditCol] ?? "", dec);
       amount = out_ == null && in_ == null ? null : (in_ ?? 0) - Math.abs(out_ ?? 0);
     }
     if (amount != null && m.flipSign) amount = -amount;

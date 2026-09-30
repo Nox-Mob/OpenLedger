@@ -12,11 +12,16 @@ type Row = z.infer<typeof rowSchema>;
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-/** FITID (bank's own id) wins when present; otherwise content hash. */
-async function fingerprint(orgId: string, accountId: string, row: Row) {
+/**
+ * FITID (bank's own id) wins when present; otherwise a content hash that
+ * includes the row's position in the file, so two genuinely identical rows
+ * (e.g. two $5 coffees on the same day) don't collide — while re-importing
+ * the same file still dedups.
+ */
+async function fingerprint(orgId: string, accountId: string, row: Row, rowSeq?: number) {
   const raw = row.externalId
     ? `fitid|${orgId}|${accountId}|${row.externalId}`
-    : `${orgId}|${accountId}|${row.date}|${row.description}|${row.amountCents}`;
+    : `${orgId}|${accountId}|${row.date}|${row.description}|${row.amountCents}|seq:${rowSeq ?? 0}`;
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -28,7 +33,7 @@ export const checkDuplicates = createServerFn({ method: "POST" })
     z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), rows: z.array(rowSchema).max(5000) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const fps = await Promise.all(data.rows.map((r) => fingerprint(data.orgId, data.accountId, r)));
+    const fps = await Promise.all(data.rows.map((r, i) => fingerprint(data.orgId, data.accountId, r, i)));
     const existing = new Set<string>();
     for (let i = 0; i < fps.length; i += 200) {
       const { data: found, error } = await context.supabase
@@ -88,8 +93,8 @@ export const importBankRows = createServerFn({ method: "POST" })
 
     const seen = new Set<string>();
     const records = [];
-    for (const row of data.rows) {
-      const fp = await fingerprint(data.orgId, data.accountId, row);
+    for (const [i, row] of data.rows.entries()) {
+      const fp = await fingerprint(data.orgId, data.accountId, row, i);
       if (seen.has(fp)) continue;
       seen.add(fp);
       records.push({
@@ -100,6 +105,7 @@ export const importBankRows = createServerFn({ method: "POST" })
         amount_cents: row.amountCents,
         external_id: row.externalId ?? null,
         fingerprint: fp,
+        row_seq: i,
         batch_id: batchId,
         needs_review: data.format === "pdf",
       });

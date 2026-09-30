@@ -14,7 +14,7 @@
 - Double-entry enforced in createTransaction + deferred DB trigger: posted tx needs ≥2 entries, sum=0, ≥1 debit and ≥1 credit (void exempt). Never bypass.
 - amount_cents >0 debit, <0 credit; displayBalance() flips credit-normal types.
 - Never edit entries in place: void + recreate (audit trail).
-- Bank imports are evidence only (bank_transactions.transaction_id link, SHA-256/FITID fingerprint dedup); import_batch undoable until a row posts.
+- Bank imports are evidence only (bank_transactions.transaction_id link, SHA-256 fingerprint dedup (FITID wins; content hash includes row_seq so identical rows in one file both import)); import_batch undoable until a row posts.
 - Terminology is presentation-only: org level + term_overrides; screens add user overrides, reports/PDFs use org only.
 - All org data via requireSupabaseAuth server fns in src/lib/*.functions.ts; RLS by org membership. Org settings/account setup admin-only (requireOrgAdmin) and audit-logged.
 - Sample data: one shared login demo@demo.org / demo1234 (member of Acme + Riverside only); /auth hint shows on DEV/preview only; never add real orgs to it.

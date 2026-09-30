@@ -197,7 +197,7 @@ function ImportPage() {
     if (!org || !accountId || !format || counts.valid === 0) return;
     setBusy("Importing…");
     try {
-      const toCents = (v: string) => (v.trim() ? parseAmount(v) : null);
+      const toCents = (v: string) => (v.trim() ? parseAmount(v, mapping?.decimalSeparator ?? "dot") : null);
       const result = await importBankRows({
         data: {
           orgId: org.id, accountId, fileName, format,
@@ -319,6 +319,13 @@ function ImportPage() {
                 <select value={mapping.amountMode} onChange={(e) => updateMapping({ amountMode: e.target.value as any })} className={inputCls}>
                   <option value="single">One column (+ in, − out)</option>
                   <option value="split">Separate in / out columns</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Number format</label>
+                <select value={mapping.decimalSeparator ?? "dot"} onChange={(e) => updateMapping({ decimalSeparator: e.target.value as any })} className={inputCls}>
+                  <option value="dot">1,234.56 (dot decimals)</option>
+                  <option value="comma">1.234,56 (comma decimals)</option>
                 </select>
               </div>
               {mapping.amountMode === "single" ? (

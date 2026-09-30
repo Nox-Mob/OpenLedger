@@ -72,9 +72,9 @@
 - [x] A. Self-grant admin blocked (DB policy + creator trigger)
 - [x] B. DB-enforced immutability, last-admin, audit actor, reconcile reopen, account type lock, cross-org refs
 - [x] Password reset page
-- [ ] C. Pagination / SQL aggregation past 1,000 rows
-- [ ] D. Strict amount parsing (decimal comma, >2 decimals, hex) + import locale + tests
-- [ ] E. Dedup row-sequence fingerprint
+- [x] C. Pagination / SQL aggregation past 1,000 rows
+- [x] D. Strict amount parsing (decimal comma, >2 decimals, hex) + import locale + tests
+- [x] E. Dedup row-sequence fingerprint
 - [ ] F. Double-post guards (postBankTransaction conditional update, idempotency key)
 - [ ] G. Move demo seed out of migrations into supabase/seed.sql
 - [ ] H. PDF AI opt-in, balance validation, per-user rate limit
