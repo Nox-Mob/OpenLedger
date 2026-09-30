@@ -47,6 +47,7 @@ function NewTransactionPage() {
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [fundId, setFundId] = useState("");
+  const [moneyInKind, setMoneyInKind] = useState<"donation" | "sale" | "other">("donation");
   const [busy, setBusy] = useState(false);
 
   const accountsQuery = useQuery({
@@ -240,6 +241,36 @@ function NewTransactionPage() {
               </div>
             ) : (
               <div>
+                {mode === "in" && org.orgType === "nonprofit" && (
+                  <div className="mb-4">
+                    <label className="text-sm font-medium">Type of money in</label>
+                    <div className="mt-1.5 grid grid-cols-3 gap-2">
+                      {([
+                        { id: "donation", label: "Donation", hint: "Given freely, nothing sold", accountName: "Donations" },
+                        { id: "sale", label: "Fundraising Sale", hint: "e.g. T-shirts, bake sale", accountName: "Fundraising Sales" },
+                        { id: "other", label: "Other", hint: "Grants, program revenue…", accountName: null },
+                      ] as const).map((k) => (
+                        <button
+                          key={k.id}
+                          type="button"
+                          onClick={() => {
+                            setMoneyInKind(k.id);
+                            if (k.accountName) {
+                              const match = inAccounts.find((a) => a.name === k.accountName);
+                              if (match) setOtherAccountId(match.id);
+                            }
+                          }}
+                          className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                            moneyInKind === k.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                          }`}
+                        >
+                          <span className="block text-sm font-medium">{k.label}</span>
+                          <span className="block text-xs text-muted-foreground">{k.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <label className="text-sm font-medium">
                   {mode === "in" ? `Where it came from (${terms.revenue})` : `What it was for (${terms.expenses})`}
                 </label>
