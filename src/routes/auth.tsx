@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -17,6 +17,16 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const navigate = useNavigate();
+  // Dev server builds and the editor's preview link both show the demo buttons;
+  // a published app (project--<id>.lovable.app) never does.
+  const [showDemo, setShowDemo] = useState(false);
+  useEffect(() => {
+    const onPreviewLink =
+      typeof window !== "undefined" &&
+      /(^|\.)id-preview(-[a-z0-9]+)?--/i.test(window.location.hostname);
+    setShowDemo(import.meta.env.DEV || onPreviewLink);
+  }, []);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
