@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 const SECTIONS = [
   { to: "/settings", label: "Organization profile", exact: true },
+  { to: "/settings/accounts", label: "Accounts", exact: false },
   { to: "/settings/members", label: "Users & roles", exact: false },
   { to: "/settings/preferences", label: "Your preferences", exact: false },
 ] as const;
