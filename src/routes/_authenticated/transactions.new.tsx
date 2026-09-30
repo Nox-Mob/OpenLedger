@@ -47,6 +47,7 @@ function NewTransactionPage() {
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [fundId, setFundId] = useState("");
+  const [moneyInKind, setMoneyInKind] = useState<"donation" | "sale" | "other">("donation");
   const [busy, setBusy] = useState(false);
 
   const accountsQuery = useQuery({
