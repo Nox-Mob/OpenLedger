@@ -33,7 +33,6 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const navigate = useNavigate();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -145,7 +144,7 @@ function AuthPage() {
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
 
-          {import.meta.env.DEV && (
+          {showDemo && (
             <div className="mt-3 space-y-2">
               <button
                 onClick={() => signInAsDemo("demo@openledger.dev")}
