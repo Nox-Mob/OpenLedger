@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions.new'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -29,6 +31,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -40,39 +47,65 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTransactionsNewRoute =
+  AuthenticatedTransactionsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedTransactionsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
+  '/transactions/new': typeof AuthenticatedTransactionsNewRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/transactions/new': typeof AuthenticatedTransactionsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
-  '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/onboarding' | '/transactions'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/accounts'
+    | '/onboarding'
+    | '/transactions'
+    | '/transactions/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/onboarding' | '/transactions' | '/'
+  to:
+    | '/auth'
+    | '/accounts'
+    | '/onboarding'
+    | '/transactions'
+    | '/'
+    | '/transactions/new'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/accounts'
     | '/_authenticated/onboarding'
     | '/_authenticated/transactions'
     | '/_authenticated/'
+    | '/_authenticated/transactions/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -103,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts': {
+      id: '/_authenticated/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -117,18 +157,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transactions/new': {
+      id: '/_authenticated/transactions/new'
+      path: '/new'
+      fullPath: '/transactions/new'
+      preLoaderRoute: typeof AuthenticatedTransactionsNewRouteImport
+      parentRoute: typeof AuthenticatedTransactionsRoute
+    }
   }
 }
 
+interface AuthenticatedTransactionsRouteChildren {
+  AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
+}
+
+const AuthenticatedTransactionsRouteChildren: AuthenticatedTransactionsRouteChildren =
+  {
+    AuthenticatedTransactionsNewRoute: AuthenticatedTransactionsNewRoute,
+  }
+
+const AuthenticatedTransactionsRouteWithChildren =
+  AuthenticatedTransactionsRoute._addFileChildren(
+    AuthenticatedTransactionsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
-  AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
-  AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
