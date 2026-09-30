@@ -5,6 +5,7 @@ import { AppShell, useOrgContext } from "@/components/AppShell";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import { listTransactions } from "@/lib/transactions.functions";
 import { incomeStatement } from "@/lib/reports.functions";
+import { CashChart } from "@/components/CashChart";
 import { setStoredOrgId } from "@/lib/current-org";
 import { formatCents, todayISO } from "@/lib/money";
 import { displayBalance } from "@/lib/terminology";
@@ -96,6 +97,8 @@ function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <CashChart orgId={org.id} currency={org.currency} />
 
       <h2 className="font-display mt-8 text-lg font-semibold">Recent transactions</h2>
       <div className="mt-3 overflow-hidden rounded-lg border bg-card">

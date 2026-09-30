@@ -87,3 +87,26 @@ export function computeProjectSpend(rows: LedgerRow[]): Map<string, number> {
   }
   return spent;
 }
+
+/** Daily running total of asset accounts ("cash on hand") from `from` to `to` inclusive. */
+export function computeCashSeries(rows: LedgerRow[], from: string, to: string): { date: string; cents: number }[] {
+  const byDay = new Map<string, number>();
+  let opening = 0;
+  for (const r of rows) {
+    if (r.accountType !== "asset" || r.transactionDate > to) continue;
+    if (r.transactionDate < from) opening += r.amountCents;
+    else byDay.set(r.transactionDate, (byDay.get(r.transactionDate) ?? 0) + r.amountCents);
+  }
+  const out: { date: string; cents: number }[] = [];
+  let running = opening;
+  for (let d = from; d <= to; d = addDaysUTC(d, 1)) {
+    running += byDay.get(d) ?? 0;
+    out.push({ date: d, cents: running });
+  }
+  return out;
+}
+
+function addDaysUTC(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
