@@ -17,6 +17,4 @@ export function parseToCents(input: string): number | null {
   return Math.round(value * 100);
 }
 
-export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+export { todayISO } from "./dates";
