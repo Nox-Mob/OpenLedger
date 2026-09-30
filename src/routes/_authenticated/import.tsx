@@ -35,7 +35,7 @@ function parseCsv(text: string): ParsedRow[] {
   for (const line of lines) {
     const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
     if (cols.length < 3) continue;
-    const [dateRaw, descRaw, amountRaw] = cols;
+    const [dateRaw = "", descRaw = "", amountRaw = ""] = cols;
     const date = new Date(dateRaw);
     if (isNaN(date.getTime())) continue; // skips header row too
     const amount = Number(amountRaw.replace(/[$,]/g, ""));

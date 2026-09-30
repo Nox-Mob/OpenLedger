@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
 const DEFAULT_ACCOUNTS: Record<
   "nonprofit" | "business",
-  Array<{ name: string; type: string; subtype?: string }>
+  Array<{ name: string; type: AccountType; subtype?: string }>
 > = {
   nonprofit: [
     { name: "Checking", type: "asset", subtype: "bank" },
