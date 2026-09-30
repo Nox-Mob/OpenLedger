@@ -128,7 +128,9 @@ function SettingsPage() {
         </div>
 
         <div className="rounded-lg border bg-card p-5">
-          <h2 className="font-display text-lg font-semibold">Language</h2>
+          <h2 className="font-display text-lg font-semibold">Your preferences</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Only affects what you see — nobody else in the organization.</p>
+          <h3 className="mt-4 text-sm font-medium">Language</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose how the app talks to you. The books underneath are always proper double-entry — this only changes the words.
           </p>
