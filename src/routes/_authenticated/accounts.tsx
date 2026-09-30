@@ -56,7 +56,7 @@ function AccountsPage() {
                 accountId: newAcc.id,
                 equityAccountId: equity.id,
                 amountCents: type === "liability" ? -cents : cents,
-                date: todayISO(),
+                date: todayISO(new Date(), org?.timezone),
               },
             });
           }

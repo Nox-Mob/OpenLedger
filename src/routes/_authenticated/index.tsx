@@ -31,7 +31,7 @@ function DashboardPage() {
     if (!isLoading && org) setStoredOrgId(org.id);
   }, [isLoading, orgs.length, org?.id]);
 
-  const monthStart = todayISO().slice(0, 8) + "01";
+  const monthStart = todayISO(new Date(), org?.timezone).slice(0, 8) + "01";
 
   const accountsQuery = useQuery({
     queryKey: ["accounts", org?.id],
