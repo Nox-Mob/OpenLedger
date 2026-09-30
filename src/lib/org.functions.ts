@@ -38,7 +38,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -46,6 +46,8 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         id: row.organizations?.id as string,
         name: row.organizations?.name as string,
         orgType: row.organizations?.org_type as "nonprofit" | "business",
+        currency: (row.organizations?.currency ?? "USD") as string,
+        fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -78,6 +80,18 @@ export const setTerminology = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+async function requireOrgAdmin(supabase: any, userId: string, orgId: string) {
+  const { data: roleRow } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (roleRow?.role !== "admin") {
+    throw new Error("Only organization admins can change these settings.");
+  }
+}
+
 export const updateOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -86,33 +100,29 @@ export const updateOrganization = createServerFn({ method: "POST" })
         orgId: z.string().uuid(),
         name: z.string().min(1).max(120),
         orgType: z.enum(["nonprofit", "business"]),
+        currency: z.string().regex(/^[A-Z]{3}$/),
+        fiscalYearStartMonth: z.number().int().min(1).max(12),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-
-    // Explicit admin check — the RLS policy also enforces this, but we want a
-    // clear error message instead of a silent no-op update.
-    const { data: roleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("org_id", data.orgId)
-      .maybeSingle();
-    if ((roleRow as any)?.role !== "admin") {
-      throw new Error("Only organization admins can change these settings.");
-    }
+    await requireOrgAdmin(supabase, userId, data.orgId);
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type")
+      .select("name, org_type, currency, fiscal_year_start_month")
       .eq("id", data.orgId)
       .single();
 
     const { error } = await supabase
       .from("organizations")
-      .update({ name: data.name, org_type: data.orgType })
+      .update({
+        name: data.name,
+        org_type: data.orgType,
+        currency: data.currency,
+        fiscal_year_start_month: data.fiscalYearStartMonth,
+      })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
 
@@ -123,7 +133,85 @@ export const updateOrganization = createServerFn({ method: "POST" })
       entity: "organization",
       entity_id: data.orgId,
       before: before ?? null,
-      after: { name: data.name, org_type: data.orgType },
+      after: {
+        name: data.name,
+        org_type: data.orgType,
+        currency: data.currency,
+        fiscal_year_start_month: data.fiscalYearStartMonth,
+      },
+    });
+
+    return { ok: true };
+  });
+
+export const listOrgMembers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Any member can see the member list; RLS scopes user_roles to org members.
+    const { data: rows, error } = await supabase
+      .from("user_roles")
+      .select("id, user_id, role")
+      .eq("org_id", data.orgId);
+    if (error) throw new Error(error.message);
+
+    const userIds = (rows ?? []).map((r: any) => r.user_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+    const nameById = new Map((profiles ?? []).map((p: any) => [p.id, p.display_name]));
+
+    return (rows ?? []).map((r: any) => ({
+      id: r.id as string,
+      userId: r.user_id as string,
+      role: r.role as string,
+      displayName: (nameById.get(r.user_id) as string | null) ?? null,
+      isYou: r.user_id === userId,
+    }));
+  });
+
+export const updateMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        orgId: z.string().uuid(),
+        userId: z.string().uuid(),
+        role: z.enum(["admin", "member", "viewer"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireOrgAdmin(supabase, userId, data.orgId);
+    if (data.userId === userId && data.role !== "admin") {
+      throw new Error("You can't demote yourself — ask another admin to do it.");
+    }
+
+    const { data: before } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId)
+      .eq("org_id", data.orgId)
+      .maybeSingle();
+
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: data.role })
+      .eq("user_id", data.userId)
+      .eq("org_id", data.orgId);
+    if (error) throw new Error(error.message);
+
+    await supabase.from("audit_log").insert({
+      org_id: data.orgId,
+      user_id: userId,
+      action: "update",
+      entity: "user_role",
+      entity_id: data.userId,
+      before: before ?? null,
+      after: { role: data.role },
     });
 
     return { ok: true };
