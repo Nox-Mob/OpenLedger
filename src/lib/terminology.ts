@@ -72,9 +72,9 @@ export function getTerms(orgType: OrgType, level: Terminology, overrides: TermOv
   for (const item of TERM_ITEMS) {
     const l = overrides[item.key] ?? level;
     levels[item.key] = l;
-    w[item.key] = termOptions(item, orgType)[LEVELS.indexOf(l)];
+    w[item.key] = termOptions(item, orgType)[LEVELS.indexOf(l)]!;
   }
-  const [debit, credit] = w.debitCredit.split(" / ");
+  const [debit = "Debit", credit = "Credit"] = w.debitCredit.split(" / ");
   return {
     orgLabel: orgType === "nonprofit" ? "Nonprofit" : "Business",
     levels,

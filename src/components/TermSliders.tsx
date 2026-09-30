@@ -43,9 +43,9 @@ export function TermSliders({
               max={2}
               step={1}
               value={[idx]}
-              disabled={disabled}
+              disabled={!!disabled}
               aria-label={item.label}
-              onValueChange={([v]) => onChange({ ...value, [item.key]: LEVELS[v] })}
+              onValueChange={([v]) => onChange({ ...value, [item.key]: LEVELS[v ?? 0]! })}
             />
             <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
               {opts.map((o, i) => (
