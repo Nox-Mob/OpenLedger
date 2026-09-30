@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
-  const { org, terminology, terms } = useOrgContext();
+  const { org, terminology } = useOrgContext();
   const queryClient = useQueryClient();
   const [orgName, setOrgName] = useState<string | null>(null);
   const [orgType, setOrgType] = useState<"nonprofit" | "business" | null>(null);
