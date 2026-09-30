@@ -2,10 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  computeBalance, computeIncome, computeProjectSpend, computeTrialBalance, inRange,
+  computeBalance, computeCashSeries, computeIncome, computeProjectSpend, computeTrialBalance, inRange,
   type LedgerRow,
 } from "./report-math";
-import { fiscalYearStart, todayISO } from "./dates";
+import { addDays, fiscalYearStart, todayISO } from "./dates";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -88,4 +88,14 @@ export const projectSummary = createServerFn({ method: "GET" })
       budgetCents: p.budget_cents as number,
       spentCents: spent.get(p.id) ?? 0,
     }));
+  });
+
+export const cashHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid(), days: z.number().int().min(7).max(1100) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const to = await orgToday(context.supabase, data.orgId);
+    const from = addDays(to, -data.days);
+    const rows = await fetchLedger(context.supabase, data.orgId, to);
+    return computeCashSeries(rows, from, to);
   });
