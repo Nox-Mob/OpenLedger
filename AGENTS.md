@@ -20,3 +20,4 @@
 - Terminology is presentation-only: engine vocabulary stays in the DB, org type (nonprofit/business) and user preference (simplified/accounting) map labels in src/lib/terminology.ts.
 - Current org id is stored in localStorage (`openledger_current_org`) via src/lib/current-org.ts; `useOrgContext()` in AppShell resolves org + terms.
 - All org data access goes through `requireSupabaseAuth` server fns in src/lib/*.functions.ts; RLS scopes every table by org membership (is_org_member / can_write_org / has_org_role).
+- Dev-only demo account: demo@openledger.dev (fixed UUID d0e00000-...-0001) with seeded org "Acme Demo Co" (d0e00000-...-0002). The "Explore the demo account" button on /auth is gated by import.meta.env.DEV so it never renders in production builds. Seed rows use fixed d0e00000-* UUIDs and ON CONFLICT DO NOTHING for idempotent re-seeding. Demo data lives in the shared backend — remove it before real production use.
