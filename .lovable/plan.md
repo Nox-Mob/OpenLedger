@@ -3,6 +3,7 @@
 Follows the reviewer's suggested order. Each phase ends with a check before the next starts.
 
 ## Phase A — Quick, high-risk (items 1–3)
+0. **Remove the "Test" organization** and everything in it (accounts, transactions, imports, statement checks, members, activity log).
 1. **One sample-data account.** Keep the sample data. Replace the two demo logins with a single dummy account, demo@demo.org, that is a member of both sample organizations (Acme Demo Co and Riverside Community Kitchen) and nothing else. Remove the old demo@openledger.dev logins. The sample account gets no admin rights over anything real, and the tenant tests in item 2 confirm it can't see real organizations. Confirm no password is baked into the app itself; the sign-in page just pre-fills the email on preview links.
 2. **Tenant isolation proof.** Automated tests that sign in as a user of org A and try to read, change, void and delete org B's transactions, entries, bank rows, reconciliations, members and audit log — all must fail. Review every server function using the admin client for an explicit membership check, and every SECURITY DEFINER function. Confirm audit log has no change/delete permissions at all.
 3. **.env hygiene.** Add .env to .gitignore, stop tracking it, scan history for secret-looking values; report anything that needs rotating.
