@@ -10,8 +10,10 @@
 - [x] 8. Terminology toggle (simplified vs accounting) in Settings
 - [x] 9. Build verified clean; public flow verified (redirect to /auth, sign-in page renders)
 
-## Blocked
-- End-to-end test of signed-in pages: needs the first real user to sign up (no auth users exist yet, so no test session can be minted). After the user signs up, verify: onboarding → create transaction → reports.
+- [x] 10. Dev-only demo account (demo@openledger.dev) with seeded org, chart of accounts, 3 months of transactions, projects, funds, and unlinked bank rows; dev-only sign-in button on /auth; verified end-to-end in browser (dashboard, transactions, accounts, reports, import, projects)
+
+## Notes
+- Demo data lives in the shared backend, so the demo credentials would work on the published site too if typed manually — the button is hidden in production, but wipe the demo rows before real production use.
 
 ## Deferred (from plan)
 - Accrual basis switching, invoices/bills, bank feeds API, receipt attachments, budgets module, reconciliation UI, exports
