@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell, useOrgContext } from "@/components/AppShell";
-import { incomeStatement, balanceSheet } from "@/lib/reports.functions";
+import { incomeStatement, balanceSheet, trialBalance } from "@/lib/reports.functions";
+import { fiscalYearStart } from "@/lib/dates";
 import { formatCents, todayISO } from "@/lib/money";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
@@ -43,10 +44,11 @@ function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; 
 
 function ReportsPage() {
   const { org, reportTerms: terms, terminology } = useOrgContext();
-  const [tab, setTab] = useState<"income" | "balance">("income");
-  const yearStart = todayISO().slice(0, 4) + "-01-01";
+  const [tab, setTab] = useState<"income" | "balance" | "trial">("income");
+  const yearStart = fiscalYearStart(todayISO(), org?.fiscalYearStartMonth ?? 1);
   const [from, setFrom] = useState(yearStart);
   const [to, setTo] = useState(todayISO());
+  const [asOf, setAsOf] = useState(todayISO());
 
   const incomeQuery = useQuery({
     queryKey: ["income", org?.id, from, to],
@@ -54,9 +56,14 @@ function ReportsPage() {
     enabled: !!org && tab === "income",
   });
   const balanceQuery = useQuery({
-    queryKey: ["balance", org?.id],
-    queryFn: () => balanceSheet({ data: { orgId: org!.id } }),
+    queryKey: ["balance", org?.id, asOf],
+    queryFn: () => balanceSheet({ data: { orgId: org!.id, asOf } }),
     enabled: !!org && tab === "balance",
+  });
+  const trialQuery = useQuery({
+    queryKey: ["trial", org?.id, asOf],
+    queryFn: () => trialBalance({ data: { orgId: org!.id, asOf } }),
+    enabled: !!org && tab === "trial",
   });
 
   const [exporting, setExporting] = useState(false);
@@ -71,7 +78,7 @@ function ReportsPage() {
     try {
       const pdf = await import("@/lib/report-pdf");
       if (tab === "income" && income) await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
-      else if (tab === "balance" && balance) await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf: todayISO(), data: balance });
+      else if (tab === "balance" && balance) await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not create PDF");
     } finally {
@@ -85,7 +92,7 @@ function ReportsPage() {
         <h1 className="font-display text-2xl font-bold">Reports</h1>
         <button
           onClick={exportPdf}
-          disabled={exporting || (tab === "income" ? !income : !balance)}
+          disabled={exporting || tab === "trial" || (tab === "income" ? !income : !balance)}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
@@ -106,7 +113,21 @@ function ReportsPage() {
         >
           {terms.balanceSheet}
         </button>
+        <button
+          onClick={() => setTab("trial")}
+          className={`rounded-md border px-4 py-2 text-sm font-medium ${tab === "trial" ? "border-primary bg-accent" : "border-input hover:bg-accent/50"}`}
+        >
+          Trial balance
+        </button>
       </div>
+      <p className="mt-2 text-xs text-muted-foreground">Cash basis · voided transactions are excluded.</p>
+
+      {tab !== "income" && (
+        <div className="mt-4 flex items-center gap-3 text-sm">
+          <label className="text-muted-foreground">As of</label>
+          <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={inputCls} />
+        </div>
+      )}
 
       {tab === "income" && (
         <div className="mt-6 max-w-2xl">
@@ -159,7 +180,11 @@ function ReportsPage() {
                   </tr>
                 ))}
                 <tr className="border-b">
-                  <td className="px-4 py-2.5 italic text-muted-foreground">{terms.netIncome} (all time)</td>
+                  <td className="px-4 py-2.5 italic text-muted-foreground">{org.orgType === "nonprofit" ? "Net assets from prior years" : "Retained earnings (prior years)"}</td>
+                  <td className="tnum px-4 py-2.5 text-right">{formatCents(balance.retainedEarningsCents)}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-4 py-2.5 italic text-muted-foreground">{terms.netIncome} (this fiscal year)</td>
                   <td className="tnum px-4 py-2.5 text-right">{formatCents(balance.netIncomeCents)}</td>
                 </tr>
                 <tr className="bg-muted/50 font-semibold">
@@ -172,6 +197,30 @@ function ReportsPage() {
           <p className="text-xs text-muted-foreground">
             Check: assets {formatCents(balance.totalAssetsCents)} = liabilities {formatCents(balance.totalLiabilitiesCents)} + {terms.equity.toLowerCase()} {formatCents(balance.totalEquityCents)}
           </p>
+        </div>
+      )}
+
+      {tab === "trial" && trialQuery.data && (
+        <div className="mt-6 max-w-2xl overflow-hidden rounded-lg border bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <tr><th className="px-4 py-2">Account</th><th className="px-4 py-2 text-right">Debit</th><th className="px-4 py-2 text-right">Credit</th></tr>
+            </thead>
+            <tbody>
+              {trialQuery.data.lines.map((l) => (
+                <tr key={l.type + l.name} className="border-b">
+                  <td className="px-4 py-2.5">{l.name}</td>
+                  <td className="tnum px-4 py-2.5 text-right">{l.debitCents ? formatCents(l.debitCents) : ""}</td>
+                  <td className="tnum px-4 py-2.5 text-right">{l.creditCents ? formatCents(l.creditCents) : ""}</td>
+                </tr>
+              ))}
+              <tr className="bg-muted/50 font-semibold">
+                <td className="px-4 py-2.5">Totals {trialQuery.data.balanced ? "(balanced)" : "(NOT balanced)"}</td>
+                <td className="tnum px-4 py-2.5 text-right">{formatCents(trialQuery.data.totalDebitCents)}</td>
+                <td className="tnum px-4 py-2.5 text-right">{formatCents(trialQuery.data.totalCreditCents)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
     </AppShell>
