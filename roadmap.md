@@ -24,3 +24,10 @@
 - [ ] Org profile fields: name, type, currency, fiscal year start
 - [ ] Users & Roles: list members, change roles (admin-only)
 - [ ] Verify current org settings save flow in browser (in progress)
+
+## Step 12 — Deeper organization settings (done)
+- [x] Settings area restructured with sub-navigation (Organization profile / Users & roles / Your preferences)
+- [x] Org profile: name, type, currency, fiscal year start month (admin-only, audit-logged)
+- [x] Users & roles: member list with roles, admin-only role changes (can't demote yourself)
+- [x] Migration: organizations.currency + fiscal_year_start_month
+- Deferred from competitor screenshot: branding, custom domain, locations, taxes, automation, subscriptions — revisit per-user demand
