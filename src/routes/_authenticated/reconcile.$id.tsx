@@ -74,7 +74,7 @@ function ReconcileWorkspace() {
     if (ids.length) run(() => setCleared({ data: { id, entryIds: ids, cleared } }));
   };
 
-  const EntryRow = ({ e, badge }: { e: (typeof entries)[number]; badge?: string }) => (
+  const EntryRow = ({ e, badge }: { e: (typeof entries)[number]; badge?: string | undefined }) => (
     <tr className={`border-b last:border-0 ${e.cleared ? "bg-primary/5" : ""}`}>
       <td className="px-3 py-2">
         <input type="checkbox" checked={e.cleared} disabled={done || busy} onChange={(ev) => toggle(e.id, ev.target.checked)} aria-label={`Tick ${e.description}`} />
