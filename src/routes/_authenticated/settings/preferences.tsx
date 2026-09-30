@@ -30,7 +30,7 @@ function PreferencesSettings() {
         <p className="mt-3 text-sm text-muted-foreground">
           This organization currently uses{" "}
           <span className="font-medium text-foreground">
-            {terminology === "accounting" ? "accounting terms" : "plain language"}
+            {terminology === "accounting" ? "double-entry terms" : terminology === "simple" ? "simple terms" : "simplest terms"}
           </span>
           . An admin can change it under{" "}
           <Link to="/settings" className="text-primary underline underline-offset-2">

@@ -133,7 +133,7 @@ function TransactionsPage() {
                               ))}
                             </tbody>
                           </table>
-                          {terminology === "simplified" && (
+                          {terminology !== "accounting" && (
                             <p className="mt-2 text-xs text-muted-foreground">
                               Every transaction moves money between accounts — increases always equal decreases.
                             </p>

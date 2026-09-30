@@ -1,3 +1,4 @@
+import { normalizeTerminology } from "@/lib/terminology";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,7 +35,7 @@ export function useOrgContext() {
   const org = orgs.find((o) => o.id === currentOrgId) ?? orgs[0] ?? null;
   // Wording is an organization-wide setting; the personal preference is only a fallback.
   const terminology: Terminology =
-    (org as any)?.terminology ?? profileQuery.data?.terminology ?? "simplified";
+    normalizeTerminology((org as any)?.terminology ?? profileQuery.data?.terminology);
   const terms = getTerms((org?.orgType ?? "business") as OrgType, terminology);
 
   return {

@@ -30,7 +30,7 @@ function OrgProfileSettings() {
   const [orgType, setOrgType] = useState<"nonprofit" | "business" | null>(null);
   const [currency, setCurrency] = useState<string | null>(null);
   const [fyMonth, setFyMonth] = useState<number | null>(null);
-  const [term, setTerm] = useState<"simplified" | "accounting" | null>(null);
+  const [term, setTerm] = useState<"simplest" | "simple" | "accounting" | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!org) return null;
@@ -49,7 +49,7 @@ function OrgProfileSettings() {
           orgType: orgType ?? org.orgType,
           currency: currency ?? org.currency,
           fiscalYearStartMonth: fyMonth ?? org.fiscalYearStartMonth,
-          terminology: term ?? (org as any).terminology ?? "simplified",
+          terminology: term ?? (org as any).terminology ?? "simplest",
         },
       });
       queryClient.invalidateQueries({ queryKey: ["orgs"] });
@@ -119,15 +119,16 @@ function OrgProfileSettings() {
             </p>
             <div className="mt-2 grid grid-cols-2 gap-3">
               {([
-                { id: "simplified", label: "Plain language", hint: '"Money in", "Money out", "Increase / Decrease"' },
-                { id: "accounting", label: "Accounting terms", hint: '"Revenue", "Expenses", "Debit / Credit"' },
+                { id: "simplest", label: "Simplest", hint: '"Money you have", "Money you owe", "Money in / out"' },
+                { id: "simple", label: "Simple", hint: '"Accounts", "Income", "Expenses", "Transfers"' },
+                { id: "accounting", label: "Double-entry", hint: '"Assets", "Liabilities", "Revenue", "Debits / Credits"' },
               ] as const).map((o) => (
                 <button
                   key={o.id}
                   onClick={() => isAdmin && setTerm(o.id)}
                   disabled={!isAdmin}
                   className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
-                    (term ?? (org as any).terminology ?? "simplified") === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                    (term ?? (org as any).terminology ?? "simplest") === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
                   }`}
                 >
                   <div className="text-sm font-medium">{o.label}</div>

@@ -1,3 +1,4 @@
+import { normalizeTerminology } from "./terminology";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -49,7 +50,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         orgType: row.organizations?.org_type as "nonprofit" | "business",
         currency: (row.organizations?.currency ?? "USD") as string,
         fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
-        terminology: (row.organizations?.terminology ?? "simplified") as "simplified" | "accounting",
+        terminology: normalizeTerminology(row.organizations?.terminology),
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -65,14 +66,14 @@ export const getMyProfile = createServerFn({ method: "GET" })
       .maybeSingle();
     return {
       displayName: (data as any)?.display_name ?? null,
-      terminology: ((data as any)?.terminology ?? "simplified") as "simplified" | "accounting",
+      terminology: normalizeTerminology((data as any)?.terminology),
     };
   });
 
 export const setTerminology = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ terminology: z.enum(["simplified", "accounting"]) }).parse(input),
+    z.object({ terminology: z.enum(["simplest", "simple", "accounting"]) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -104,7 +105,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         orgType: z.enum(["nonprofit", "business"]),
         currency: z.string().regex(/^[A-Z]{3}$/),
         fiscalYearStartMonth: z.number().int().min(1).max(12),
-        terminology: z.enum(["simplified", "accounting"]),
+        terminology: z.enum(["simplest", "simple", "accounting"]),
       })
       .parse(input),
   )
