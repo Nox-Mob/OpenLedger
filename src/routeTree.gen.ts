@@ -20,6 +20,9 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsMembersRouteImport } from './routes/_authenticated/settings/members'
+import { Route as AuthenticatedSettingsPreferencesRouteImport } from './routes/_authenticated/settings/preferences'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions.new'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -77,6 +80,24 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsMembersRoute =
+  AuthenticatedSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsPreferencesRoute =
+  AuthenticatedSettingsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedTransactionsNewRoute =
   AuthenticatedTransactionsNewRouteImport.update({
     id: '/new',
@@ -93,9 +114,12 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
-  '/settings': typeof AuthenticatedSettingsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
+  '/settings/members': typeof AuthenticatedSettingsMembersRoute
+  '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -105,10 +129,12 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
-  '/settings': typeof AuthenticatedSettingsRoute
   '/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/settings/members': typeof AuthenticatedSettingsMembersRoute
+  '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -120,10 +146,13 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/settings/members': typeof AuthenticatedSettingsMembersRoute
+  '/_authenticated/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,7 +167,10 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/transactions'
+    | '/settings/members'
+    | '/settings/preferences'
     | '/transactions/new'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -148,10 +180,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/projects'
     | '/reports'
-    | '/settings'
     | '/transactions'
     | '/'
+    | '/settings/members'
+    | '/settings/preferences'
     | '/transactions/new'
+    | '/settings'
   id:
     | '__root__'
     | '/_authenticated'
@@ -165,7 +199,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/transactions'
     | '/_authenticated/'
+    | '/_authenticated/settings/members'
+    | '/_authenticated/settings/preferences'
     | '/_authenticated/transactions/new'
+    | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -252,6 +289,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/members': {
+      id: '/_authenticated/settings/members'
+      path: '/members'
+      fullPath: '/settings/members'
+      preLoaderRoute: typeof AuthenticatedSettingsMembersRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/preferences': {
+      id: '/_authenticated/settings/preferences'
+      path: '/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof AuthenticatedSettingsPreferencesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/transactions/new': {
       id: '/_authenticated/transactions/new'
       path: '/new'
@@ -261,6 +319,23 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsMembersRoute: typeof AuthenticatedSettingsMembersRoute
+  AuthenticatedSettingsPreferencesRoute: typeof AuthenticatedSettingsPreferencesRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsMembersRoute: AuthenticatedSettingsMembersRoute,
+  AuthenticatedSettingsPreferencesRoute: AuthenticatedSettingsPreferencesRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
 
 interface AuthenticatedTransactionsRouteChildren {
   AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
@@ -283,7 +358,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
@@ -295,7 +370,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
