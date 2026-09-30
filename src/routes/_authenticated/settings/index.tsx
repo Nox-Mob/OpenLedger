@@ -30,12 +30,13 @@ function OrgProfileSettings() {
   const [orgType, setOrgType] = useState<"nonprofit" | "business" | null>(null);
   const [currency, setCurrency] = useState<string | null>(null);
   const [fyMonth, setFyMonth] = useState<number | null>(null);
+  const [term, setTerm] = useState<"simplified" | "accounting" | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!org) return null;
 
   const isAdmin = org.role === "admin";
-  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null;
+  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || term !== null;
 
   async function saveOrg() {
     if (!org) return;
@@ -48,6 +49,7 @@ function OrgProfileSettings() {
           orgType: orgType ?? org.orgType,
           currency: currency ?? org.currency,
           fiscalYearStartMonth: fyMonth ?? org.fiscalYearStartMonth,
+          terminology: term ?? (org as any).terminology ?? "simplified",
         },
       });
       queryClient.invalidateQueries({ queryKey: ["orgs"] });
@@ -55,6 +57,7 @@ function OrgProfileSettings() {
       setOrgType(null);
       setCurrency(null);
       setFyMonth(null);
+      setTerm(null);
       toast.success("Organization settings saved");
     } catch (err: any) {
       toast.error(err.message ?? "Could not save");
@@ -108,6 +111,30 @@ function OrgProfileSettings() {
                 Changing type only changes labels and report names — your accounts and transactions stay as they are.
               </p>
             )}
+          </div>
+          <div>
+            <span className="text-sm font-medium">Wording</span>
+            <p className="mt-1 text-xs text-muted-foreground">
+              How the app and reports talk to everyone in this organization. The books underneath are always proper double-entry — this only changes the words.
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {([
+                { id: "simplified", label: "Plain language", hint: '"Money in", "Money out", "Increase / Decrease"' },
+                { id: "accounting", label: "Accounting terms", hint: '"Revenue", "Expenses", "Debit / Credit"' },
+              ] as const).map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => isAdmin && setTerm(o.id)}
+                  disabled={!isAdmin}
+                  className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
+                    (term ?? (org as any).terminology ?? "simplified") === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{o.label}</div>
+                  <div className="text-xs text-muted-foreground">{o.hint}</div>
+                </button>
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
