@@ -237,10 +237,8 @@ export const createOrganization = createServerFn({ method: "POST" })
       });
     if (orgError) throw new Error(orgError.message);
 
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .insert({ user_id: userId, org_id: org.id, role: "admin" });
-    if (roleError) throw new Error(roleError.message);
+    // The creator's admin row is added by the organizations_add_creator DB trigger.
+
 
     const keys = data.accountKeys ? new Set(data.accountKeys) : null;
     const accounts = catalogFor(data.orgType)
