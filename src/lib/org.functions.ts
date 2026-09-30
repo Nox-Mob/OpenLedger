@@ -39,7 +39,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, terminology)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -49,6 +49,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         orgType: row.organizations?.org_type as "nonprofit" | "business",
         currency: (row.organizations?.currency ?? "USD") as string,
         fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
+        terminology: (row.organizations?.terminology ?? "simplified") as "simplified" | "accounting",
         role: row.role as string,
       }))
       .filter((o) => o.id);
