@@ -241,7 +241,7 @@ function NewTransactionPage() {
               </div>
             ) : (
               <div>
-                {mode === "in" && org.org_type === "nonprofit" && (
+                {mode === "in" && org.orgType === "nonprofit" && (
                   <div className="mb-4">
                     <label className="text-sm font-medium">Type of money in</label>
                     <div className="mt-1.5 grid grid-cols-3 gap-2">
