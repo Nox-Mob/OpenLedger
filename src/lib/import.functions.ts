@@ -5,14 +5,49 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const rowSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   description: z.string().min(1).max(300),
-  amountCents: z.number().int(),
+  amountCents: z.number().int().refine((v) => v !== 0),
+  externalId: z.string().max(200).optional(),
 });
+type Row = z.infer<typeof rowSchema>;
 
-async function fingerprint(orgId: string, accountId: string, row: z.infer<typeof rowSchema>) {
-  const raw = `${orgId}|${accountId}|${row.date}|${row.description}|${row.amountCents}`;
+const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** FITID (bank's own id) wins when present; otherwise content hash. */
+async function fingerprint(orgId: string, accountId: string, row: Row) {
+  const raw = row.externalId
+    ? `fitid|${orgId}|${accountId}|${row.externalId}`
+    : `${orgId}|${accountId}|${row.date}|${row.description}|${row.amountCents}`;
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+/** Returns indexes of rows that already exist (or repeat within the file). */
+export const checkDuplicates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), rows: z.array(rowSchema).max(5000) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const fps = await Promise.all(data.rows.map((r) => fingerprint(data.orgId, data.accountId, r)));
+    const existing = new Set<string>();
+    for (let i = 0; i < fps.length; i += 200) {
+      const { data: found, error } = await context.supabase
+        .from("bank_transactions")
+        .select("fingerprint")
+        .eq("org_id", data.orgId)
+        .eq("account_id", data.accountId)
+        .in("fingerprint", fps.slice(i, i + 200));
+      if (error) throw new Error(error.message);
+      for (const f of found ?? []) existing.add(f.fingerprint);
+    }
+    const seen = new Set<string>();
+    const duplicates: number[] = [];
+    fps.forEach((f, i) => {
+      if (existing.has(f) || seen.has(f)) duplicates.push(i);
+      seen.add(f);
+    });
+    return { duplicates };
+  });
 
 export const importBankRows = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -21,41 +56,235 @@ export const importBankRows = createServerFn({ method: "POST" })
       .object({
         orgId: z.string().uuid(),
         accountId: z.string().uuid(),
-        rows: z.array(rowSchema).min(1).max(2000),
+        fileName: z.string().min(1).max(255),
+        format: z.enum(["csv", "ofx", "qfx", "pdf"]),
+        rows: z.array(rowSchema).min(1).max(5000),
+        errorCount: z.number().int().min(0).default(0),
+        statementStart: dateStr.nullish(),
+        statementEnd: dateStr.nullish(),
+        beginningBalanceCents: z.number().int().nullish(),
+        endingBalanceCents: z.number().int().nullish(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const batchId = crypto.randomUUID();
+    const { error: bErr } = await supabase.from("import_batches").insert({
+      id: batchId,
+      org_id: data.orgId,
+      account_id: data.accountId,
+      file_name: data.fileName,
+      format: data.format,
+      statement_start: data.statementStart ?? null,
+      statement_end: data.statementEnd ?? null,
+      beginning_balance_cents: data.beginningBalanceCents ?? null,
+      ending_balance_cents: data.endingBalanceCents ?? null,
+      rows_total: data.rows.length + data.errorCount,
+      rows_error: data.errorCount,
+      created_by: userId,
+    });
+    if (bErr) throw new Error(bErr.message);
 
-    const records = await Promise.all(
-      data.rows.map(async (row) => ({
+    const seen = new Set<string>();
+    const records = [];
+    for (const row of data.rows) {
+      const fp = await fingerprint(data.orgId, data.accountId, row);
+      if (seen.has(fp)) continue;
+      seen.add(fp);
+      records.push({
         org_id: data.orgId,
         account_id: data.accountId,
         bank_date: row.date,
         description: row.description,
         amount_cents: row.amountCents,
-        fingerprint: await fingerprint(data.orgId, data.accountId, row),
-      })),
-    );
+        external_id: row.externalId ?? null,
+        fingerprint: fp,
+        batch_id: batchId,
+        needs_review: data.format === "pdf",
+      });
+    }
 
     const { data: inserted, error } = await supabase
       .from("bank_transactions")
       .upsert(records, { onConflict: "org_id,account_id,fingerprint", ignoreDuplicates: true })
       .select("id");
-    if (error) throw new Error(error.message);
+    if (error) {
+      await supabase.from("import_batches").delete().eq("id", batchId);
+      throw new Error(`Import failed, nothing was saved: ${error.message}`);
+    }
+    const imported = inserted?.length ?? 0;
+    const duplicates = data.rows.length - imported;
+    await supabase.from("import_batches").update({ rows_imported: imported, rows_duplicate: duplicates }).eq("id", batchId);
 
     await supabase.from("audit_log").insert({
       org_id: data.orgId,
       user_id: userId,
       action: "import",
-      entity: "bank_transactions",
-      after: { attempted: data.rows.length, imported: inserted?.length ?? 0 },
+      entity: "import_batch",
+      entity_id: batchId,
+      after: { file: data.fileName, format: data.format, imported, duplicates, errors: data.errorCount },
     });
 
+    return { batchId, imported, duplicatesSkipped: duplicates };
+  });
+
+export const listImportBatches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("import_batches")
+      .select("*, accounts(name), bank_transactions(id, transaction_id)")
+      .eq("org_id", data.orgId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return ((rows ?? []) as any[]).map((b) => ({
+      id: b.id as string,
+      accountId: b.account_id as string,
+      accountName: b.accounts?.name ?? "",
+      fileName: b.file_name as string,
+      format: b.format as string,
+      statementStart: b.statement_start as string | null,
+      statementEnd: b.statement_end as string | null,
+      beginningBalanceCents: b.beginning_balance_cents as number | null,
+      endingBalanceCents: b.ending_balance_cents as number | null,
+      rowsImported: b.rows_imported as number,
+      rowsDuplicate: b.rows_duplicate as number,
+      rowsError: b.rows_error as number,
+      status: b.status as string,
+      createdAt: b.created_at as string,
+      postedCount: ((b.bank_transactions ?? []) as any[]).filter((t) => t.transaction_id).length,
+    }));
+  });
+
+export const undoImportBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: posted, error: pErr } = await supabase
+      .from("bank_transactions")
+      .select("id")
+      .eq("batch_id", data.batchId)
+      .not("transaction_id", "is", null)
+      .limit(1);
+    if (pErr) throw new Error(pErr.message);
+    if ((posted ?? []).length > 0) throw new Error("Some rows from this file are already in the ledger. Void those transactions first.");
+    const { data: removed, error } = await supabase
+      .from("bank_transactions")
+      .delete()
+      .eq("batch_id", data.batchId)
+      .eq("org_id", data.orgId)
+      .select("id");
+    if (error) throw new Error(error.message);
+    await supabase.from("import_batches").update({ status: "undone" }).eq("id", data.batchId).eq("org_id", data.orgId);
+    await supabase.from("audit_log").insert({
+      org_id: data.orgId, user_id: userId, action: "undo_import", entity: "import_batch", entity_id: data.batchId,
+      after: { removed: removed?.length ?? 0 },
+    });
+    return { removed: removed?.length ?? 0 };
+  });
+
+const mappingSchema = z.record(z.string(), z.unknown());
+
+export const listImportProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("import_profiles")
+      .select("id, account_id, name, mapping")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => ({ id: r.id, accountId: r.account_id, name: r.name, mapping: r.mapping as any }));
+  });
+
+export const saveImportProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), name: z.string().min(1).max(80), mapping: mappingSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("import_profiles")
+      .upsert({ org_id: data.orgId, account_id: data.accountId, name: data.name, mapping: data.mapping as any }, { onConflict: "account_id,name" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** AI-assisted extraction of a statement's text. Result is always reviewed by the user before import. */
+export const extractPdfStatement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ text: z.string().min(20).max(120_000) }).parse(input))
+  .handler(async ({ data }) => {
+    const key = process.env["LOVABLE_API_KEY"];
+    if (!key) throw new Error("AI service is not configured");
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You extract bank statement data. Return every transaction line exactly once. amount is signed: deposits/credits to the account positive, withdrawals/debits/fees negative. Dates as YYYY-MM-DD. Balances in major currency units. Omit fields you cannot find. Never invent transactions.",
+          },
+          { role: "user", content: data.text },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "statement",
+              parameters: {
+                type: "object",
+                properties: {
+                  statement_start: { type: "string" },
+                  statement_end: { type: "string" },
+                  beginning_balance: { type: "number" },
+                  ending_balance: { type: "number" },
+                  transactions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: { date: { type: "string" }, description: { type: "string" }, amount: { type: "number" } },
+                      required: ["date", "description", "amount"],
+                    },
+                  },
+                },
+                required: ["transactions"],
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "statement" } },
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`AI extract failed [${res.status}]: ${body}`);
+      if (res.status === 429) throw new Error("The reader is busy — try again in a minute.");
+      if (res.status === 402) throw new Error("AI credits are used up for this workspace.");
+      throw new Error("Couldn't read this PDF automatically.");
+    }
+    const json: any = await res.json();
+    const args = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const c = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? Math.round(n * 100) : null);
     return {
-      imported: inserted?.length ?? 0,
-      duplicatesSkipped: data.rows.length - (inserted?.length ?? 0),
+      statementStart: (parsed?.statement_start as string) ?? null,
+      statementEnd: (parsed?.statement_end as string) ?? null,
+      beginningBalanceCents: c(parsed?.beginning_balance),
+      endingBalanceCents: c(parsed?.ending_balance),
+      transactions: ((parsed?.transactions ?? []) as any[]).map((t) => ({
+        date: String(t.date ?? ""),
+        description: String(t.description ?? ""),
+        amountCents: c(t.amount) ?? 0,
+      })),
     };
   });
 
@@ -73,7 +302,7 @@ export const listBankTransactions = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("bank_transactions")
-      .select("id, bank_date, description, amount_cents, transaction_id, accounts(name)")
+      .select("id, bank_date, description, amount_cents, transaction_id, needs_review, accounts(name)")
       .eq("org_id", data.orgId)
       .order("bank_date", { ascending: false })
       .limit(300);
@@ -87,6 +316,7 @@ export const listBankTransactions = createServerFn({ method: "GET" })
       description: r.description as string,
       amountCents: r.amount_cents as number,
       linkedTransactionId: r.transaction_id as string | null,
+      needsReview: !!r.needs_review,
       accountName: r.accounts?.name ?? "",
     }));
   });
@@ -121,24 +351,22 @@ export const postBankTransaction = createServerFn({ method: "POST" })
     if (bError || !bank) throw new Error("Bank transaction not found");
     if (bank.transaction_id) throw new Error("Already posted to the ledger");
 
-    const { data: tx, error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        org_id: data.orgId,
-        transaction_date: bank.bank_date,
-        posted_date: bank.bank_date,
-        description: bank.description,
-        source: "import",
-        created_by: userId,
-      })
-      .select("id")
-      .single();
+    const txId = crypto.randomUUID();
+    const { error: txError } = await supabase.from("transactions").insert({
+      id: txId,
+      org_id: data.orgId,
+      transaction_date: bank.bank_date,
+      posted_date: bank.bank_date,
+      description: bank.description,
+      source: "import",
+      created_by: userId,
+    });
     if (txError) throw new Error(txError.message);
 
     const { error: eError } = await supabase.from("entries").insert([
-      { transaction_id: tx.id, account_id: bank.account_id, amount_cents: bank.amount_cents },
+      { transaction_id: txId, account_id: bank.account_id, amount_cents: bank.amount_cents },
       {
-        transaction_id: tx.id,
+        transaction_id: txId,
         account_id: data.offsetAccountId,
         amount_cents: -bank.amount_cents,
         category_id: data.categoryId ?? null,
@@ -147,13 +375,13 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       },
     ]);
     if (eError) {
-      await supabase.from("transactions").delete().eq("id", tx.id);
+      await supabase.from("transactions").delete().eq("id", txId);
       throw new Error(eError.message);
     }
 
     await supabase
       .from("bank_transactions")
-      .update({ transaction_id: tx.id })
+      .update({ transaction_id: txId, needs_review: false })
       .eq("id", data.bankTransactionId);
 
     await supabase.from("audit_log").insert({
@@ -161,9 +389,9 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       user_id: userId,
       action: "post_from_bank",
       entity: "transaction",
-      entity_id: tx.id,
+      entity_id: txId,
       after: { bank_transaction_id: data.bankTransactionId },
     });
 
-    return { id: tx.id as string };
+    return { id: txId };
   });

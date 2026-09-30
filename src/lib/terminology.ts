@@ -64,6 +64,8 @@ export interface Terms {
   debit: string;
   credit: string;
   journal: string;
+  /** Derived: plain alias at simplest level. */
+  reconcile: string;
 }
 
 export function getTerms(orgType: OrgType, level: Terminology, overrides: TermOverrides = {}): Terms {
@@ -89,6 +91,7 @@ export function getTerms(orgType: OrgType, level: Terminology, overrides: TermOv
     debit,
     credit,
     journal: w.journal,
+    reconcile: levels.debitCredit === "simplest" ? "Check against statement" : "Reconcile",
   };
 }
 
