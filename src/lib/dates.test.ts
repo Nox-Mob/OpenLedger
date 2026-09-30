@@ -36,3 +36,13 @@ describe("dates", () => {
     expect(isISODate("2026-3-1")).toBe(false);
   });
 });
+
+import { dateInTimeZone } from "./dates";
+describe("dateInTimeZone", () => {
+  it("uses the org's calendar day, not UTC", () => {
+    const t = new Date("2026-04-01T03:30:00Z"); // 10:30pm Mar 31 in Chicago
+    expect(dateInTimeZone(t, "America/Chicago")).toBe("2026-03-31");
+    expect(dateInTimeZone(t, "UTC")).toBe("2026-04-01");
+    expect(dateInTimeZone(t, "Pacific/Auckland")).toBe("2026-04-01");
+  });
+});

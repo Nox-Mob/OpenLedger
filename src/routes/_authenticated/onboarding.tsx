@@ -58,7 +58,7 @@ function OnboardingPage() {
     setError(null);
     try {
       const { id } = await createOrganization({
-        data: { name, orgType, accountKeys: [...keys], currency, fiscalYearStartMonth: fyMonth, terminology },
+        data: { name, orgType, accountKeys: [...keys], currency, fiscalYearStartMonth: fyMonth, terminology, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
       });
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
