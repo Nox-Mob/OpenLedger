@@ -305,6 +305,7 @@ export type Database = {
           id: string
           name: string
           org_type: Database["public"]["Enums"]["org_type"]
+          term_overrides: Json
           terminology: string
         }
         Insert: {
@@ -315,6 +316,7 @@ export type Database = {
           id?: string
           name: string
           org_type?: Database["public"]["Enums"]["org_type"]
+          term_overrides?: Json
           terminology?: string
         }
         Update: {
@@ -325,6 +327,7 @@ export type Database = {
           id?: string
           name?: string
           org_type?: Database["public"]["Enums"]["org_type"]
+          term_overrides?: Json
           terminology?: string
         }
         Relationships: []
@@ -334,18 +337,21 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          term_overrides: Json
           terminology: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
+          term_overrides?: Json
           terminology?: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
+          term_overrides?: Json
           terminology?: string
         }
         Relationships: []
