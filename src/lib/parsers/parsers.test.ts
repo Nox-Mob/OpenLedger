@@ -38,11 +38,10 @@ describe("csv", () => {
     expect(parseAmount("1,234.56", "comma")).toBeNull(); // dot-locale value rejected
   });
   it("guesses the decimal separator from the file", () => {
-    const eu = tokenizeCsv("Date;Description;Amount\n2026-09-01;Rent;1.234,56\n".replaceAll(";", ","));
-    // comma decimals dominate → "comma"
-    expect(guessMapping(tokenizeCsv("Date,Description,Amount\n2026-09-01,Rent,1234,56\n2026-09-02,Sale,50,00\n")).decimalSeparator).toBe("comma");
+    // comma-decimal amounts are quoted in a comma-delimited file
+    const eu = tokenizeCsv('Date,Description,Amount\n2026-09-01,Rent,"1234,56"\n2026-09-02,Sale,"50,00"\n');
+    expect(guessMapping(eu).decimalSeparator).toBe("comma");
     expect(guessMapping(tokenizeCsv("Date,Description,Amount\n2026-09-01,Rent,1234.56\n2026-09-02,Sale,50.00\n")).decimalSeparator).toBe("dot");
-    void eu;
   });
   it("parses dates", () => {
     expect(parseDate("09/03/2026", "MDY")).toBe("2026-09-03");
