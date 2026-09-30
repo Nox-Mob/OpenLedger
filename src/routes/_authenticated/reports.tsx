@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AppShell, useOrgContext } from "@/components/AppShell";
 import { incomeStatement, balanceSheet } from "@/lib/reports.functions";
 import { formatCents, todayISO } from "@/lib/money";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -40,7 +42,7 @@ function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; 
 }
 
 function ReportsPage() {
-  const { org, terms } = useOrgContext();
+  const { org, terms, terminology } = useOrgContext();
   const [tab, setTab] = useState<"income" | "balance">("income");
   const yearStart = todayISO().slice(0, 4) + "-01-01";
   const [from, setFrom] = useState(yearStart);
@@ -57,14 +59,39 @@ function ReportsPage() {
     enabled: !!org && tab === "balance",
   });
 
+  const [exporting, setExporting] = useState(false);
   if (!org) return null;
 
   const income = incomeQuery.data;
   const balance = balanceQuery.data;
 
+  async function exportPdf() {
+    if (!org) return;
+    setExporting(true);
+    try {
+      const pdf = await import("@/lib/report-pdf");
+      if (tab === "income" && income) await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
+      else if (tab === "balance" && balance) await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf: todayISO(), data: balance });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not create PDF");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-bold">Reports</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Reports</h1>
+        <button
+          onClick={exportPdf}
+          disabled={exporting || (tab === "income" ? !income : !balance)}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {exporting ? "Preparing…" : "Export PDF"}
+        </button>
+      </div>
 
       <div className="mt-4 flex items-center gap-2">
         <button
