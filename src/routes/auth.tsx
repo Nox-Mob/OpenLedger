@@ -24,7 +24,7 @@ function AuthPage() {
   useEffect(() => {
     const onPreviewLink =
       typeof window !== "undefined" &&
-      /(^|\.)id-preview(-[a-z0-9]+)?--/i.test(window.location.hostname);
+      /(^|\.)id-preview(-[a-z0-9]+)*--/i.test(window.location.hostname);
     setShowDemo(import.meta.env.DEV || onPreviewLink);
   }, []);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
