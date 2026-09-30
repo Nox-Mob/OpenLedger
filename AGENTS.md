@@ -25,3 +25,4 @@
 - /onboarding doubles as the "New organization" page, linked from the sidebar for all users.
 - Imports: parsers are client-side in src/lib/parsers (csv tokenizer+mapping, ofx, pdf-text via pdfjs); PDF rows are AI-extracted (extractPdfStatement) and flagged needs_review. Every upload is an import_batch (undoable until any row is posted); FITID-based fingerprint when present.
 - Reconciliation (src/lib/reconcile.functions.ts) only stamps entries.reconciliation_id; completion requires difference=0 server-side; completed reconciliations lock their entries/transactions via DB triggers; only the latest completed one per account can be reopened, admin-only. Balances stored in statement sign (liabilities = amount owed).
+- Account setup (Settings → Accounts) + 3-step new-org wizard: accounts are catalog in src/lib/account-catalog.ts; removal blocked when entries exist; required = one bank + equity.
