@@ -14,16 +14,536 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      accounts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          org_id: string
+          subtype: string | null
+          type: Database["public"]["Enums"]["account_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+          subtype?: string | null
+          type: Database["public"]["Enums"]["account_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          subtype?: string | null
+          type?: Database["public"]["Enums"]["account_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          after: Json | null
+          before: Json | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          org_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          org_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          org_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          bank_date: string
+          created_at: string
+          description: string
+          external_id: string | null
+          fingerprint: string
+          id: string
+          org_id: string
+          raw: Json | null
+          transaction_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          bank_date: string
+          created_at?: string
+          description: string
+          external_id?: string | null
+          fingerprint: string
+          id?: string
+          org_id: string
+          raw?: Json | null
+          transaction_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          bank_date?: string
+          created_at?: string
+          description?: string
+          external_id?: string | null
+          fingerprint?: string
+          id?: string
+          org_id?: string
+          raw?: Json | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          type: Database["public"]["Enums"]["account_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          type?: Database["public"]["Enums"]["account_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          type?: Database["public"]["Enums"]["account_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entries: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          category_id: string | null
+          created_at: string
+          fund_id: string | null
+          id: string
+          memo: string | null
+          project_id: string | null
+          transaction_id: string
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          category_id?: string | null
+          created_at?: string
+          fund_id?: string | null
+          id?: string
+          memo?: string | null
+          project_id?: string | null
+          transaction_id: string
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          category_id?: string | null
+          created_at?: string
+          fund_id?: string | null
+          id?: string
+          memo?: string | null
+          project_id?: string | null
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funds: {
+        Row: {
+          created_at: string
+          id: string
+          is_restricted: boolean
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_restricted?: boolean
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_restricted?: boolean
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funds_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          org_type: Database["public"]["Enums"]["org_type"]
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          org_type?: Database["public"]["Enums"]["org_type"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          org_type?: Database["public"]["Enums"]["org_type"]
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          terminology: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          terminology?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          terminology?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          budget_cents: number
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          status: string
+        }
+        Insert: {
+          budget_cents?: number
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          status?: string
+        }
+        Update: {
+          budget_cents?: number
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_tags: {
+        Row: {
+          tag_id: string
+          transaction_id: string
+        }
+        Insert: {
+          tag_id: string
+          transaction_id: string
+        }
+        Update: {
+          tag_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_tags_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          org_id: string
+          posted_date: string | null
+          source: Database["public"]["Enums"]["transaction_source"]
+          status: Database["public"]["Enums"]["transaction_status"]
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          org_id: string
+          posted_date?: string | null
+          source?: Database["public"]["Enums"]["transaction_source"]
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          org_id?: string
+          posted_date?: string | null
+          source?: Database["public"]["Enums"]["transaction_source"]
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          org_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_write_org: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_org_role: {
+        Args: {
+          _org_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
+      app_role: "admin" | "member" | "viewer"
+      org_type: "nonprofit" | "business"
+      transaction_source:
+        | "manual"
+        | "import"
+        | "opening_balance"
+        | "adjustment"
+        | "transfer"
+      transaction_status: "posted" | "void"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +670,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_type: ["asset", "liability", "equity", "revenue", "expense"],
+      app_role: ["admin", "member", "viewer"],
+      org_type: ["nonprofit", "business"],
+      transaction_source: [
+        "manual",
+        "import",
+        "opening_balance",
+        "adjustment",
+        "transfer",
+      ],
+      transaction_status: ["posted", "void"],
+    },
   },
 } as const
