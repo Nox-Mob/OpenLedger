@@ -41,10 +41,10 @@
 
 ## Step 14 — Reviewer findings (see plan)
 ### Phase A — quick, high-risk (today)
-- [ ] 0. Delete the "Test" organization and all its data
-- [ ] 1. Replace two demo logins with one sample-data account (demo@demo.org) holding both demo orgs; demo org can never see real orgs; no credentials in client bundle
-- [ ] 2. Cross-tenant RLS tests; audit service-role + SECURITY DEFINER usage; audit_log append-only
-- [ ] 3. Stop tracking .env, add to .gitignore, scan history for secrets
+- [x] 0. Delete the "Test" organization and all its data
+- [x] 1. Replace two demo logins with one sample-data account (demo@demo.org) holding both demo orgs; demo org can never see real orgs; no credentials in client bundle
+- [ ] 2. (partial: no admin client in app code; audit_log change/delete revoked) Cross-tenant RLS tests; audit service-role + SECURITY DEFINER usage; audit_log append-only
+- [x] 3. .env already untracked + gitignored; history scan found no secrets
 ### Phase B — correctness
 - [ ] 4. Date/timezone safety (no new Date()/toISOString on transaction_date); boundary tests
 - [ ] 5. Report invariant tests (A=L+E, NI=Δequity, trial balance=0, voids excluded, fiscal year)
