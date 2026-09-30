@@ -101,11 +101,13 @@ export type Database = {
           account_id: string
           amount_cents: number
           bank_date: string
+          batch_id: string | null
           created_at: string
           description: string
           external_id: string | null
           fingerprint: string
           id: string
+          needs_review: boolean
           org_id: string
           raw: Json | null
           transaction_id: string | null
@@ -114,11 +116,13 @@ export type Database = {
           account_id: string
           amount_cents: number
           bank_date: string
+          batch_id?: string | null
           created_at?: string
           description: string
           external_id?: string | null
           fingerprint: string
           id?: string
+          needs_review?: boolean
           org_id: string
           raw?: Json | null
           transaction_id?: string | null
@@ -127,11 +131,13 @@ export type Database = {
           account_id?: string
           amount_cents?: number
           bank_date?: string
+          batch_id?: string | null
           created_at?: string
           description?: string
           external_id?: string | null
           fingerprint?: string
           id?: string
+          needs_review?: boolean
           org_id?: string
           raw?: Json | null
           transaction_id?: string | null
@@ -142,6 +148,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
           {
@@ -202,6 +215,7 @@ export type Database = {
           id: string
           memo: string | null
           project_id: string | null
+          reconciliation_id: string | null
           transaction_id: string
         }
         Insert: {
@@ -213,6 +227,7 @@ export type Database = {
           id?: string
           memo?: string | null
           project_id?: string | null
+          reconciliation_id?: string | null
           transaction_id: string
         }
         Update: {
@@ -224,6 +239,7 @@ export type Database = {
           id?: string
           memo?: string | null
           project_id?: string | null
+          reconciliation_id?: string | null
           transaction_id?: string
         }
         Relationships: [
@@ -253,6 +269,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliations"
             referencedColumns: ["id"]
           },
           {
@@ -289,6 +312,126 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "funds_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_batches: {
+        Row: {
+          account_id: string
+          beginning_balance_cents: number | null
+          created_at: string
+          created_by: string | null
+          ending_balance_cents: number | null
+          file_name: string
+          format: Database["public"]["Enums"]["import_format"]
+          id: string
+          org_id: string
+          rows_duplicate: number
+          rows_error: number
+          rows_imported: number
+          rows_total: number
+          statement_end: string | null
+          statement_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          beginning_balance_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          ending_balance_cents?: number | null
+          file_name: string
+          format: Database["public"]["Enums"]["import_format"]
+          id?: string
+          org_id: string
+          rows_duplicate?: number
+          rows_error?: number
+          rows_imported?: number
+          rows_total?: number
+          statement_end?: string | null
+          statement_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          beginning_balance_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          ending_balance_cents?: number | null
+          file_name?: string
+          format?: Database["public"]["Enums"]["import_format"]
+          id?: string
+          org_id?: string
+          rows_duplicate?: number
+          rows_error?: number
+          rows_imported?: number
+          rows_total?: number
+          statement_end?: string | null
+          statement_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_profiles: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          mapping: Json
+          name: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          mapping?: Json
+          name: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          mapping?: Json
+          name?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_profiles_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -384,6 +527,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliations: {
+        Row: {
+          account_id: string
+          batch_id: string | null
+          beginning_balance_cents: number
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          ending_balance_cents: number
+          id: string
+          mode: Database["public"]["Enums"]["reconcile_mode"]
+          org_id: string
+          period_end: string
+          period_start: string
+          status: Database["public"]["Enums"]["reconcile_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          batch_id?: string | null
+          beginning_balance_cents?: number
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ending_balance_cents?: number
+          id?: string
+          mode?: Database["public"]["Enums"]["reconcile_mode"]
+          org_id: string
+          period_end: string
+          period_start: string
+          status?: Database["public"]["Enums"]["reconcile_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          batch_id?: string | null
+          beginning_balance_cents?: number
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ending_balance_cents?: number
+          id?: string
+          mode?: Database["public"]["Enums"]["reconcile_mode"]
+          org_id?: string
+          period_end?: string
+          period_start?: string
+          status?: Database["public"]["Enums"]["reconcile_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -551,7 +770,10 @@ export type Database = {
     Enums: {
       account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
       app_role: "admin" | "member" | "viewer"
+      import_format: "csv" | "ofx" | "qfx" | "pdf"
       org_type: "nonprofit" | "business"
+      reconcile_mode: "simple" | "full"
+      reconcile_status: "in_progress" | "completed"
       transaction_source:
         | "manual"
         | "import"
@@ -688,7 +910,10 @@ export const Constants = {
     Enums: {
       account_type: ["asset", "liability", "equity", "revenue", "expense"],
       app_role: ["admin", "member", "viewer"],
+      import_format: ["csv", "ofx", "qfx", "pdf"],
       org_type: ["nonprofit", "business"],
+      reconcile_mode: ["simple", "full"],
+      reconcile_status: ["in_progress", "completed"],
       transaction_source: [
         "manual",
         "import",

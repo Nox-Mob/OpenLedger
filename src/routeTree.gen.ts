@@ -19,6 +19,8 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedReconcileIndexRouteImport } from './routes/_authenticated/reconcile.index'
+import { Route as AuthenticatedReconcileIdRouteImport } from './routes/_authenticated/reconcile.$id'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedSettingsMembersRouteImport } from './routes/_authenticated/settings/members'
 import { Route as AuthenticatedSettingsPreferencesRouteImport } from './routes/_authenticated/settings/preferences'
@@ -74,6 +76,18 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReconcileIndexRoute =
+  AuthenticatedReconcileIndexRouteImport.update({
+    id: '/reconcile/',
+    path: '/reconcile/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReconcileIdRoute =
+  AuthenticatedReconcileIdRouteImport.update({
+    id: '/reconcile/$id',
+    path: '/reconcile/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/',
@@ -115,9 +129,11 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/reconcile/': typeof AuthenticatedReconcileIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/transactions/': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -130,9 +146,11 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/reconcile': typeof AuthenticatedReconcileIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -148,9 +166,11 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/_authenticated/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/_authenticated/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/_authenticated/reconcile/': typeof AuthenticatedReconcileIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -166,9 +186,11 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/settings'
+    | '/reconcile/$id'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
+    | '/reconcile/'
     | '/settings/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -181,9 +203,11 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/'
+    | '/reconcile/$id'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
+    | '/reconcile'
     | '/settings'
     | '/transactions'
   id:
@@ -198,9 +222,11 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/reconcile/$id'
     | '/_authenticated/settings/members'
     | '/_authenticated/settings/preferences'
     | '/_authenticated/transactions/new'
+    | '/_authenticated/reconcile/'
     | '/_authenticated/settings/'
     | '/_authenticated/transactions/'
   fileRoutesById: FileRoutesById
@@ -282,6 +308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reconcile/': {
+      id: '/_authenticated/reconcile/'
+      path: '/reconcile'
+      fullPath: '/reconcile/'
+      preLoaderRoute: typeof AuthenticatedReconcileIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reconcile/$id': {
+      id: '/_authenticated/reconcile/$id'
+      path: '/reconcile/$id'
+      fullPath: '/reconcile/$id'
+      preLoaderRoute: typeof AuthenticatedReconcileIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/': {
       id: '/_authenticated/settings/'
       path: '/'
@@ -346,7 +386,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedReconcileIdRoute: typeof AuthenticatedReconcileIdRoute
   AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
+  AuthenticatedReconcileIndexRoute: typeof AuthenticatedReconcileIndexRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
@@ -359,7 +401,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedReconcileIdRoute: AuthenticatedReconcileIdRoute,
   AuthenticatedTransactionsNewRoute: AuthenticatedTransactionsNewRoute,
+  AuthenticatedReconcileIndexRoute: AuthenticatedReconcileIndexRoute,
   AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
 }
 

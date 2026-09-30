@@ -7,6 +7,7 @@ import {
   PlusCircle,
   Landmark,
   Upload,
+  ListChecks,
   FolderKanban,
   PiggyBank,
   FileBarChart,
@@ -59,6 +60,7 @@ const NAV = [
   { to: "/transactions/new", label: "New Transaction", icon: PlusCircle },
   { to: "/accounts", label: "Accounts", icon: Landmark },
   { to: "/import", label: "Import Bank File", icon: Upload },
+  { to: "/reconcile", label: "Reconcile", icon: ListChecks },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/funds", label: "Funds", icon: PiggyBank },
   { to: "/reports", label: "Reports", icon: FileBarChart },
@@ -125,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {item.to === "/reconcile" ? terms.reconcile : item.label}
             </Link>
           ))}
         </nav>

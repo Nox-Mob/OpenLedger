@@ -33,3 +33,8 @@
 - Deferred from competitor screenshot: branding, custom domain, locations, taxes, automation, subscriptions — revisit per-user demand
 - [x] Money In type picker for nonprofits: Donation vs Fundraising Sale vs Other; auto-selects matching revenue account; "Fundraising Sales" added to default nonprofit chart + demo org
 - [x] Wording (plain vs accounting) is now an organization-wide setting: organizations.terminology column, admin-editable under Settings > Organization profile; AppShell + PDFs use org terminology; Acme demo set to accounting
+
+## Step 13 — Bank import v2 + reconciliation (done)
+- [x] CSV column mapping + saved layouts, OFX/QFX, PDF (AI-read, reviewed), row-level errors/duplicates, import batches with undo, statement period + balances
+- [x] Reconciliation: simple (auto-match) and full (tick) modes, history, reopen (admin), audit trail, lock on completion
+- Deferred: Plaid / automatic bank feeds
