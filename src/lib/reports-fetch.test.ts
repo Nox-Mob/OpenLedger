@@ -47,7 +47,7 @@ describe("report math at scale", () => {
       transactionDate: r.transactions.transaction_date,
     }));
     const b = computeBalance(ledger, "2026-12-31", "2026-01-01");
-    expect(b.assets.find((a) => a.name === "Checking")?.balanceCents).toBe(250_000);
+    expect(b.assets.find((a) => a.name === "Checking")?.totalCents).toBe(250_000);
     expect(b.netIncomeCents).toBe(250_000);
     expect(b.balanced).toBe(true);
     const i = computeIncome(ledger);
