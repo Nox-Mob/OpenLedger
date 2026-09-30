@@ -65,23 +65,6 @@ function AuthPage() {
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
 
-  // Dev-only: sign in to a seeded demo account. Never rendered in production builds.
-  async function signInAsDemo(email: string) {
-    setError(null);
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: "demo-password-123",
-      });
-      if (error) throw error;
-      navigate({ to: "/" });
-    } catch (err: any) {
-      setError(err.message ?? "Demo sign-in failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -145,20 +128,17 @@ function AuthPage() {
           </button>
 
           {showDemo && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 rounded-md border border-dashed border-input p-3 text-center text-xs text-muted-foreground">
+              <p>Sample data account (both sample organizations)</p>
               <button
-                onClick={() => signInAsDemo("demo@openledger.dev")}
-                disabled={busy}
-                className="w-full rounded-md border border-dashed border-input px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setMode("signin");
+                  setEmail("demo@demo.org");
+                }}
+                className="mt-1 font-medium text-foreground underline underline-offset-2"
               >
-                Explore the business demo (dev only)
-              </button>
-              <button
-                onClick={() => signInAsDemo("demo-np@openledger.dev")}
-                disabled={busy}
-                className="w-full rounded-md border border-dashed border-input px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-              >
-                Explore the nonprofit demo (dev only)
+                Use demo@demo.org
               </button>
             </div>
           )}
