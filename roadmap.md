@@ -43,12 +43,12 @@
 ### Phase A — quick, high-risk (today)
 - [x] 0. Delete the "Test" organization and all its data
 - [x] 1. Replace two demo logins with one sample-data account (demo@demo.org) holding both demo orgs; demo org can never see real orgs; no credentials in client bundle
-- [ ] 2. (partial: no admin client in app code; audit_log change/delete revoked) Cross-tenant RLS tests; audit service-role + SECURITY DEFINER usage; audit_log append-only
+- [x] 2. Tenant isolation: stranger reads/changes/deletes 0 rows on all 15 tables, self-join + audit delete blocked (supabase/tests/tenant_isolation.sql); no admin client in app code
 - [x] 3. .env already untracked + gitignored; history scan found no secrets
 ### Phase B — correctness
-- [ ] 4. Date/timezone safety (no new Date()/toISOString on transaction_date); boundary tests
-- [ ] 5. Report invariant tests (A=L+E, NI=Δequity, trial balance=0, voids excluded, fiscal year)
-- [ ] 7. Void vs reconciliation/bank link/transfer/double-void rules
+- [x] 4. Date/timezone safety (no new Date()/toISOString on transaction_date); boundary tests
+- [x] 5. Report invariant tests (A=L+E, NI=Δequity, trial balance=0, voids excluded, fiscal year)
+- [x] 7. Void vs reconciliation/bank link/transfer/double-void rules
 ### Phase C — integrity & access
 - [ ] 8. Import correctness (row-seq fingerprint, amount formats, PDF balance check, encoding, size limits)
 - [ ] 10. Role authorization matrix + last-admin protection server-side
