@@ -110,6 +110,7 @@ export type Database = {
           needs_review: boolean
           org_id: string
           raw: Json | null
+          row_seq: number | null
           transaction_id: string | null
         }
         Insert: {
@@ -125,6 +126,7 @@ export type Database = {
           needs_review?: boolean
           org_id: string
           raw?: Json | null
+          row_seq?: number | null
           transaction_id?: string | null
         }
         Update: {
@@ -140,6 +142,7 @@ export type Database = {
           needs_review?: boolean
           org_id?: string
           raw?: Json | null
+          row_seq?: number | null
           transaction_id?: string | null
         }
         Relationships: [
