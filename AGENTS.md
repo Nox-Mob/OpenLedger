@@ -13,15 +13,13 @@
 
 ## Architecture rules
 
-- Double-entry is enforced twice: the `createTransaction` server fn validates entries sum to 0, and a deferred constraint trigger `entries_balanced_after_write` on `entries` re-checks at commit. Never bypass either.
-- Entry sign convention: `amount_cents > 0` = debit, `< 0` = credit. Display balances flip sign for credit-normal accounts (liability/equity/revenue) via `displayBalance()` in src/lib/terminology.ts.
-- Entries are never edited in place — void the transaction (status='void', trigger skips balance check) and create a new one. Keeps the audit trail honest.
-- Bank imports are evidence only: `bank_transactions` rows link to ledger `transactions` via `transaction_id`; dedup is a SHA-256 fingerprint unique per (org, account).
-- Terminology is presentation-only: engine vocabulary stays in the DB, org type (nonprofit/business) and user preference (simplified/accounting) map labels in src/lib/terminology.ts.
-- Current org id is stored in localStorage (`openledger_current_org`) via src/lib/current-org.ts; `useOrgContext()` in AppShell resolves org + terms.
+- Double-entry enforced twice: `createTransaction` checks sum=0; deferred trigger `entries_balanced_after_write` re-checks at commit. Posted tx invariant: ≥2 entries, sum(amount_cents)=0, ≥1 positive and ≥1 negative entry (void exempt). Never bypass.
+- Sign convention: amount_cents > 0 = debit, < 0 = credit. Balances flip sign for credit-normal accounts (liability/equity/revenue) via `displayBalance()` in src/lib/terminology.ts.
+- Entries are never edited in place — void the transaction (status='void', trigger skips checks) and create a new one. Keeps the audit trail honest.
+- Bank imports are evidence only: `bank_transactions` link to ledger `transactions` via `transaction_id`; dedup is a SHA-256 fingerprint unique per (org, account).
+- Terminology is presentation-only: engine vocabulary stays in the DB; org type (nonprofit/business) and org-wide terminology (simplified/accounting) map labels in src/lib/terminology.ts.
+- Current org id in localStorage (`openledger_current_org`) via src/lib/current-org.ts; `useOrgContext()` in AppShell resolves org + terms from org.terminology (profile preference is fallback only). Reports and PDFs follow the org setting.
 - All org data access goes through `requireSupabaseAuth` server fns in src/lib/*.functions.ts; RLS scopes every table by org membership (is_org_member / can_write_org / has_org_role).
-- Dev-only demo account: demo@openledger.dev (fixed UUID d0e00000-...-0001) with seeded org "Acme Demo Co" (d0e00000-...-0002). The "Explore the demo account" button on /auth is gated by import.meta.env.DEV so it never renders in production builds. Seed rows use fixed d0e00000-* UUIDs and ON CONFLICT DO NOTHING for idempotent re-seeding. Demo data lives in the shared backend — remove it before real production use.
-- Second demo account: demo-np@openledger.dev (UUID d0e00000-...-0003) with seeded nonprofit org "Riverside Community Kitchen" (d0e00000-...-0004), restricted funds, and donation/grant transactions. Both demo buttons on /auth are dev-only (import.meta.env.DEV). The org-setup page (/onboarding) doubles as the "New organization" page, linked from the sidebar for all users.
-- Org settings (name, org_type) are admin-only: updateOrganization checks the admin role server-side before updating, and the Settings page separates org-wide settings from per-user preferences (terminology).
-- Settings live under a layout route: src/routes/_authenticated/settings.tsx is the sub-nav shell; sections are settings/index.tsx (org profile), settings/members.tsx (users & roles), settings/preferences.tsx (personal). Org-wide changes go through updateOrganization/updateMemberRole, both gated by a server-side admin check (requireOrgAdmin helper) plus RLS, and both write audit_log rows.
-- Terminology is org-wide (organizations.terminology, admin-set in Settings > Organization profile); AppShell resolves terms from org.terminology with the profile preference only as fallback. Reports and PDFs always follow the org setting.
+- Demo accounts (dev-only buttons on /auth, gated by import.meta.env.DEV): demo@openledger.dev → "Acme Demo Co" business (d0e00000-...-0002); demo-np@openledger.dev → "Riverside Community Kitchen" nonprofit (d0e00000-...-0004). Seed rows use fixed d0e00000-* UUIDs, ON CONFLICT DO NOTHING. Demo data lives in the shared backend — wipe before real production use.
+- Org settings (name, org_type, currency, fiscal year, terminology) are admin-only: updateOrganization/updateMemberRole check admin server-side (requireOrgAdmin) plus RLS, and write audit_log rows. Settings is a layout route (settings.tsx shell) with sections: index (org profile), members (users & roles), preferences (personal).
+- /onboarding doubles as the "New organization" page, linked from the sidebar for all users.
