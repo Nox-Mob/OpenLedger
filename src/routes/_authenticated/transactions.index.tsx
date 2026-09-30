@@ -7,7 +7,7 @@ import { formatCents } from "@/lib/money";
 import { PlusCircle, Ban } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/transactions")({
+export const Route = createFileRoute("/_authenticated/transactions/")({
   head: () => ({
     meta: [
       { title: "Transactions — Open Ledger" },
