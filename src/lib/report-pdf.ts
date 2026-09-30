@@ -45,10 +45,11 @@ async function setup(org: OrgInfo, title: string, subtitle: string, pref: Termin
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
       const h = doc.internal.pageSize.getHeight();
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       doc.text(
-        `${pref === "accounting" ? "Prepared on accrual-ready ledger" : "Prepared from your records"} · Amounts in ${org.currency} · Fiscal year starts ${fy} · Generated ${prettyDate(new Date().toISOString().slice(0, 10))}`,
+        `Prepared with Open Ledger · Amounts in ${org.currency} · Fiscal year starts ${fy} · Generated ${prettyDate(new Date().toISOString().slice(0, 10))}`,
         56, h - 32,
       );
       doc.text(`Page ${i} of ${pages}`, w - 56, h - 32, { align: "right" });
