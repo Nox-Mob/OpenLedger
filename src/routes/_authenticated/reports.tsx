@@ -45,10 +45,10 @@ function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; 
 function ReportsPage() {
   const { org, reportTerms: terms, terminology } = useOrgContext();
   const [tab, setTab] = useState<"income" | "balance" | "trial">("income");
-  const yearStart = fiscalYearStart(todayISO(), org?.fiscalYearStartMonth ?? 1);
+  const yearStart = fiscalYearStart(todayISO(new Date(), org?.timezone), org?.fiscalYearStartMonth ?? 1);
   const [from, setFrom] = useState(yearStart);
-  const [to, setTo] = useState(todayISO());
-  const [asOf, setAsOf] = useState(todayISO());
+  const [to, setTo] = useState(todayISO(new Date(), org?.timezone));
+  const [asOf, setAsOf] = useState(todayISO(new Date(), org?.timezone));
 
   const incomeQuery = useQuery({
     queryKey: ["income", org?.id, from, to],

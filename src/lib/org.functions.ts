@@ -1,3 +1,4 @@
+import { isValidTimeZone } from "./dates";
 import { normalizeTerminology, cleanOverrides } from "./terminology";
 const overridesSchema = z.record(z.string(), z.enum(["simplest", "simple", "accounting"])).transform(cleanOverrides);
 import { createServerFn } from "@tanstack/react-start";
@@ -11,7 +12,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, terminology, term_overrides)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -21,6 +22,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         orgType: row.organizations?.org_type as "nonprofit" | "business",
         currency: (row.organizations?.currency ?? "USD") as string,
         fiscalYearStartMonth: (row.organizations?.fiscal_year_start_month ?? 1) as number,
+        timezone: (row.organizations?.timezone ?? "America/Chicago") as string,
         terminology: normalizeTerminology(row.organizations?.terminology),
         termOverrides: cleanOverrides(row.organizations?.term_overrides),
         role: row.role as string,
@@ -76,6 +78,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         orgType: z.enum(["nonprofit", "business"]),
         currency: z.string().regex(/^[A-Z]{3}$/),
         fiscalYearStartMonth: z.number().int().min(1).max(12),
+        timezone: z.string().max(64).refine(isValidTimeZone, "Unknown timezone"),
         terminology: z.enum(["simplest", "simple", "accounting"]),
         termOverrides: overridesSchema,
       })
@@ -87,7 +90,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type, currency, fiscal_year_start_month, terminology, term_overrides")
+      .select("name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides")
       .eq("id", data.orgId)
       .single();
 
@@ -98,6 +101,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         org_type: data.orgType,
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
+        timezone: data.timezone,
         terminology: data.terminology,
         term_overrides: data.termOverrides as any,
       })
@@ -116,6 +120,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         org_type: data.orgType,
         currency: data.currency,
         fiscal_year_start_month: data.fiscalYearStartMonth,
+        timezone: data.timezone,
         terminology: data.terminology,
         term_overrides: data.termOverrides,
       },
@@ -207,6 +212,7 @@ export const createOrganization = createServerFn({ method: "POST" })
         accountKeys: z.array(z.string().max(60)).max(100).optional(),
         currency: z.string().regex(/^[A-Z]{3}$/).optional(),
         fiscalYearStartMonth: z.number().int().min(1).max(12).optional(),
+        timezone: z.string().max(64).refine(isValidTimeZone, "Unknown timezone").optional(),
         terminology: z.enum(["simplest", "simple", "accounting"]).optional(),
       })
       .parse(input),
@@ -227,6 +233,7 @@ export const createOrganization = createServerFn({ method: "POST" })
         ...(data.currency ? { currency: data.currency } : {}),
         ...(data.fiscalYearStartMonth ? { fiscal_year_start_month: data.fiscalYearStartMonth } : {}),
         ...(data.terminology ? { terminology: data.terminology } : {}),
+        ...(data.timezone ? { timezone: data.timezone } : {}),
       });
     if (orgError) throw new Error(orgError.message);
 

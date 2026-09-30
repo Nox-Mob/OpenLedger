@@ -450,6 +450,7 @@ export type Database = {
           org_type: Database["public"]["Enums"]["org_type"]
           term_overrides: Json
           terminology: string
+          timezone: string
         }
         Insert: {
           created_at?: string
@@ -461,6 +462,7 @@ export type Database = {
           org_type?: Database["public"]["Enums"]["org_type"]
           term_overrides?: Json
           terminology?: string
+          timezone?: string
         }
         Update: {
           created_at?: string
@@ -472,6 +474,7 @@ export type Database = {
           org_type?: Database["public"]["Enums"]["org_type"]
           term_overrides?: Json
           terminology?: string
+          timezone?: string
         }
         Relationships: []
       }

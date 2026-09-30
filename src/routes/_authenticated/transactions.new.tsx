@@ -38,7 +38,7 @@ function NewTransactionPage() {
   const queryClient = useQueryClient();
 
   const [mode, setMode] = useState<Mode>("out");
-  const [date, setDate] = useState(todayISO());
+  const [date, setDate] = useState(() => todayISO(new Date(), org?.timezone));
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [moneyAccountId, setMoneyAccountId] = useState("");

@@ -33,6 +33,12 @@ async function fiscalStartMonth(supabase: any, orgId: string): Promise<number> {
   return data?.fiscal_year_start_month ?? 1;
 }
 
+/** "Today" in the organization's timezone — reports never use the server's clock day. */
+async function orgToday(supabase: any, orgId: string): Promise<string> {
+  const { data } = await supabase.from("organizations").select("timezone").eq("id", orgId).single();
+  return todayISO(new Date(), data?.timezone ?? "America/Chicago");
+}
+
 export const incomeStatement = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -47,7 +53,7 @@ export const balanceSheet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input))
   .handler(async ({ data, context }) => {
-    const asOf = data.asOf ?? todayISO();
+    const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
     const [rows, month] = await Promise.all([
       fetchLedger(context.supabase, data.orgId, asOf),
       fiscalStartMonth(context.supabase, data.orgId),
@@ -59,7 +65,7 @@ export const trialBalance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input))
   .handler(async ({ data, context }) => {
-    const asOf = data.asOf ?? todayISO();
+    const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
     const rows = await fetchLedger(context.supabase, data.orgId, asOf);
     return { asOf, ...computeTrialBalance(rows, asOf) };
   });

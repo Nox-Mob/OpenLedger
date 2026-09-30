@@ -20,7 +20,7 @@
 - Sample data: one shared login demo@demo.org / demo1234 (member of Acme + Riverside only); /auth hint shows on DEV/preview only; never add real orgs to it.
 - Reconciliation stamps entries.reconciliation_id; finish needs difference=0; completed ones lock entries via triggers.
 - Starter accounts come from src/lib/account-catalog.ts (onboarding wizard + Settings → Accounts); accounts with entries can't be removed.
-- Dates are YYYY-MM-DD strings; use src/lib/dates.ts (local todayISO, UTC-only math). Never toISOString a transaction date.
+- Dates are YYYY-MM-DD strings; use src/lib/dates.ts ("today" = todayISO(now, org.timezone), UTC-only math). Never toISOString a transaction date.
 - Report math lives in src/lib/report-math.ts (pure, tested); balance sheet rolls prior fiscal years into retained earnings / net assets.
 - Void: blocked if in a completed reconciliation; idempotent (posted→void only); unticks in-progress stamps and unlinks bank rows.
 - Tests: bunx vitest run <files>; tenant isolation SQL in supabase/tests/tenant_isolation.sql.

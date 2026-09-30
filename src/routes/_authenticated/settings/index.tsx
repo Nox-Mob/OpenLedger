@@ -20,6 +20,10 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 });
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "JPY", "CHF"];
+const TIMEZONES: string[] = (() => {
+  try { return (Intl as any).supportedValuesOf("timeZone") as string[]; }
+  catch { return ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Stockholm", "Australia/Sydney", "Pacific/Auckland"]; }
+})();
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -32,6 +36,7 @@ function OrgProfileSettings() {
   const [orgType, setOrgType] = useState<"nonprofit" | "business" | null>(null);
   const [currency, setCurrency] = useState<string | null>(null);
   const [fyMonth, setFyMonth] = useState<number | null>(null);
+  const [timezone, setTimezone] = useState<string | null>(null);
   const [term, setTerm] = useState<"simplest" | "simple" | "accounting" | null>(null);
   const [overrides, setOverrides] = useState<TermOverrides | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,7 +44,7 @@ function OrgProfileSettings() {
   if (!org) return null;
 
   const isAdmin = org.role === "admin";
-  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || term !== null || overrides !== null;
+  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || timezone !== null || term !== null || overrides !== null;
 
   async function saveOrg() {
     if (!org) return;
@@ -52,6 +57,7 @@ function OrgProfileSettings() {
           orgType: orgType ?? org.orgType,
           currency: currency ?? org.currency,
           fiscalYearStartMonth: fyMonth ?? org.fiscalYearStartMonth,
+          timezone: timezone ?? org.timezone,
           terminology: term ?? (org as any).terminology ?? "simplest",
           termOverrides: overrides ?? (org as any).termOverrides ?? {},
         },
@@ -61,6 +67,7 @@ function OrgProfileSettings() {
       setOrgType(null);
       setCurrency(null);
       setFyMonth(null);
+      setTimezone(null);
       setTerm(null);
       setOverrides(null);
       toast.success("Organization settings saved");
@@ -182,6 +189,23 @@ function OrgProfileSettings() {
                   <option key={m} value={i + 1}>{m}</option>
                 ))}
               </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-sm font-medium" htmlFor="org-tz">Timezone</label>
+              <select
+                id="org-tz"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
+                value={timezone ?? org.timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                disabled={!isAdmin}
+              >
+                {(TIMEZONES.includes(org.timezone) ? TIMEZONES : [org.timezone, ...TIMEZONES]).map((z) => (
+                  <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Decides what "today" is for new transactions and for report dates, for everyone in this organization.
+              </p>
             </div>
           </div>
           <div className="flex items-center justify-between">
