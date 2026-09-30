@@ -269,6 +269,13 @@ function NewTransactionPage() {
                         </button>
                       ))}
                     </div>
+                    {moneyInKind !== "other" &&
+                      !inAccounts.some((a) => a.name === (moneyInKind === "sale" ? "Fundraising Sales" : "Donations")) && (
+                        <p className="mt-2 text-xs text-destructive">
+                          This organization doesn't have a "{moneyInKind === "sale" ? "Fundraising Sales" : "Donations"}" account yet.
+                          An admin can turn it on in Settings → Accounts.
+                        </p>
+                      )}
                   </div>
                 )}
                 <label className="text-sm font-medium">
