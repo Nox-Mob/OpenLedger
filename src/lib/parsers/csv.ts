@@ -134,16 +134,19 @@ export function guessMapping(rows: string[][]): CsvMapping {
   const debitCol = header.findIndex((h) => /debit|withdraw|money out/.test(h));
   const creditCol = header.findIndex((h) => /credit|deposit|money in/.test(h));
   const split = hasHeader && debitCol >= 0 && creditCol >= 0 && !header.some((h) => h === "amount");
+  const amountCol = hasHeader ? find(/amount/, 2) : 2;
+  const sampleRows = hasHeader ? rows.slice(1) : rows;
   return {
     hasHeader,
     dateCol: hasHeader ? find(/date/, 0) : 0,
     descCol: hasHeader ? find(/desc|memo|payee|name|details/, 1) : 1,
     amountMode: split ? "split" : "single",
-    amountCol: hasHeader ? find(/amount/, 2) : 2,
+    amountCol,
     debitCol: debitCol >= 0 ? debitCol : 2,
     creditCol: creditCol >= 0 ? creditCol : 3,
     dateFormat: "auto",
     flipSign: false,
+    decimalSeparator: guessDecimalSeparator(sampleRows, split ? [debitCol, creditCol] : [amountCol]),
   };
 }
 
@@ -154,11 +157,12 @@ export function applyMapping(rows: string[][], m: CsvMapping): ParsedRow[] {
     const line = i + 1;
     const date = parseDate(cols[m.dateCol] ?? "", m.dateFormat);
     const description = (cols[m.descCol] ?? "").trim() || "Bank transaction";
+    const dec = m.decimalSeparator ?? "dot";
     let amount: number | null;
-    if (m.amountMode === "single") amount = parseAmount(cols[m.amountCol] ?? "");
+    if (m.amountMode === "single") amount = parseAmount(cols[m.amountCol] ?? "", dec);
     else {
-      const out_ = parseAmount(cols[m.debitCol] ?? "");
-      const in_ = parseAmount(cols[m.creditCol] ?? "");
+      const out_ = parseAmount(cols[m.debitCol] ?? "", dec);
+      const in_ = parseAmount(cols[m.creditCol] ?? "", dec);
       amount = out_ == null && in_ == null ? null : (in_ ?? 0) - Math.abs(out_ ?? 0);
     }
     if (amount != null && m.flipSign) amount = -amount;
