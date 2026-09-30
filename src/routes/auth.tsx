@@ -56,6 +56,24 @@ function AuthPage() {
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
 
+  // Dev-only: sign in to the seeded demo account. Never rendered in production builds.
+  async function signInAsDemo() {
+    setError(null);
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "demo@openledger.dev",
+        password: "demo-password-123",
+      });
+      if (error) throw error;
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setError(err.message ?? "Demo sign-in failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
@@ -116,6 +134,16 @@ function AuthPage() {
           >
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
+
+          {import.meta.env.DEV && (
+            <button
+              onClick={signInAsDemo}
+              disabled={busy}
+              className="mt-3 w-full rounded-md border border-dashed border-input px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+            >
+              Explore the demo account (dev only)
+            </button>
+          )}
         </div>
       </div>
     </div>
