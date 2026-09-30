@@ -38,3 +38,31 @@
 - [x] CSV column mapping + saved layouts, OFX/QFX, PDF (AI-read, reviewed), row-level errors/duplicates, import batches with undo, statement period + balances
 - [x] Reconciliation: simple (auto-match) and full (tick) modes, history, reopen (admin), audit trail, lock on completion
 - Deferred: Plaid / automatic bank feeds
+
+## Step 14 — Reviewer findings (see plan)
+### Phase A — quick, high-risk (today)
+- [ ] 1. Wipe demo orgs/users from shared backend; confirm no credentials in client bundle
+- [ ] 2. Cross-tenant RLS tests; audit service-role + SECURITY DEFINER usage; audit_log append-only
+- [ ] 3. Stop tracking .env, add to .gitignore, scan history for secrets
+### Phase B — correctness
+- [ ] 4. Date/timezone safety (no new Date()/toISOString on transaction_date); boundary tests
+- [ ] 5. Report invariant tests (A=L+E, NI=Δequity, trial balance=0, voids excluded, fiscal year)
+- [ ] 7. Void vs reconciliation/bank link/transfer/double-void rules
+### Phase C — integrity & access
+- [ ] 8. Import correctness (row-seq fingerprint, amount formats, PDF balance check, encoding, size limits)
+- [ ] 10. Role authorization matrix + last-admin protection server-side
+- [ ] 11. Double-submit / concurrency guards (idempotency keys)
+- [ ] 12. Lock account type once used; archive instead of delete
+### Phase D — parallel
+- [ ] 9. AI disclosure + opt-in, Terms, Privacy, "not advice" notice
+- [ ] 13. Auth hygiene (verification, reset, rate limits, Google/email same address)
+- [ ] 6. Lock-books-through date + year-end close
+### Tier 2 (pull forward: 14, 15, 17)
+- [ ] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
+- [ ] 15. CSV/XLSX exports + org backup/restore (formula-injection escaping)
+- [ ] 17. Automated test suite + CI
+- [ ] 16. Invites, remove member, transfer ownership, org/account deletion
+- [ ] 18. Budgets entry  - [ ] 19. MFA  - [ ] 20. "Cash basis" labels; A/R, A/P later
+- [ ] 21. Observability + audit log viewer + backups  - [ ] 22. Performance at 10k–50k entries
+### Tier 3
+- [ ] 23–32. Roadmap cleanup, README, org switcher, terminology note, empty/error states, a11y, input validation, currency rules, undo wording, catalog duplicate protection
