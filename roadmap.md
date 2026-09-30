@@ -41,6 +41,7 @@
 
 ## Step 14 — Reviewer findings (see plan)
 ### Phase A — quick, high-risk (today)
+- [ ] 0. Delete the "Test" organization and all its data
 - [ ] 1. Replace two demo logins with one sample-data account (demo@demo.org) holding both demo orgs; demo org can never see real orgs; no credentials in client bundle
 - [ ] 2. Cross-tenant RLS tests; audit service-role + SECURITY DEFINER usage; audit_log append-only
 - [ ] 3. Stop tracking .env, add to .gitignore, scan history for secrets
