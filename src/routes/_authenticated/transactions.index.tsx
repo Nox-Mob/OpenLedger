@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { AppShell, useOrgContext } from "@/components/AppShell";
 import { listTransactions, voidTransaction } from "@/lib/transactions.functions";
 import { formatCents } from "@/lib/money";
@@ -74,7 +74,7 @@ function TransactionsPage() {
                 const total = t.entries.filter((e) => e.amountCents > 0).reduce((a, e) => a + e.amountCents, 0);
                 const isOpen = expanded === t.id;
                 return (
-                  <>
+                  <Fragment key={t.id}>
                     <tr
                       key={t.id}
                       onClick={() => setExpanded(isOpen ? null : t.id)}
@@ -141,7 +141,7 @@ function TransactionsPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
