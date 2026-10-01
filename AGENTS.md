@@ -26,3 +26,4 @@
 - Tests: bunx vitest run <files>; tenant isolation SQL in supabase/tests/tenant_isolation.sql.
 - Double-post: transactions.idempotency_key unique per org; forms send one key per submission, bank posts use `bank:<id>`. Keep both.
 - Sample data lives only in supabase/seed/demo.sql (run by hand on dev/test DBs); never seed in migrations.
+- AI PDF reading: org opt-in (organizations.ai_pdf_enabled, off by default) + per-upload acknowledgement + per-user limits (ai_usage, 10/day 50/30d) enforced in extractPdfStatement; PDF imports must pass checkStatementBalance or carry acceptMismatch (gap stored on batch).
