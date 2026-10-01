@@ -209,7 +209,7 @@ function CloseBooksSettings() {
               <p>
                 Fiscal year {preview.fiscalYearStart} → {preview.fiscalYearEnd}:{" "}
                 <span className="font-medium">
-                  {formatMoney(preview.netIncomeCents, org.currency)} net {preview.netIncomeCents >= 0 ? "income" : "loss"}
+                  {formatCents(preview.netIncomeCents)} net {preview.netIncomeCents >= 0 ? "income" : "loss"}
                 </span>{" "}
                 will move into the chosen equity account, and the books will lock through {preview.fiscalYearEnd}.
               </p>
@@ -235,7 +235,7 @@ function CloseBooksSettings() {
               <li key={c.id} className="flex items-center justify-between py-2">
                 <span>Fiscal year ending {c.fiscal_year_end}</span>
                 <span className="text-muted-foreground">
-                  {formatMoney(c.net_income_cents, org.currency)} · closed {new Date(c.created_at).toLocaleDateString()}
+                  {formatCents(c.net_income_cents)} · closed {new Date(c.created_at).toLocaleDateString()}
                 </span>
               </li>
             ))}
