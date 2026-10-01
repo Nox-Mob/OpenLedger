@@ -51,7 +51,11 @@ function DashboardPage() {
   });
 
   if (isLoading || !org) {
-    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading…</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
 
   const accounts = accountsQuery.data ?? [];
@@ -123,7 +127,9 @@ function DashboardPage() {
                     <td className="px-4 py-3">
                       {t.description}
                       {t.status === "void" && (
-                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">void</span>
+                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                          void
+                        </span>
                       )}
                     </td>
                     <td className="tnum px-4 py-3 text-right">{formatCents(total)}</td>

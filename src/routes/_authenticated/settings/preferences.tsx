@@ -13,9 +13,15 @@ export const Route = createFileRoute("/_authenticated/settings/preferences")({
   head: () => ({
     meta: [
       { title: "Your Preferences — Open Ledger" },
-      { name: "description", content: "Personal display preferences that only affect what you see." },
+      {
+        name: "description",
+        content: "Personal display preferences that only affect what you see.",
+      },
       { property: "og:title", content: "Your Preferences — Open Ledger" },
-      { property: "og:description", content: "Personal display preferences that only affect what you see." },
+      {
+        property: "og:description",
+        content: "Personal display preferences that only affect what you see.",
+      },
     ],
   }),
   component: PreferencesSettings,
@@ -49,9 +55,12 @@ function PreferencesSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Your preferences</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose what each term is called on your screens. This only affects what you see — reports and
-          PDF exports always use the{" "}
-          <Link to="/settings" className="text-primary underline underline-offset-2">organization's wording</Link>.
+          Choose what each term is called on your screens. This only affects what you see — reports
+          and PDF exports always use the{" "}
+          <Link to="/settings" className="text-primary underline underline-offset-2">
+            organization's wording
+          </Link>
+          .
         </p>
         <div className="mt-4">
           <TermSliders
@@ -63,8 +72,12 @@ function PreferencesSettings() {
           />
         </div>
         <div className="mt-4 flex gap-2">
-          <Button onClick={save} disabled={draft === null || saving}>{saving ? "Saving…" : "Save"}</Button>
-          <Button variant="outline" onClick={() => setDraft({})}>Reset all to organization defaults</Button>
+          <Button onClick={save} disabled={draft === null || saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="outline" onClick={() => setDraft({})}>
+            Reset all to organization defaults
+          </Button>
         </div>
       </div>
     </div>

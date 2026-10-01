@@ -29,7 +29,11 @@ describe("fetchLedger paging", () => {
     const rows = makeRows(2300); // pages of 1000, 1000, 300
     const ledger = await fetchLedger(mockSupabase(rows), "o1");
     expect(ledger).toHaveLength(2300);
-    expect(ledger[0]).toMatchObject({ accountName: "Checking", accountType: "asset", amountCents: 100 });
+    expect(ledger[0]).toMatchObject({
+      accountName: "Checking",
+      accountType: "asset",
+      amountCents: 100,
+    });
   });
 
   it("returns an empty ledger for an org with no entries", async () => {

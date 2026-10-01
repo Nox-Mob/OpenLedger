@@ -13,10 +13,17 @@ if (typeof window !== "undefined") {
       window.location.reload();
     }
   };
-  window.addEventListener("vite:preloadError", (e) => { e.preventDefault(); reloadOnce(); });
+  window.addEventListener("vite:preloadError", (e) => {
+    e.preventDefault();
+    reloadOnce();
+  });
   window.addEventListener("unhandledrejection", (e) => {
     const msg = String((e.reason as Error)?.message ?? e.reason ?? "");
-    if (/dynamically imported module|Importing a module script failed|Failed to fetch dynamically/i.test(msg)) {
+    if (
+      /dynamically imported module|Importing a module script failed|Failed to fetch dynamically/i.test(
+        msg,
+      )
+    ) {
       e.preventDefault();
       reloadOnce();
     }

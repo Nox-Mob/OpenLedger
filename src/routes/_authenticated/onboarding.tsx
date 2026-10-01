@@ -12,23 +12,45 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
       { title: "Set up your organization — Open Ledger" },
-      { name: "description", content: "Create your organization, choose your accounts, and pick how the app talks to you." },
+      {
+        name: "description",
+        content:
+          "Create your organization, choose your accounts, and pick how the app talks to you.",
+      },
       { property: "og:title", content: "Set up your organization — Open Ledger" },
-      { property: "og:description", content: "Create your organization, choose your accounts, and pick how the app talks to you." },
+      {
+        property: "og:description",
+        content:
+          "Create your organization, choose your accounts, and pick how the app talks to you.",
+      },
     ],
   }),
   component: OnboardingPage,
 });
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "JPY", "CHF"];
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 const LEVELS = [
   { id: "simplest", label: "Simplest", hint: '"Money you have", "Money in / out"' },
   { id: "simple", label: "Simple", hint: '"Accounts", "Income", "Expenses"' },
   { id: "accounting", label: "Double-entry", hint: '"Assets", "Revenue", "Debits / Credits"' },
 ] as const;
 const STEPS = ["Organization", "Accounts", "Display"];
-const inputCls = "mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+const inputCls =
+  "mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function OnboardingPage() {
   const [step, setStep] = useState(0);
@@ -44,7 +66,8 @@ function OnboardingPage() {
   const queryClient = useQueryClient();
 
   const catalog = catalogFor(orgType);
-  const keys = picked[orgType] ?? new Set(catalog.filter((c) => c.defaultOn || c.required).map((c) => c.key));
+  const keys =
+    picked[orgType] ?? new Set(catalog.filter((c) => c.defaultOn || c.required).map((c) => c.key));
   const terms = useMemo(() => getTerms(orgType, terminology, {}), [orgType, terminology]);
 
   function toggle(key: string, on: boolean) {
@@ -59,7 +82,15 @@ function OnboardingPage() {
     setError(null);
     try {
       const { id } = await createOrganization({
-        data: { name, orgType, accountKeys: [...keys], currency, fiscalYearStartMonth: fyMonth, terminology, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        data: {
+          name,
+          orgType,
+          accountKeys: [...keys],
+          currency,
+          fiscalYearStartMonth: fyMonth,
+          terminology,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
       });
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
@@ -78,7 +109,10 @@ function OnboardingPage() {
           <h1 className="font-display mt-3 text-2xl font-bold">Set up your organization</h1>
           <ol className="mt-4 flex justify-center gap-2 text-xs">
             {STEPS.map((s, i) => (
-              <li key={s} className={`rounded-full border px-3 py-1 ${i === step ? "border-primary bg-accent font-medium" : "text-muted-foreground"}`}>
+              <li
+                key={s}
+                className={`rounded-full border px-3 py-1 ${i === step ? "border-primary bg-accent font-medium" : "text-muted-foreground"}`}
+              >
                 {i + 1}. {s}
               </li>
             ))}
@@ -87,23 +121,55 @@ function OnboardingPage() {
 
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           {step === 0 && (
-            <form onSubmit={(e) => { e.preventDefault(); setStep(1); }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setStep(1);
+              }}
+            >
               <label className="block text-sm font-medium">Organization name</label>
-              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Riverside Community Kitchen" className={inputCls} />
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Riverside Community Kitchen"
+                className={inputCls}
+              />
               <div className="mt-5 grid grid-cols-2 gap-3">
-                {([
-                  { id: "business", icon: Building2, label: "Small Business", hint: "Profit & loss, owner's equity" },
-                  { id: "nonprofit", icon: HeartHandshake, label: "Nonprofit", hint: "Funds, net assets, grants" },
-                ] as const).map((o) => (
-                  <button key={o.id} type="button" onClick={() => setOrgType(o.id)}
-                    className={`rounded-md border p-4 text-left transition-colors ${orgType === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"}`}>
+                {(
+                  [
+                    {
+                      id: "business",
+                      icon: Building2,
+                      label: "Small Business",
+                      hint: "Profit & loss, owner's equity",
+                    },
+                    {
+                      id: "nonprofit",
+                      icon: HeartHandshake,
+                      label: "Nonprofit",
+                      hint: "Funds, net assets, grants",
+                    },
+                  ] as const
+                ).map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => setOrgType(o.id)}
+                    className={`rounded-md border p-4 text-left transition-colors ${orgType === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"}`}
+                  >
                     <o.icon className="h-5 w-5 text-primary" />
                     <div className="mt-2 text-sm font-medium">{o.label}</div>
                     <div className="text-xs text-muted-foreground">{o.hint}</div>
                   </button>
                 ))}
               </div>
-              <button type="submit" className="mt-6 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Next: choose accounts</button>
+              <button
+                type="submit"
+                className="mt-6 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Next: choose accounts
+              </button>
             </form>
           )}
 
@@ -115,14 +181,28 @@ function OnboardingPage() {
               <AccountChecklist
                 terms={terms}
                 rows={catalog.map((c) => ({
-                  id: c.key, name: c.name, type: c.type, catalog: c,
-                  checked: !!c.required || keys.has(c.key), locked: c.required ? "Required" : null,
+                  id: c.key,
+                  name: c.name,
+                  type: c.type,
+                  catalog: c,
+                  checked: !!c.required || keys.has(c.key),
+                  locked: c.required ? "Required" : null,
                 }))}
                 onToggle={(r, on) => toggle(r.id, on)}
               />
               <div className="mt-6 flex gap-3">
-                <button onClick={() => setStep(0)} className="flex-1 rounded-md border px-4 py-2 text-sm">Back</button>
-                <button onClick={() => setStep(2)} className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Next: display</button>
+                <button
+                  onClick={() => setStep(0)}
+                  className="flex-1 rounded-md border px-4 py-2 text-sm"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(2)}
+                  className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Next: display
+                </button>
               </div>
             </div>
           )}
@@ -131,11 +211,18 @@ function OnboardingPage() {
             <div className="space-y-5">
               <div>
                 <span className="text-sm font-medium">Wording</span>
-                <p className="text-xs text-muted-foreground">How the app and reports talk to everyone. The books are always proper double-entry underneath.</p>
+                <p className="text-xs text-muted-foreground">
+                  How the app and reports talk to everyone. The books are always proper double-entry
+                  underneath.
+                </p>
                 <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {LEVELS.map((l) => (
-                    <button key={l.id} type="button" onClick={() => setTerminology(l.id)}
-                      className={`rounded-md border p-3 text-left ${terminology === l.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"}`}>
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => setTerminology(l.id)}
+                      className={`rounded-md border p-3 text-left ${terminology === l.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"}`}
+                    >
                       <div className="text-sm font-medium">{l.label}</div>
                       <div className="text-xs text-muted-foreground">{l.hint}</div>
                     </button>
@@ -145,21 +232,44 @@ function OnboardingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Currency</label>
-                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}>
-                    {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className={inputCls}
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Fiscal year starts</label>
-                  <select value={fyMonth} onChange={(e) => setFyMonth(Number(e.target.value))} className={inputCls}>
-                    {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                  <select
+                    value={fyMonth}
+                    onChange={(e) => setFyMonth(Number(e.target.value))}
+                    className={inputCls}
+                  >
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>
+                        {m}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="flex-1 rounded-md border px-4 py-2 text-sm">Back</button>
-                <button onClick={finish} disabled={busy} className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 rounded-md border px-4 py-2 text-sm"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={finish}
+                  disabled={busy}
+                  className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
                   {busy ? "Creating…" : "Create organization"}
                 </button>
               </div>

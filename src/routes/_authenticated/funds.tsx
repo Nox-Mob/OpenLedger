@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell, useOrgContext } from "@/components/AppShell";
-import { listFunds, createFund, listTags, createTag, listCategories, createCategory } from "@/lib/taxonomy.functions";
+import {
+  listFunds,
+  createFund,
+  listTags,
+  createTag,
+  listCategories,
+  createCategory,
+} from "@/lib/taxonomy.functions";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,18 +56,32 @@ function SimpleListManager({
         }}
         className="mt-3 flex gap-2"
       >
-        <input required value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder={placeholder} />
-        <button type="submit" className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        <input
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={inputCls}
+          placeholder={placeholder}
+        />
+        <button
+          type="submit"
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
           <Plus className="h-4 w-4" />
         </button>
       </form>
       {extra}
       <ul className="mt-3 space-y-1">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded bg-muted/50 px-3 py-1.5 text-sm">
+          <li
+            key={item.id}
+            className="flex items-center justify-between rounded bg-muted/50 px-3 py-1.5 text-sm"
+          >
             <span>{item.name}</span>
             {item.is_restricted !== undefined && (
-              <span className="text-xs text-muted-foreground">{item.is_restricted ? "Restricted" : "Unrestricted"}</span>
+              <span className="text-xs text-muted-foreground">
+                {item.is_restricted ? "Restricted" : "Unrestricted"}
+              </span>
             )}
             {item.type && <span className="text-xs text-muted-foreground">{item.type}</span>}
           </li>
@@ -97,7 +118,8 @@ function FundsPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">Funds, Categories & Tags</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Organize your transactions — restricted funds for grants, categories for detail, tags for anything.
+        Organize your transactions — restricted funds for grants, categories for detail, tags for
+        anything.
       </p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">

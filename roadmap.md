@@ -13,17 +13,14 @@
 - [x] 10. Dev-only demo account (demo@openledger.dev) with seeded org, chart of accounts, 3 months of transactions, projects, funds, and unlinked bank rows; dev-only sign-in button on /auth; verified end-to-end in browser (dashboard, transactions, accounts, reports, import, projects)
 
 ## Notes
-- Demo data lives in the shared backend, so the demo credentials would work on the published site too if typed manually — the button is hidden in production, but wipe the demo rows before real production use.
+- Demo login (demo@demo.org) is signed out automatically on published sites unless VITE_ALLOW_DEMO_LOGIN=true.
 
 ## Deferred (from plan)
 - Accrual basis switching, invoices/bills, bank feeds API, receipt attachments, budgets module, reconciliation UI, exports
 - [x] 11. Second demo account (nonprofit, "Riverside Community Kitchen") with restricted funds + donation/grant sample data; dev-only sign-in button; "/onboarding" exposed as "New organization" in the sidebar for all users
 
 ## Org settings depth (from competitor screenshot)
-- [ ] Settings area with sections: Organization Profile, Users & Roles, Preferences
-- [ ] Org profile fields: name, type, currency, fiscal year start
-- [ ] Users & Roles: list members, change roles (admin-only)
-- [ ] Verify current org settings save flow in browser (in progress)
+- [x] Superseded by Step 12 below
 
 ## Step 12 — Deeper organization settings (done)
 - [x] Settings area restructured with sub-navigation (Organization profile / Users & roles / Your preferences)
@@ -78,5 +75,13 @@
 - [x] F. Double-post guards (postBankTransaction conditional update, idempotency key)
 - [x] G. Demo seed moved out of migrations into supabase/seed/demo.sql (manual, dev/test only)
 - [x] H. PDF AI opt-in, balance validation, per-user rate limit
-- [ ] Reduce 114 legacy `any` types (lint warnings) and run `bun run format` once to clear formatting backlog
-- [ ] Startup/restart must never delete or reset real data (audit migrations, seeds, scripts, CI for destructive SQL)
+- [x] Formatting backlog cleared (any-types tracked below)
+- [x] Startup/restart must never delete or reset real data (audit migrations, seeds, scripts, CI for destructive SQL)
+
+## v0.0.1 release hardening
+- [x] Data-safety guards (local-only DB tests, seed refuses real orgs, CI blocks destructive migrations)
+- [x] Security scan + linter clean (3 intentional role-check helpers); role checks added to account/opening-balance/project/fund/import-layout saves
+- [x] Demo sign-in blocked on published sites
+- [x] Page walk-through script (scripts/smoke/smoke.py): all 18 pages load with no errors
+- [x] Sign-in field labels, transactions list warning, formatting pass (CI formatting now blocking)
+- [ ] Reduce legacy `any` types (non-blocking warnings)

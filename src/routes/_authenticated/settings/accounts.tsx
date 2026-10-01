@@ -38,9 +38,7 @@ function AccountsSetup() {
   const rows: ChecklistRow[] = [
     ...catalog.map((c) => {
       const acc = existing.find((a) => matchesCatalog(a, c));
-      const locked = c.required
-        ? "Required"
-        : null;
+      const locked = c.required ? "Required" : null;
       return {
         id: `c:${c.key}`,
         name: c.name,
@@ -48,7 +46,9 @@ function AccountsSetup() {
         catalog: c,
         checked: acc?.isActive ?? !!c.required,
         locked,
-        note: acc?.entryCount ? `Used by ${acc.entryCount} transaction line${acc.entryCount === 1 ? "" : "s"}; those records stay intact if archived.` : null,
+        note: acc?.entryCount
+          ? `Used by ${acc.entryCount} transaction line${acc.entryCount === 1 ? "" : "s"}; those records stay intact if archived.`
+          : null,
       };
     }),
     ...existing
@@ -59,7 +59,9 @@ function AccountsSetup() {
         type: a.type,
         checked: a.isActive,
         locked: null,
-        note: a.entryCount ? `Used by ${a.entryCount} transaction line${a.entryCount === 1 ? "" : "s"}; those records stay intact if archived.` : null,
+        note: a.entryCount
+          ? `Used by ${a.entryCount} transaction line${a.entryCount === 1 ? "" : "s"}; those records stay intact if archived.`
+          : null,
       })),
   ];
 
@@ -86,10 +88,16 @@ function AccountsSetup() {
     <div className="max-w-2xl rounded-lg border bg-card p-5">
       <h2 className="font-display text-lg font-semibold">Accounts</h2>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">
-        Tick the accounts {org.name} uses for new activity. Archiving never removes past transactions or reports.
+        Tick the accounts {org.name} uses for new activity. Archiving never removes past
+        transactions or reports.
         {!isAdmin && " Only admins can change these."}
       </p>
-      <AccountChecklist rows={rows} terms={terms} onToggle={toggle} disabled={!isAdmin || !!busy || setup.isLoading} />
+      <AccountChecklist
+        rows={rows}
+        terms={terms}
+        onToggle={toggle}
+        disabled={!isAdmin || !!busy || setup.isLoading}
+      />
     </div>
   );
 }

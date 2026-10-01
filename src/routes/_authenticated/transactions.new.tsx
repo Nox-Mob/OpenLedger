@@ -5,7 +5,14 @@ import { AppShell, useOrgContext } from "@/components/AppShell";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
 import { parseToCents, todayISO, formatCents } from "@/lib/money";
-import { ArrowDownToLine, ArrowUpFromLine, Repeat, SlidersHorizontal, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Repeat,
+  SlidersHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/transactions/new")({
@@ -77,7 +84,9 @@ function NewTransactionPage() {
   const outAccounts = accounts.filter((a) => a.type === "expense");
 
   // Advanced mode rows
-  const [rows, setRows] = useState<Array<{ accountId: string; debit: string; credit: string; memo: string }>>([
+  const [rows, setRows] = useState<
+    Array<{ accountId: string; debit: string; credit: string; memo: string }>
+  >([
     { accountId: "", debit: "", credit: "", memo: "" },
     { accountId: "", debit: "", credit: "", memo: "" },
   ]);
@@ -102,11 +111,19 @@ function NewTransactionPage() {
     submittingRef.current = true;
     setBusy(true);
     try {
-      let entries: Array<{ accountId: string; amountCents: number; categoryId?: string | null; projectId?: string | null; fundId?: string | null; memo?: string | null }> = [];
+      let entries: Array<{
+        accountId: string;
+        amountCents: number;
+        categoryId?: string | null;
+        projectId?: string | null;
+        fundId?: string | null;
+        memo?: string | null;
+      }> = [];
       let source: "manual" | "transfer" = "manual";
 
       if (mode === "advanced") {
-        if (!advancedTotals.balanced) throw new Error(`${terms.debit}s and ${terms.credit.toLowerCase()}s must be equal.`);
+        if (!advancedTotals.balanced)
+          throw new Error(`${terms.debit}s and ${terms.credit.toLowerCase()}s must be equal.`);
         entries = rows.flatMap((r) => {
           const d = parseToCents(r.debit) ?? 0;
           const c = parseToCents(r.credit) ?? 0;
@@ -124,12 +141,24 @@ function NewTransactionPage() {
           if (!otherAccountId) throw new Error(`Choose where the money came from.`);
           entries = [
             { accountId: moneyAccountId, amountCents: cents },
-            { accountId: otherAccountId, amountCents: -cents, categoryId: categoryId || null, projectId: projectId || null, fundId: fundId || null },
+            {
+              accountId: otherAccountId,
+              amountCents: -cents,
+              categoryId: categoryId || null,
+              projectId: projectId || null,
+              fundId: fundId || null,
+            },
           ];
         } else if (mode === "out") {
           if (!otherAccountId) throw new Error("Choose what the money was for.");
           entries = [
-            { accountId: otherAccountId, amountCents: cents, categoryId: categoryId || null, projectId: projectId || null, fundId: fundId || null },
+            {
+              accountId: otherAccountId,
+              amountCents: cents,
+              categoryId: categoryId || null,
+              projectId: projectId || null,
+              fundId: fundId || null,
+            },
             { accountId: moneyAccountId, amountCents: -cents },
           ];
         } else {
@@ -182,7 +211,9 @@ function NewTransactionPage() {
             key={m.id}
             onClick={() => setMode(m.id)}
             className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
-              mode === m.id ? "border-primary bg-accent text-accent-foreground" : "border-input hover:bg-accent/50"
+              mode === m.id
+                ? "border-primary bg-accent text-accent-foreground"
+                : "border-input hover:bg-accent/50"
             }`}
           >
             <m.icon className="h-4 w-4" />
@@ -195,7 +226,13 @@ function NewTransactionPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Date</label>
-            <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={inputCls}
+            />
           </div>
           <div>
             <label className="text-sm font-medium">Description</label>
@@ -203,7 +240,13 @@ function NewTransactionPage() {
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={mode === "in" ? "e.g. Donation from Smith family" : mode === "out" ? "e.g. Office supplies" : "e.g. Move to savings"}
+              placeholder={
+                mode === "in"
+                  ? "e.g. Donation from Smith family"
+                  : mode === "out"
+                    ? "e.g. Office supplies"
+                    : "e.g. Move to savings"
+              }
               className={inputCls}
             />
           </div>
@@ -227,10 +270,17 @@ function NewTransactionPage() {
                 <label className="text-sm font-medium">
                   {mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
                 </label>
-                <select required value={moneyAccountId} onChange={(e) => setMoneyAccountId(e.target.value)} className={selectCls}>
+                <select
+                  required
+                  value={moneyAccountId}
+                  onChange={(e) => setMoneyAccountId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">Choose account…</option>
                   {moneyAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -239,10 +289,17 @@ function NewTransactionPage() {
             {mode === "transfer" ? (
               <div>
                 <label className="text-sm font-medium">To account</label>
-                <select required value={transferToId} onChange={(e) => setTransferToId(e.target.value)} className={selectCls}>
+                <select
+                  required
+                  value={transferToId}
+                  onChange={(e) => setTransferToId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">Choose account…</option>
                   {moneyAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -252,11 +309,28 @@ function NewTransactionPage() {
                   <div className="mb-4">
                     <label className="text-sm font-medium">Type of money in</label>
                     <div className="mt-1.5 grid grid-cols-3 gap-2">
-                      {([
-                        { id: "donation", label: "Donation", hint: "Given freely, nothing sold", accountName: "Donations" },
-                        { id: "sale", label: "Fundraising Sale", hint: "e.g. T-shirts, bake sale", accountName: "Fundraising Sales" },
-                        { id: "other", label: "Other", hint: "Grants, program revenue…", accountName: null },
-                      ] as const).map((k) => (
+                      {(
+                        [
+                          {
+                            id: "donation",
+                            label: "Donation",
+                            hint: "Given freely, nothing sold",
+                            accountName: "Donations",
+                          },
+                          {
+                            id: "sale",
+                            label: "Fundraising Sale",
+                            hint: "e.g. T-shirts, bake sale",
+                            accountName: "Fundraising Sales",
+                          },
+                          {
+                            id: "other",
+                            label: "Other",
+                            hint: "Grants, program revenue…",
+                            accountName: null,
+                          },
+                        ] as const
+                      ).map((k) => (
                         <button
                           key={k.id}
                           type="button"
@@ -268,7 +342,9 @@ function NewTransactionPage() {
                             }
                           }}
                           className={`rounded-md border px-3 py-2 text-left transition-colors ${
-                            moneyInKind === k.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                            moneyInKind === k.id
+                              ? "border-primary bg-accent"
+                              : "border-input hover:bg-accent/50"
                           }`}
                         >
                           <span className="block text-sm font-medium">{k.label}</span>
@@ -277,21 +353,34 @@ function NewTransactionPage() {
                       ))}
                     </div>
                     {moneyInKind !== "other" &&
-                      !inAccounts.some((a) => a.name === (moneyInKind === "sale" ? "Fundraising Sales" : "Donations")) && (
+                      !inAccounts.some(
+                        (a) =>
+                          a.name === (moneyInKind === "sale" ? "Fundraising Sales" : "Donations"),
+                      ) && (
                         <p className="mt-2 text-xs text-destructive">
-                          This organization doesn't have a "{moneyInKind === "sale" ? "Fundraising Sales" : "Donations"}" account yet.
+                          This organization doesn't have a "
+                          {moneyInKind === "sale" ? "Fundraising Sales" : "Donations"}" account yet.
                           An admin can turn it on in Settings → Accounts.
                         </p>
                       )}
                   </div>
                 )}
                 <label className="text-sm font-medium">
-                  {mode === "in" ? `Where it came from (${terms.revenue})` : `What it was for (${terms.expenses})`}
+                  {mode === "in"
+                    ? `Where it came from (${terms.revenue})`
+                    : `What it was for (${terms.expenses})`}
                 </label>
-                <select required value={otherAccountId} onChange={(e) => setOtherAccountId(e.target.value)} className={selectCls}>
+                <select
+                  required
+                  value={otherAccountId}
+                  onChange={(e) => setOtherAccountId(e.target.value)}
+                  className={selectCls}
+                >
                   <option value="">Choose…</option>
                   {(mode === "in" ? inAccounts : outAccounts).map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -300,29 +389,53 @@ function NewTransactionPage() {
             {mode !== "transfer" && (
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Category <span className="text-muted-foreground">(optional)</span></label>
-                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectCls}>
+                  <label className="text-sm font-medium">
+                    Category <span className="text-muted-foreground">(optional)</span>
+                  </label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className={selectCls}
+                  >
                     <option value="">None</option>
                     {(categoriesQuery.data ?? []).map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Project <span className="text-muted-foreground">(optional)</span></label>
-                  <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={selectCls}>
+                  <label className="text-sm font-medium">
+                    Project <span className="text-muted-foreground">(optional)</span>
+                  </label>
+                  <select
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    className={selectCls}
+                  >
                     <option value="">None</option>
                     {(projectsQuery.data ?? []).map((p: any) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Fund <span className="text-muted-foreground">(optional)</span></label>
-                  <select value={fundId} onChange={(e) => setFundId(e.target.value)} className={selectCls}>
+                  <label className="text-sm font-medium">
+                    Fund <span className="text-muted-foreground">(optional)</span>
+                  </label>
+                  <select
+                    value={fundId}
+                    onChange={(e) => setFundId(e.target.value)}
+                    className={selectCls}
+                  >
                     <option value="">None</option>
                     {(fundsQuery.data ?? []).map((f: any) => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -334,7 +447,8 @@ function NewTransactionPage() {
         {mode === "advanced" && (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              Split a transaction across accounts. {terms.debit}s must equal {terms.credit.toLowerCase()}s.
+              Split a transaction across accounts. {terms.debit}s must equal{" "}
+              {terms.credit.toLowerCase()}s.
             </p>
             <div className="grid grid-cols-[1fr_110px_110px_1fr_32px] gap-2 text-xs font-medium text-muted-foreground">
               <span>Account</span>
@@ -347,31 +461,49 @@ function NewTransactionPage() {
               <div key={i} className="grid grid-cols-[1fr_110px_110px_1fr_32px] gap-2">
                 <select
                   value={row.accountId}
-                  onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, accountId: e.target.value } : r)))}
+                  onChange={(e) =>
+                    setRows(rows.map((r, j) => (j === i ? { ...r, accountId: e.target.value } : r)))
+                  }
                   className={selectCls}
                 >
                   <option value="">Choose…</option>
                   {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
                   ))}
                 </select>
                 <input
                   inputMode="decimal"
                   value={row.debit}
-                  onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, debit: e.target.value, credit: "" } : r)))}
+                  onChange={(e) =>
+                    setRows(
+                      rows.map((r, j) =>
+                        j === i ? { ...r, debit: e.target.value, credit: "" } : r,
+                      ),
+                    )
+                  }
                   placeholder="0.00"
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
                   inputMode="decimal"
                   value={row.credit}
-                  onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, credit: e.target.value, debit: "" } : r)))}
+                  onChange={(e) =>
+                    setRows(
+                      rows.map((r, j) =>
+                        j === i ? { ...r, credit: e.target.value, debit: "" } : r,
+                      ),
+                    )
+                  }
                   placeholder="0.00"
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
                   value={row.memo}
-                  onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, memo: e.target.value } : r)))}
+                  onChange={(e) =>
+                    setRows(rows.map((r, j) => (j === i ? { ...r, memo: e.target.value } : r)))
+                  }
                   placeholder="Optional note"
                   className={inputCls}
                 />
@@ -392,9 +524,19 @@ function NewTransactionPage() {
               <Plus className="h-4 w-4" /> Add line
             </button>
             <div className="flex justify-end gap-6 border-t pt-3 text-sm">
-              <span className="tnum">{terms.debit}: {formatCents(advancedTotals.debit)}</span>
-              <span className="tnum">{terms.credit}: {formatCents(advancedTotals.credit)}</span>
-              <span className={advancedTotals.balanced ? "text-primary font-medium" : "text-destructive font-medium"}>
+              <span className="tnum">
+                {terms.debit}: {formatCents(advancedTotals.debit)}
+              </span>
+              <span className="tnum">
+                {terms.credit}: {formatCents(advancedTotals.credit)}
+              </span>
+              <span
+                className={
+                  advancedTotals.balanced
+                    ? "text-primary font-medium"
+                    : "text-destructive font-medium"
+                }
+              >
                 {advancedTotals.balanced ? "Balanced" : "Not balanced"}
               </span>
             </div>

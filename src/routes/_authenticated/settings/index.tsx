@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/settings/")({
       { title: "Organization Profile — Open Ledger" },
       { name: "description", content: "Organization name, type, currency, and fiscal year." },
       { property: "og:title", content: "Organization Profile — Open Ledger" },
-      { property: "og:description", content: "Organization name, type, currency, and fiscal year." },
+      {
+        property: "og:description",
+        content: "Organization name, type, currency, and fiscal year.",
+      },
     ],
   }),
   component: OrgProfileSettings,
@@ -21,12 +24,35 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "JPY", "CHF"];
 const TIMEZONES: string[] = (() => {
-  try { return (Intl as any).supportedValuesOf("timeZone") as string[]; }
-  catch { return ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Stockholm", "Australia/Sydney", "Pacific/Auckland"]; }
+  try {
+    return (Intl as any).supportedValuesOf("timeZone") as string[];
+  } catch {
+    return [
+      "UTC",
+      "America/New_York",
+      "America/Chicago",
+      "America/Denver",
+      "America/Los_Angeles",
+      "Europe/London",
+      "Europe/Stockholm",
+      "Australia/Sydney",
+      "Pacific/Auckland",
+    ];
+  }
 })();
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function OrgProfileSettings() {
@@ -45,7 +71,15 @@ function OrgProfileSettings() {
   if (!org) return null;
 
   const isAdmin = org.role === "admin";
-  const dirty = orgName !== null || orgType !== null || currency !== null || fyMonth !== null || timezone !== null || term !== null || overrides !== null || aiPdf !== null;
+  const dirty =
+    orgName !== null ||
+    orgType !== null ||
+    currency !== null ||
+    fyMonth !== null ||
+    timezone !== null ||
+    term !== null ||
+    overrides !== null ||
+    aiPdf !== null;
 
   async function saveOrg() {
     if (!org) return;
@@ -86,12 +120,13 @@ function OrgProfileSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Organization profile</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          These apply to everyone in {org.name}.
-          {!isAdmin && " Only admins can change them."}
+          These apply to everyone in {org.name}.{!isAdmin && " Only admins can change them."}
         </p>
         <div className="mt-4 space-y-4">
           <div>
-            <label className="text-sm font-medium" htmlFor="org-name">Organization name</label>
+            <label className="text-sm font-medium" htmlFor="org-name">
+              Organization name
+            </label>
             <input
               id="org-name"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
@@ -109,10 +144,14 @@ function OrgProfileSettings() {
                   onClick={() => isAdmin && setOrgType(t)}
                   disabled={!isAdmin}
                   className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
-                    (orgType ?? org.orgType) === t ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                    (orgType ?? org.orgType) === t
+                      ? "border-primary bg-accent"
+                      : "border-input hover:bg-accent/50"
                   }`}
                 >
-                  <div className="text-sm font-medium">{t === "nonprofit" ? "Nonprofit" : "Business"}</div>
+                  <div className="text-sm font-medium">
+                    {t === "nonprofit" ? "Nonprofit" : "Business"}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {t === "nonprofit"
                       ? "Funds, donations, Statement of Activities"
@@ -123,27 +162,50 @@ function OrgProfileSettings() {
             </div>
             {orgType !== null && orgType !== org.orgType && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Changing type only changes labels and report names — your accounts and transactions stay as they are.
+                Changing type only changes labels and report names — your accounts and transactions
+                stay as they are.
               </p>
             )}
           </div>
           <div>
             <span className="text-sm font-medium">Wording</span>
             <p className="mt-1 text-xs text-muted-foreground">
-              How the app and reports talk to everyone in this organization. The books underneath are always proper double-entry — this only changes the words.
+              How the app and reports talk to everyone in this organization. The books underneath
+              are always proper double-entry — this only changes the words.
             </p>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {([
-                { id: "simplest", label: "Simplest", hint: '"Money you have", "Money you owe", "Money in / out"' },
-                { id: "simple", label: "Simple", hint: '"Accounts", "Income", "Expenses", "Transfers"' },
-                { id: "accounting", label: "Double-entry", hint: '"Assets", "Liabilities", "Revenue", "Debits / Credits"' },
-              ] as const).map((o) => (
+              {(
+                [
+                  {
+                    id: "simplest",
+                    label: "Simplest",
+                    hint: '"Money you have", "Money you owe", "Money in / out"',
+                  },
+                  {
+                    id: "simple",
+                    label: "Simple",
+                    hint: '"Accounts", "Income", "Expenses", "Transfers"',
+                  },
+                  {
+                    id: "accounting",
+                    label: "Double-entry",
+                    hint: '"Assets", "Liabilities", "Revenue", "Debits / Credits"',
+                  },
+                ] as const
+              ).map((o) => (
                 <button
                   key={o.id}
-                  onClick={() => { if (isAdmin) { setTerm(o.id); setOverrides({}); } }}
+                  onClick={() => {
+                    if (isAdmin) {
+                      setTerm(o.id);
+                      setOverrides({});
+                    }
+                  }}
                   disabled={!isAdmin}
                   className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
-                    (term ?? (org as any).terminology ?? "simplest") === o.id ? "border-primary bg-accent" : "border-input hover:bg-accent/50"
+                    (term ?? (org as any).terminology ?? "simplest") === o.id
+                      ? "border-primary bg-accent"
+                      : "border-input hover:bg-accent/50"
                   }`}
                 >
                   <div className="text-sm font-medium">{o.label}</div>
@@ -152,7 +214,8 @@ function OrgProfileSettings() {
               ))}
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Fine-tune each term — drag a slider to choose what it's called. Picking a level above resets every term to that level.
+              Fine-tune each term — drag a slider to choose what it's called. Picking a level above
+              resets every term to that level.
             </p>
             <div className="mt-2">
               <TermSliders
@@ -166,7 +229,9 @@ function OrgProfileSettings() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="org-currency">Currency</label>
+              <label className="text-sm font-medium" htmlFor="org-currency">
+                Currency
+              </label>
               <select
                 id="org-currency"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
@@ -175,12 +240,16 @@ function OrgProfileSettings() {
                 disabled={!isAdmin}
               >
                 {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium" htmlFor="org-fy">Fiscal year starts</label>
+              <label className="text-sm font-medium" htmlFor="org-fy">
+                Fiscal year starts
+              </label>
               <select
                 id="org-fy"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
@@ -189,12 +258,16 @@ function OrgProfileSettings() {
                 disabled={!isAdmin}
               >
                 {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
+                  <option key={m} value={i + 1}>
+                    {m}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium" htmlFor="org-tz">Timezone</label>
+              <label className="text-sm font-medium" htmlFor="org-tz">
+                Timezone
+              </label>
               <select
                 id="org-tz"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
@@ -202,12 +275,17 @@ function OrgProfileSettings() {
                 onChange={(e) => setTimezone(e.target.value)}
                 disabled={!isAdmin}
               >
-                {(TIMEZONES.includes(org.timezone) ? TIMEZONES : [org.timezone, ...TIMEZONES]).map((z) => (
-                  <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
-                ))}
+                {(TIMEZONES.includes(org.timezone) ? TIMEZONES : [org.timezone, ...TIMEZONES]).map(
+                  (z) => (
+                    <option key={z} value={z}>
+                      {z.replace(/_/g, " ")}
+                    </option>
+                  ),
+                )}
               </select>
               <p className="mt-1 text-xs text-muted-foreground">
-                Decides what "today" is for new transactions and for report dates, for everyone in this organization.
+                Decides what "today" is for new transactions and for report dates, for everyone in
+                this organization.
               </p>
             </div>
             <div className="sm:col-span-2 rounded-md border p-3">
@@ -222,9 +300,10 @@ function OrgProfileSettings() {
                 <span>
                   <span className="font-medium">Allow AI to read PDF bank statements</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    When on, the text of an uploaded PDF statement is sent to an AI service to find the transactions. It isn't used
-                    for training, and every row must still be checked before it's imported. Each person can read up to 10 PDFs a
-                    day and 50 a month. CSV and OFX imports never use AI.
+                    When on, the text of an uploaded PDF statement is sent to an AI service to find
+                    the transactions. It isn't used for training, and every row must still be
+                    checked before it's imported. Each person can read up to 10 PDFs a day and 50 a
+                    month. CSV and OFX imports never use AI.
                   </span>
                 </span>
               </label>
@@ -250,8 +329,8 @@ function OrgProfileSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">About Open Ledger</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Free, open-source accounting. Your ledger is the source of truth — bank imports are just evidence.
-          Every change is recorded in an audit history.
+          Free, open-source accounting. Your ledger is the source of truth — bank imports are just
+          evidence. Every change is recorded in an audit history.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">Version 0.0.1</p>
       </div>

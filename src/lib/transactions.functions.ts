@@ -5,7 +5,10 @@ import { assertCan } from "./permissions";
 
 const entrySchema = z.object({
   accountId: z.string().uuid(),
-  amountCents: z.number().int().refine((v) => v !== 0, "Amount cannot be zero"),
+  amountCents: z
+    .number()
+    .int()
+    .refine((v) => v !== 0, "Amount cannot be zero"),
   categoryId: z.string().uuid().nullish(),
   projectId: z.string().uuid().nullish(),
   fundId: z.string().uuid().nullish(),
@@ -15,9 +18,14 @@ const entrySchema = z.object({
 const createSchema = z.object({
   orgId: z.string().uuid(),
   transactionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  postedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  postedDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish(),
   description: z.string().min(1).max(300),
-  source: z.enum(["manual", "import", "opening_balance", "adjustment", "transfer"]).default("manual"),
+  source: z
+    .enum(["manual", "import", "opening_balance", "adjustment", "transfer"])
+    .default("manual"),
   entries: z.array(entrySchema).min(2),
   tagIds: z.array(z.string().uuid()).optional(),
   /** One per form submission; a repeat with the same key returns the first transaction. */
@@ -95,7 +103,10 @@ export const createTransaction = createServerFn({ method: "POST" })
       .eq("org_id", data.orgId)
       .in("id", accountIds);
     if (accountError) throw new Error(accountError.message);
-    if ((accounts ?? []).length !== accountIds.length || accounts?.some((account) => !account.is_active)) {
+    if (
+      (accounts ?? []).length !== accountIds.length ||
+      accounts?.some((account) => !account.is_active)
+    ) {
       throw new Error("New transactions can only use active accounts in this organization.");
     }
 
@@ -126,7 +137,11 @@ export const createTransaction = createServerFn({ method: "POST" })
       // Lost a race with an identical concurrent submit: return the winner.
       if (txError.code === "23505" && data.idempotencyKey) {
         const { data: prior } = await supabase
-          .from("transactions").select("id").eq("org_id", data.orgId).eq("idempotency_key", data.idempotencyKey).maybeSingle();
+          .from("transactions")
+          .select("id")
+          .eq("org_id", data.orgId)
+          .eq("idempotency_key", data.idempotencyKey)
+          .maybeSingle();
         if (prior) return { id: prior.id as string, duplicate: true };
       }
       throw new Error(txError.message);
@@ -218,7 +233,11 @@ export const voidTransaction = createServerFn({ method: "POST" })
       entity: "transaction",
       entity_id: data.transactionId,
       before: { id: before.id, description: before.description, status: before.status },
-      after: { status: "void", unmatchedBankRows: (unlinked ?? []).length, unticked: stamped.length },
+      after: {
+        status: "void",
+        unmatchedBankRows: (unlinked ?? []).length,
+        unticked: stamped.length,
+      },
     });
     return { ok: true };
   });

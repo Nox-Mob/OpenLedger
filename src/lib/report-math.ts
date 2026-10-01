@@ -11,7 +11,10 @@ export interface LedgerRow {
   transactionDate: string;
 }
 
-export interface Line { name: string; totalCents: number }
+export interface Line {
+  name: string;
+  totalCents: number;
+}
 
 function groupBy(rows: LedgerRow[], type: AccountType, sign: 1 | -1): Line[] {
   const map = new Map<string, number>();
@@ -27,7 +30,9 @@ function groupBy(rows: LedgerRow[], type: AccountType, sign: 1 | -1): Line[] {
 const sum = (l: Line[]) => l.reduce((a, r) => a + r.totalCents, 0);
 
 export function inRange(rows: LedgerRow[], from?: string, to?: string): LedgerRow[] {
-  return rows.filter((r) => (!from || r.transactionDate >= from) && (!to || r.transactionDate <= to));
+  return rows.filter(
+    (r) => (!from || r.transactionDate >= from) && (!to || r.transactionDate <= to),
+  );
 }
 
 export function computeIncome(rows: LedgerRow[]) {
@@ -35,7 +40,13 @@ export function computeIncome(rows: LedgerRow[]) {
   const expenses = groupBy(rows, "expense", 1);
   const totalRevenueCents = sum(revenue);
   const totalExpensesCents = sum(expenses);
-  return { revenue, expenses, totalRevenueCents, totalExpensesCents, netCents: totalRevenueCents - totalExpensesCents };
+  return {
+    revenue,
+    expenses,
+    totalRevenueCents,
+    totalExpensesCents,
+    netCents: totalRevenueCents - totalExpensesCents,
+  };
 }
 
 /**
@@ -49,15 +60,21 @@ export function computeBalance(rows: LedgerRow[], asOf: string, fiscalYearStart:
   const liabilities = groupBy(upTo, "liability", -1);
   const equity = groupBy(upTo, "equity", -1);
   const priorNet = computeIncome(upTo.filter((r) => r.transactionDate < fiscalYearStart)).netCents;
-  const currentNet = computeIncome(upTo.filter((r) => r.transactionDate >= fiscalYearStart)).netCents;
+  const currentNet = computeIncome(
+    upTo.filter((r) => r.transactionDate >= fiscalYearStart),
+  ).netCents;
   const totalAssetsCents = sum(assets);
   const totalLiabilitiesCents = sum(liabilities);
   const totalEquityCents = sum(equity) + priorNet + currentNet;
   return {
-    assets, liabilities, equity,
+    assets,
+    liabilities,
+    equity,
     retainedEarningsCents: priorNet,
     netIncomeCents: currentNet,
-    totalAssetsCents, totalLiabilitiesCents, totalEquityCents,
+    totalAssetsCents,
+    totalLiabilitiesCents,
+    totalEquityCents,
     balanced: totalAssetsCents === totalLiabilitiesCents + totalEquityCents,
   };
 }
@@ -72,11 +89,21 @@ export function computeTrialBalance(rows: LedgerRow[], asOf?: string) {
   }
   const lines = [...map.values()]
     .filter((l) => l.net !== 0)
-    .map((l) => ({ name: l.name, type: l.type, debitCents: l.net > 0 ? l.net : 0, creditCents: l.net < 0 ? -l.net : 0 }))
+    .map((l) => ({
+      name: l.name,
+      type: l.type,
+      debitCents: l.net > 0 ? l.net : 0,
+      creditCents: l.net < 0 ? -l.net : 0,
+    }))
     .sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
   const totalDebitCents = lines.reduce((a, l) => a + l.debitCents, 0);
   const totalCreditCents = lines.reduce((a, l) => a + l.creditCents, 0);
-  return { lines, totalDebitCents, totalCreditCents, balanced: totalDebitCents === totalCreditCents };
+  return {
+    lines,
+    totalDebitCents,
+    totalCreditCents,
+    balanced: totalDebitCents === totalCreditCents,
+  };
 }
 
 export function computeProjectSpend(rows: LedgerRow[]): Map<string, number> {
@@ -89,7 +116,11 @@ export function computeProjectSpend(rows: LedgerRow[]): Map<string, number> {
 }
 
 /** Daily running total of asset accounts ("cash on hand") from `from` to `to` inclusive. */
-export function computeCashSeries(rows: LedgerRow[], from: string, to: string): { date: string; cents: number }[] {
+export function computeCashSeries(
+  rows: LedgerRow[],
+  from: string,
+  to: string,
+): { date: string; cents: number }[] {
   const byDay = new Map<string, number>();
   let opening = 0;
   for (const r of rows) {

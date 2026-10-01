@@ -110,15 +110,14 @@ jobs:
           exit $code
 
   format:
-    name: Formatting (report only)
+    name: Formatting
     runs-on: ubuntu-latest
     # Whitespace/style only. Reported, never auto-applied; run `bun run format` locally to fix.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run format:check || (echo "### ⚠️ Files not formatted — run \`bun run format\` locally (not blocking)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
+      - run: bun run format:check || (echo "### ⚠️ Files not formatted — run \`bun run format\` locally (blocks the build)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
 
   dependency-audit:
     name: Dependency vulnerabilities

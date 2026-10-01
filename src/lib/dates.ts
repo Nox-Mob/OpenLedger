@@ -6,7 +6,9 @@ const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
 export function isISODate(s: string): boolean {
   const m = ISO.exec(s);
   if (!m) return false;
-  const y = +m[1]!, mo = +m[2]!, d = +m[3]!;
+  const y = +m[1]!,
+    mo = +m[2]!,
+    d = +m[3]!;
   const dt = new Date(Date.UTC(y, mo - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
 }
@@ -58,7 +60,12 @@ export function daysBetween(a: string, b: string): number {
 /** Calendar day (YYYY-MM-DD) of an instant in an IANA timezone. Falls back to UTC on bad zones. */
 export function dateInTimeZone(instant: Date, timeZone: string): string {
   try {
-    const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(instant);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(instant);
     const get = (t: string) => parts.find((p) => p.type === t)!.value;
     return `${get("year")}-${get("month")}-${get("day")}`;
   } catch {
@@ -67,5 +74,10 @@ export function dateInTimeZone(instant: Date, timeZone: string): string {
 }
 
 export function isValidTimeZone(tz: string): boolean {
-  try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch { return false; }
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
 }

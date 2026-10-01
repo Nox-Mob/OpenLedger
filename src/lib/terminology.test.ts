@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  LEVELS, TERM_ITEMS, accountTypeLabel, cleanOverrides, displayBalance, getTerms, normalizeTerminology,
+  LEVELS,
+  TERM_ITEMS,
+  accountTypeLabel,
+  cleanOverrides,
+  displayBalance,
+  getTerms,
+  normalizeTerminology,
 } from "./terminology";
 
 describe("normalizeTerminology", () => {
@@ -46,7 +52,17 @@ describe("getTerms", () => {
     for (const org of ["business", "nonprofit"] as const)
       for (const lvl of LEVELS) {
         const t = getTerms(org, lvl);
-        for (const k of ["assets", "liabilities", "equity", "revenue", "expenses", "netIncome", "debit", "credit", "journal"] as const)
+        for (const k of [
+          "assets",
+          "liabilities",
+          "equity",
+          "revenue",
+          "expenses",
+          "netIncome",
+          "debit",
+          "credit",
+          "journal",
+        ] as const)
           expect(t[k], `${org}/${lvl}/${k}`).toBeTruthy();
       }
   });
@@ -60,7 +76,9 @@ describe("getTerms", () => {
 
 describe("cleanOverrides", () => {
   it("drops unknown keys and invalid levels", () => {
-    expect(cleanOverrides({ assets: "simple", bogus: "simple", equity: "nope" })).toEqual({ assets: "simple" });
+    expect(cleanOverrides({ assets: "simple", bogus: "simple", equity: "nope" })).toEqual({
+      assets: "simple",
+    });
     expect(cleanOverrides(null)).toEqual({});
     expect(cleanOverrides("x")).toEqual({});
   });

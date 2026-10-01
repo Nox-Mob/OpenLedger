@@ -8,9 +8,15 @@ export const Route = createFileRoute("/_authenticated/settings/members")({
   head: () => ({
     meta: [
       { title: "Users & Roles — Open Ledger" },
-      { name: "description", content: "Manage who belongs to the organization and what they can do." },
+      {
+        name: "description",
+        content: "Manage who belongs to the organization and what they can do.",
+      },
       { property: "og:title", content: "Users & Roles — Open Ledger" },
-      { property: "og:description", content: "Manage who belongs to the organization and what they can do." },
+      {
+        property: "og:description",
+        content: "Manage who belongs to the organization and what they can do.",
+      },
     ],
   }),
   component: MembersSettings,
@@ -67,7 +73,9 @@ function MembersSettings() {
                 <select
                   className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
                   value={m.role}
-                  onChange={(e) => changeRole(m.userId, e.target.value as "admin" | "member" | "viewer")}
+                  onChange={(e) =>
+                    changeRole(m.userId, e.target.value as "admin" | "member" | "viewer")
+                  }
                 >
                   <option value="admin">Admin</option>
                   <option value="member">Member</option>
@@ -82,8 +90,9 @@ function MembersSettings() {
           ))}
         </ul>
         <p className="mt-4 text-xs text-muted-foreground">
-          Inviting new users by email is coming in a later version. For now, new teammates can create
-          their own organization from the sidebar, or you can ask us to link an existing account.
+          Inviting new users by email is coming in a later version. For now, new teammates can
+          create their own organization from the sidebar, or you can ask us to link an existing
+          account.
         </p>
       </div>
     </div>

@@ -1,11 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { computeBalance, computeIncome, computeProjectSpend, computeTrialBalance, inRange, type LedgerRow, type AccountType } from "./report-math";
+import {
+  computeBalance,
+  computeIncome,
+  computeProjectSpend,
+  computeTrialBalance,
+  inRange,
+  type LedgerRow,
+  type AccountType,
+} from "./report-math";
 import { fiscalYearStart } from "./dates";
 
 // Helper: a balanced transaction as ledger rows (debit first, credit second).
-function tx(date: string, amount: number, debit: [string, AccountType], credit: [string, AccountType], projectId?: string): LedgerRow[] {
+function tx(
+  date: string,
+  amount: number,
+  debit: [string, AccountType],
+  credit: [string, AccountType],
+  projectId?: string,
+): LedgerRow[] {
   return [
-    { transactionDate: date, amountCents: amount, accountName: debit[0], accountType: debit[1], projectId: projectId ?? null },
+    {
+      transactionDate: date,
+      amountCents: amount,
+      accountName: debit[0],
+      accountType: debit[1],
+      projectId: projectId ?? null,
+    },
     { transactionDate: date, amountCents: -amount, accountName: credit[0], accountType: credit[1] },
   ];
 }
@@ -19,8 +39,8 @@ const rent: [string, AccountType] = ["Rent", "expense"];
 const ledger: LedgerRow[] = [
   ...tx("2025-01-05", 500_00, cash, owner),
   ...tx("2025-03-10", 1200_00, cash, sales),
-  ...tx("2025-06-30", 300_00, rent, cash),       // last day of FY2025 (July start)
-  ...tx("2025-07-01", 800_00, cash, sales),      // first day of FY2026
+  ...tx("2025-06-30", 300_00, rent, cash), // last day of FY2025 (July start)
+  ...tx("2025-07-01", 800_00, cash, sales), // first day of FY2026
   ...tx("2025-08-15", 250_00, rent, card, "p1"),
   ...tx("2026-03-31", 100_00, rent, cash, "p1"),
 ];
@@ -49,7 +69,8 @@ describe("balance sheet", () => {
 
 describe("income statement", () => {
   it("net income equals the change in equity over the period", () => {
-    const from = "2025-07-01", to = "2026-06-30";
+    const from = "2025-07-01",
+      to = "2026-06-30";
     const income = computeIncome(inRange(ledger, from, to));
     const start = computeBalance(ledger, "2025-06-30", "2024-07-01");
     const end = computeBalance(ledger, to, from);
@@ -65,7 +86,9 @@ describe("income statement", () => {
 
   it("a 3/31 transaction stays in March", () => {
     expect(computeIncome(inRange(ledger, "2026-04-01", "2026-04-30")).totalExpensesCents).toBe(0);
-    expect(computeIncome(inRange(ledger, "2026-03-01", "2026-03-31")).totalExpensesCents).toBe(100_00);
+    expect(computeIncome(inRange(ledger, "2026-03-01", "2026-03-31")).totalExpensesCents).toBe(
+      100_00,
+    );
   });
 });
 
@@ -76,7 +99,15 @@ describe("trial balance", () => {
     expect(t.balanced).toBe(true);
   });
   it("flags an unbalanced ledger", () => {
-    const bad = [...ledger, { transactionDate: "2026-01-01", amountCents: 1, accountName: "Checking", accountType: "asset" as const }];
+    const bad = [
+      ...ledger,
+      {
+        transactionDate: "2026-01-01",
+        amountCents: 1,
+        accountName: "Checking",
+        accountType: "asset" as const,
+      },
+    ];
     expect(computeTrialBalance(bad).balanced).toBe(false);
   });
 });

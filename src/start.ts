@@ -1,22 +1,27 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { isAbort } from "./lib/abort";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 // A browser that closes a page mid-load makes Node's HTTP server emit "aborted" on the
 // request stream, outside any middleware. Swallow only that case so it can't surface as a crash.
-function isAbort(e: unknown): boolean {
-  for (let c: unknown = e, i = 0; c && i < 5; i++) {
-    if (c instanceof Error && (c.name === "AbortError" || c.message === "aborted" ||
-      c.message === "This operation was aborted" || (c as { code?: string }).code === "ECONNRESET")) return true;
-    c = (c as { cause?: unknown }).cause;
-  }
-  return false;
-}
-const g = globalThis as { process?: { on?: (ev: string, fn: (e: unknown) => void) => void }; __olAbortGuard?: boolean };
+const g = globalThis as {
+  process?: { on?: (ev: string, fn: (e: unknown) => void) => void; exit?: (code: number) => void };
+  __olAbortGuard?: boolean;
+};
 if (typeof window === "undefined" && g.process?.on && !g.__olAbortGuard) {
   g.__olAbortGuard = true;
-  g.process.on("unhandledRejection", (e) => { if (!isAbort(e)) console.error(e); });
+  g.process.on("unhandledRejection", (e) => {
+    if (!isAbort(e)) console.error(e);
+  });
+  // The socket "aborted" error can also arrive as an uncaught exception. Drop only that;
+  // anything else still crashes the process as before.
+  g.process.on("uncaughtException", (e) => {
+    if (isAbort(e)) return;
+    console.error(e);
+    g.process?.exit?.(1);
+  });
 }
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {

@@ -76,23 +76,50 @@ function ResetPasswordPage() {
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           {mode === "request" ? (
             <form onSubmit={requestLink} className="space-y-3">
-              <input type="email" required placeholder="Email" value={email}
-                onChange={(e) => setEmail(e.target.value)} className={input} />
+              <input
+                type="email"
+                required
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={input}
+              />
               {error && <p className="text-sm text-destructive">{error}</p>}
               {message && <p className="text-sm text-primary">{message}</p>}
-              <button type="submit" disabled={busy} className={primary}>Send reset link</button>
+              <button type="submit" disabled={busy} className={primary}>
+                Send reset link
+              </button>
             </form>
           ) : (
             <form onSubmit={updatePassword} className="space-y-3">
-              <input type="password" required minLength={6} placeholder="New password" value={password}
-                onChange={(e) => setPassword(e.target.value)} className={input} />
-              <input type="password" required minLength={6} placeholder="Confirm new password" value={confirm}
-                onChange={(e) => setConfirm(e.target.value)} className={input} />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="New password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={input}
+              />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Confirm new password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={input}
+              />
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <button type="submit" disabled={busy} className={primary}>Save new password</button>
+              <button type="submit" disabled={busy} className={primary}>
+                Save new password
+              </button>
             </form>
           )}
-          <Link to="/auth" className="mt-4 block text-center text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            to="/auth"
+            className="mt-4 block text-center text-sm text-muted-foreground hover:text-foreground"
+          >
             Back to sign in
           </Link>
         </div>

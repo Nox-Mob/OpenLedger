@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrgContext } from "@/components/AppShell";
-import { getBooksStatus, setBooksLock, previewYearEndClose, closeFiscalYear } from "@/lib/close.functions";
+import {
+  getBooksStatus,
+  setBooksLock,
+  previewYearEndClose,
+  closeFiscalYear,
+} from "@/lib/close.functions";
 import { getAccountSetup } from "@/lib/org.functions";
 import { formatCents } from "@/lib/money";
 import { toast } from "sonner";
@@ -25,7 +30,11 @@ function CloseBooksSettings() {
   const [lockDate, setLockDate] = useState("");
   const [equityAccountId, setEquityAccountId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<{ fiscalYearStart: string; fiscalYearEnd: string; netIncomeCents: number } | null>(null);
+  const [preview, setPreview] = useState<{
+    fiscalYearStart: string;
+    fiscalYearEnd: string;
+    netIncomeCents: number;
+  } | null>(null);
   const [fyEnd, setFyEnd] = useState<string | null>(null);
 
   const statusQuery = useQuery({
@@ -43,7 +52,9 @@ function CloseBooksSettings() {
   const isAdmin = org.role === "admin";
   const status = statusQuery.data;
   const accountsRaw: any = accountsQuery.data;
-  const accounts = (Array.isArray(accountsRaw) ? accountsRaw : accountsRaw?.accounts ?? []) as any[];
+  const accounts = (
+    Array.isArray(accountsRaw) ? accountsRaw : (accountsRaw?.accounts ?? [])
+  ) as any[];
   const equityAccounts = accounts.filter((a) => a.type === "equity" && a.is_active !== false);
   const lockedThrough = status?.booksLockedThrough ?? null;
 
@@ -115,12 +126,15 @@ function CloseBooksSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Lock the books</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Locking the books through a date stops anyone from adding or changing transactions on or before that date.
+          Locking the books through a date stops anyone from adding or changing transactions on or
+          before that date.
           {!isAdmin && " Only admins can change this."}
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-sm font-medium" htmlFor="lock-date">Locked through</label>
+            <label className="text-sm font-medium" htmlFor="lock-date">
+              Locked through
+            </label>
             <input
               id="lock-date"
               type="date"
@@ -153,7 +167,8 @@ function CloseBooksSettings() {
         </div>
         {lockedThrough && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Currently locked through <span className="font-medium text-foreground">{lockedThrough}</span>.
+            Currently locked through{" "}
+            <span className="font-medium text-foreground">{lockedThrough}</span>.
           </p>
         )}
       </div>
@@ -161,19 +176,28 @@ function CloseBooksSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Close a fiscal year</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          This records one closing transaction that moves the year's {org.orgType === "nonprofit" ? "net result into Net Assets" : "profit into Retained Earnings"},
-          then locks the books through the year's last day. It can't be undone — the closing entry becomes part of the audit trail.
+          This records one closing transaction that moves the year's{" "}
+          {org.orgType === "nonprofit"
+            ? "net result into Net Assets"
+            : "profit into Retained Earnings"}
+          , then locks the books through the year's last day. It can't be undone — the closing entry
+          becomes part of the audit trail.
         </p>
         <div className="mt-4 space-y-3">
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="text-sm font-medium" htmlFor="fy-end">Fiscal year ends</label>
+              <label className="text-sm font-medium" htmlFor="fy-end">
+                Fiscal year ends
+              </label>
               <input
                 id="fy-end"
                 type="date"
                 className="mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
                 value={fiscalYearEnd}
-                onChange={(e) => { setFyEnd(e.target.value); setPreview(null); }}
+                onChange={(e) => {
+                  setFyEnd(e.target.value);
+                  setPreview(null);
+                }}
                 disabled={!isAdmin}
               />
             </div>
@@ -190,7 +214,9 @@ function CloseBooksSettings() {
               >
                 <option value="">Choose…</option>
                 {equityAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -209,9 +235,11 @@ function CloseBooksSettings() {
               <p>
                 Fiscal year {preview.fiscalYearStart} → {preview.fiscalYearEnd}:{" "}
                 <span className="font-medium">
-                  {formatCents(preview.netIncomeCents)} net {preview.netIncomeCents >= 0 ? "income" : "loss"}
+                  {formatCents(preview.netIncomeCents)} net{" "}
+                  {preview.netIncomeCents >= 0 ? "income" : "loss"}
                 </span>{" "}
-                will move into the chosen equity account, and the books will lock through {preview.fiscalYearEnd}.
+                will move into the chosen equity account, and the books will lock through{" "}
+                {preview.fiscalYearEnd}.
               </p>
               {isAdmin && (
                 <button
@@ -235,13 +263,16 @@ function CloseBooksSettings() {
               <li key={c.id} className="flex items-center justify-between py-2">
                 <span>Fiscal year ending {c.fiscal_year_end}</span>
                 <span className="text-muted-foreground">
-                  {formatCents(c.net_income_cents)} · closed {new Date(c.created_at).toLocaleDateString()}
+                  {formatCents(c.net_income_cents)} · closed{" "}
+                  {new Date(c.created_at).toLocaleDateString()}
                 </span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-muted-foreground">No fiscal years have been closed yet.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No fiscal years have been closed yet.
+          </p>
         )}
       </div>
     </div>

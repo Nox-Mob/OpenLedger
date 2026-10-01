@@ -22,8 +22,24 @@ function shiftDate(d: string, days: number) {
   return addDays(d, days);
 }
 
-async function audit(supabase: Supa, orgId: string, userId: string, action: string, id: string, before: unknown, after: unknown) {
-  await supabase.from("audit_log").insert({ org_id: orgId, user_id: userId, action, entity: "reconciliation", entity_id: id, before, after });
+async function audit(
+  supabase: Supa,
+  orgId: string,
+  userId: string,
+  action: string,
+  id: string,
+  before: unknown,
+  after: unknown,
+) {
+  await supabase.from("audit_log").insert({
+    org_id: orgId,
+    user_id: userId,
+    action,
+    entity: "reconciliation",
+    entity_id: id,
+    before,
+    after,
+  });
 }
 
 async function loadRec(supabase: Supa, id: string) {
@@ -39,7 +55,9 @@ async function loadRec(supabase: Supa, id: string) {
 async function loadWorkspace(supabase: Supa, rec: any) {
   const { data: entries, error } = await supabase
     .from("entries")
-    .select("id, amount_cents, memo, reconciliation_id, transaction_id, transactions!inner(id, transaction_date, description, status)")
+    .select(
+      "id, amount_cents, memo, reconciliation_id, transaction_id, transactions!inner(id, transaction_date, description, status)",
+    )
     .eq("account_id", rec.account_id)
     .eq("transactions.status", "posted")
     .lte("transactions.transaction_date", rec.period_end)
@@ -78,17 +96,34 @@ async function loadWorkspace(supabase: Supa, rec: any) {
   }));
   for (const b of bankRows) {
     if (!b.linkedTransactionId) continue;
-    const e = ents.find((x) => !used.has(x.id) && x.transactionId === b.linkedTransactionId && x.amountCents === b.amountCents);
-    if (e) { used.add(e.id); matches.push({ bankId: b.id, entryId: e.id }); }
+    const e = ents.find(
+      (x) =>
+        !used.has(x.id) &&
+        x.transactionId === b.linkedTransactionId &&
+        x.amountCents === b.amountCents,
+    );
+    if (e) {
+      used.add(e.id);
+      matches.push({ bankId: b.id, entryId: e.id });
+    }
   }
   const matchedBank = new Set(matches.map((m) => m.bankId));
   for (const b of bankRows) {
     if (matchedBank.has(b.id)) continue;
     const candidates = ents
-      .filter((x) => !used.has(x.id) && x.amountCents === b.amountCents && dayDiff(x.date, b.date) <= MATCH_WINDOW_DAYS)
+      .filter(
+        (x) =>
+          !used.has(x.id) &&
+          x.amountCents === b.amountCents &&
+          dayDiff(x.date, b.date) <= MATCH_WINDOW_DAYS,
+      )
       .sort((x, y) => dayDiff(x.date, b.date) - dayDiff(y.date, b.date));
     const e = candidates[0];
-    if (e) { used.add(e.id); matchedBank.add(b.id); matches.push({ bankId: b.id, entryId: e.id }); }
+    if (e) {
+      used.add(e.id);
+      matchedBank.add(b.id);
+      matches.push({ bankId: b.id, entryId: e.id });
+    }
   }
   return { entries: ents, bankRows, matches };
 }
@@ -99,9 +134,14 @@ function signFor(type: string) {
 
 function summarize(rec: any, entries: { amountCents: number; cleared: boolean }[]) {
   const sign = signFor(rec.accounts?.type ?? "asset");
-  const clearedCents = sign * entries.filter((e) => e.cleared).reduce((s, e) => s + e.amountCents, 0);
+  const clearedCents =
+    sign * entries.filter((e) => e.cleared).reduce((s, e) => s + e.amountCents, 0);
   const clearedBalance = Number(rec.beginning_balance_cents) + clearedCents;
-  return { clearedCents, clearedBalance, difference: Number(rec.ending_balance_cents) - clearedBalance };
+  return {
+    clearedCents,
+    clearedBalance,
+    difference: Number(rec.ending_balance_cents) - clearedBalance,
+  };
 }
 
 function recDto(r: any) {
@@ -131,7 +171,10 @@ export const listReconciliations = createServerFn({ method: "GET" })
       .eq("org_id", data.orgId)
       .order("period_end", { ascending: false });
     if (error) throw new Error(error.message);
-    return ((rows ?? []) as any[]).map((r) => ({ ...recDto(r), itemCount: (r.entries ?? []).length }));
+    return ((rows ?? []) as any[]).map((r) => ({
+      ...recDto(r),
+      itemCount: (r.entries ?? []).length,
+    }));
   });
 
 /** Suggest defaults for a new reconciliation on an account. */
@@ -145,7 +188,8 @@ export const suggestReconciliation = createServerFn({ method: "GET" })
       .eq("id", data.accountId)
       .eq("org_id", data.orgId)
       .maybeSingle();
-    if (accountError || !account?.is_active) throw new Error("Choose an active account in this organization.");
+    if (accountError || !account?.is_active)
+      throw new Error("Choose an active account in this organization.");
     const { data: last } = await context.supabase
       .from("reconciliations")
       .select("period_end, ending_balance_cents")
@@ -165,9 +209,15 @@ export const suggestReconciliation = createServerFn({ method: "GET" })
       .maybeSingle();
     return {
       periodStart: last ? shiftDate(last.period_end, 1) : (batch?.statement_start ?? null),
-      periodEnd: batch && (!last || batch.statement_end > last.period_end) ? batch.statement_end : null,
-      beginningBalanceCents: last ? Number(last.ending_balance_cents) : (batch?.beginning_balance_cents ?? 0),
-      endingBalanceCents: batch && (!last || batch.statement_end > last.period_end) ? batch.ending_balance_cents : null,
+      periodEnd:
+        batch && (!last || batch.statement_end > last.period_end) ? batch.statement_end : null,
+      beginningBalanceCents: last
+        ? Number(last.ending_balance_cents)
+        : (batch?.beginning_balance_cents ?? 0),
+      endingBalanceCents:
+        batch && (!last || batch.statement_end > last.period_end)
+          ? batch.ending_balance_cents
+          : null,
       batchId: batch?.id ?? null,
       hasPrevious: !!last,
     };
@@ -198,7 +248,8 @@ export const startReconciliation = createServerFn({ method: "POST" })
       .eq("id", data.accountId)
       .eq("org_id", data.orgId)
       .maybeSingle();
-    if (accountError || !account?.is_active) throw new Error("Choose an active account in this organization.");
+    if (accountError || !account?.is_active)
+      throw new Error("Choose an active account in this organization.");
     const { supabase, userId } = context;
     const { data: open } = await supabase
       .from("reconciliations")
@@ -206,7 +257,10 @@ export const startReconciliation = createServerFn({ method: "POST" })
       .eq("account_id", data.accountId)
       .eq("status", "in_progress")
       .limit(1);
-    if ((open ?? []).length) throw new Error("This account already has a reconciliation in progress. Finish or discard it first.");
+    if ((open ?? []).length)
+      throw new Error(
+        "This account already has a reconciliation in progress. Finish or discard it first.",
+      );
     const id = crypto.randomUUID();
     const row = {
       id,
@@ -235,13 +289,19 @@ export const getReconciliation = createServerFn({ method: "GET" })
     if (rec.status === "completed") {
       const { data: entries } = await context.supabase
         .from("entries")
-        .select("id, amount_cents, memo, transaction_id, transactions(transaction_date, description)")
+        .select(
+          "id, amount_cents, memo, transaction_id, transactions(transaction_date, description)",
+        )
         .eq("reconciliation_id", rec.id);
       ws = {
         entries: ((entries ?? []) as any[])
           .map((e) => ({
-            id: e.id, transactionId: e.transaction_id, date: e.transactions?.transaction_date ?? "",
-            description: e.memo || e.transactions?.description || "", amountCents: e.amount_cents, cleared: true,
+            id: e.id,
+            transactionId: e.transaction_id,
+            date: e.transactions?.transaction_date ?? "",
+            description: e.memo || e.transactions?.description || "",
+            amountCents: e.amount_cents,
+            cleared: true,
           }))
           .sort((a, b) => a.date.localeCompare(b.date)),
         bankRows: [],
@@ -259,18 +319,25 @@ export const getReconciliation = createServerFn({ method: "GET" })
       reconciliation: recDto(rec),
       ...ws,
       summary: summarize(rec, ws.entries),
-      history: ((history ?? []) as any[]).map((h) => ({ action: h.action as string, at: h.created_at as string, after: h.after as any })),
+      history: ((history ?? []) as any[]).map((h) => ({
+        action: h.action as string,
+        at: h.created_at as string,
+        after: h.after as any,
+      })),
     };
   });
 
 export const setCleared = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid, entryIds: z.array(uuid).min(1).max(1000), cleared: z.boolean() }).parse(i))
+  .inputValidator((i) =>
+    z.object({ id: uuid, entryIds: z.array(uuid).min(1).max(1000), cleared: z.boolean() }).parse(i),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
     await assertCan(supabase, userId, rec.org_id, "write");
-    if (rec.status !== "in_progress") throw new Error("This reconciliation is completed. Reopen it to make changes.");
+    if (rec.status !== "in_progress")
+      throw new Error("This reconciliation is completed. Reopen it to make changes.");
     let q = supabase
       .from("entries")
       .update({ reconciliation_id: data.cleared ? rec.id : null })
@@ -279,7 +346,15 @@ export const setCleared = createServerFn({ method: "POST" })
     q = data.cleared ? q.is("reconciliation_id", null) : q.eq("reconciliation_id", rec.id);
     const { error } = await q;
     if (error) throw new Error(error.message);
-    await audit(supabase, rec.org_id, userId, data.cleared ? "reconcile_clear" : "reconcile_unclear", rec.id, null, { entryIds: data.entryIds });
+    await audit(
+      supabase,
+      rec.org_id,
+      userId,
+      data.cleared ? "reconcile_clear" : "reconcile_unclear",
+      rec.id,
+      null,
+      { entryIds: data.entryIds },
+    );
     return { ok: true };
   });
 
@@ -293,11 +368,19 @@ export const acceptMatches = createServerFn({ method: "POST" })
     await assertCan(supabase, userId, rec.org_id, "write");
     if (rec.status !== "in_progress") throw new Error("This reconciliation is completed.");
     const ws = await loadWorkspace(supabase, rec);
-    const ids = ws.matches.map((m) => m.entryId).filter((id) => !ws.entries.find((e) => e.id === id)?.cleared);
+    const ids = ws.matches
+      .map((m) => m.entryId)
+      .filter((id) => !ws.entries.find((e) => e.id === id)?.cleared);
     if (ids.length) {
-      const { error } = await supabase.from("entries").update({ reconciliation_id: rec.id }).in("id", ids).is("reconciliation_id", null);
+      const { error } = await supabase
+        .from("entries")
+        .update({ reconciliation_id: rec.id })
+        .in("id", ids)
+        .is("reconciliation_id", null);
       if (error) throw new Error(error.message);
-      await audit(supabase, rec.org_id, userId, "reconcile_accept_matches", rec.id, null, { entryIds: ids });
+      await audit(supabase, rec.org_id, userId, "reconcile_accept_matches", rec.id, null, {
+        entryIds: ids,
+      });
     }
     return { cleared: ids.length };
   });
@@ -318,9 +401,19 @@ export const completeReconciliation = createServerFn({ method: "POST" })
       .update({ status: "completed", completed_by: userId, completed_at: new Date().toISOString() })
       .eq("id", rec.id);
     if (error) throw new Error(error.message);
-    await audit(supabase, rec.org_id, userId, "reconcile_complete", rec.id, { status: "in_progress" }, {
-      status: "completed", items: ws.entries.filter((e) => e.cleared).length, clearedBalance: s.clearedBalance,
-    });
+    await audit(
+      supabase,
+      rec.org_id,
+      userId,
+      "reconcile_complete",
+      rec.id,
+      { status: "in_progress" },
+      {
+        status: "completed",
+        items: ws.entries.filter((e) => e.cleared).length,
+        clearedBalance: s.clearedBalance,
+      },
+    );
     return { ok: true };
   });
 
@@ -334,15 +427,35 @@ export const reopenReconciliation = createServerFn({ method: "POST" })
     await assertCan(supabase, userId, rec.org_id, "reopen_reconciliation");
     if (rec.status !== "completed") throw new Error("Not completed");
     const { data: later } = await supabase
-      .from("reconciliations").select("id").eq("account_id", rec.account_id).gt("period_end", rec.period_end).limit(1);
-    if ((later ?? []).length) throw new Error("Only the most recent reconciliation for this account can be reopened.");
+      .from("reconciliations")
+      .select("id")
+      .eq("account_id", rec.account_id)
+      .gt("period_end", rec.period_end)
+      .limit(1);
+    if ((later ?? []).length)
+      throw new Error("Only the most recent reconciliation for this account can be reopened.");
     const { data: open } = await supabase
-      .from("reconciliations").select("id").eq("account_id", rec.account_id).eq("status", "in_progress").limit(1);
-    if ((open ?? []).length) throw new Error("Discard the in-progress reconciliation for this account first.");
+      .from("reconciliations")
+      .select("id")
+      .eq("account_id", rec.account_id)
+      .eq("status", "in_progress")
+      .limit(1);
+    if ((open ?? []).length)
+      throw new Error("Discard the in-progress reconciliation for this account first.");
     const { error } = await supabase
-      .from("reconciliations").update({ status: "in_progress", completed_at: null, completed_by: null }).eq("id", rec.id);
+      .from("reconciliations")
+      .update({ status: "in_progress", completed_at: null, completed_by: null })
+      .eq("id", rec.id);
     if (error) throw new Error(error.message);
-    await audit(supabase, rec.org_id, userId, "reconcile_reopen", rec.id, { status: "completed" }, { status: "in_progress" });
+    await audit(
+      supabase,
+      rec.org_id,
+      userId,
+      "reconcile_reopen",
+      rec.id,
+      { status: "completed" },
+      { status: "in_progress" },
+    );
     return { ok: true };
   });
 
@@ -352,8 +465,12 @@ export const discardReconciliation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
-    if (rec.status !== "in_progress") throw new Error("Completed reconciliations can't be discarded — reopen instead.");
-    await supabase.from("entries").update({ reconciliation_id: null }).eq("reconciliation_id", rec.id);
+    if (rec.status !== "in_progress")
+      throw new Error("Completed reconciliations can't be discarded — reopen instead.");
+    await supabase
+      .from("entries")
+      .update({ reconciliation_id: null })
+      .eq("reconciliation_id", rec.id);
     const { error } = await supabase.from("reconciliations").delete().eq("id", rec.id);
     if (error) throw new Error(error.message);
     await audit(supabase, rec.org_id, userId, "reconcile_discard", rec.id, recDto(rec), null);

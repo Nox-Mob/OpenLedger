@@ -36,12 +36,20 @@ export function parseOfx(text: string): { rows: ParsedRow[]; meta: StatementMeta
     const amt = cents(tag(b, "TRNAMT"));
     const name = tag(b, "NAME") ?? "";
     const memo = tag(b, "MEMO") ?? "";
-    const description = [name, memo && memo !== name ? memo : ""].filter(Boolean).join(" — ") || "Bank transaction";
+    const description =
+      [name, memo && memo !== name ? memo : ""].filter(Boolean).join(" — ") || "Bank transaction";
     let error: string | undefined;
     if (!date) error = "Missing date";
     else if (amt == null) error = "Missing amount";
     else if (amt === 0) error = "Amount is zero";
-    rows.push({ line, date: date ?? "", description: description.slice(0, 300), amountCents: amt ?? 0, externalId: tag(b, "FITID"), error });
+    rows.push({
+      line,
+      date: date ?? "",
+      description: description.slice(0, 300),
+      amountCents: amt ?? 0,
+      externalId: tag(b, "FITID"),
+      error,
+    });
   }
   const list = text.match(/<BANKTRANLIST>([\s\S]*?)<STMTTRN>/i)?.[1] ?? text;
   const ledger = text.match(/<LEDGERBAL>([\s\S]*?)(<\/LEDGERBAL>|<AVAILBAL>|$)/i)?.[1];

@@ -38,7 +38,9 @@ export function AccountChecklist({
             <ul className="mt-2 divide-y rounded-md border">
               {group.map((r) => (
                 <li key={r.id}>
-                  <label className={`flex gap-3 p-3 ${r.locked || disabled ? "" : "cursor-pointer hover:bg-accent/40"}`}>
+                  <label
+                    className={`flex gap-3 p-3 ${r.locked || disabled ? "" : "cursor-pointer hover:bg-accent/40"}`}
+                  >
                     <input
                       type="checkbox"
                       className="mt-1 h-4 w-4 accent-primary"
@@ -51,18 +53,32 @@ export function AccountChecklist({
                       {r.catalog ? (
                         <>
                           <span className="block text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Why: </span>{r.catalog.why}
+                            <span className="font-medium text-foreground">Why: </span>
+                            {r.catalog.why}
                           </span>
                           <span className="block text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Why not: </span>{r.catalog.whyNot}
+                            <span className="font-medium text-foreground">Why not: </span>
+                            {r.catalog.whyNot}
                           </span>
                         </>
                       ) : (
-                        <span className="block text-xs text-muted-foreground">An account your organization added.</span>
+                        <span className="block text-xs text-muted-foreground">
+                          An account your organization added.
+                        </span>
                       )}
-                      {r.locked && <span className="mt-1 block text-xs font-medium text-primary">{r.locked}</span>}
-                      {r.note && <span className="mt-1 block text-xs text-muted-foreground">{r.note}</span>}
-                      {!r.checked && !r.locked && <span className="mt-1 block text-xs font-medium text-muted-foreground">Archived — available to reactivate at any time.</span>}
+                      {r.locked && (
+                        <span className="mt-1 block text-xs font-medium text-primary">
+                          {r.locked}
+                        </span>
+                      )}
+                      {r.note && (
+                        <span className="mt-1 block text-xs text-muted-foreground">{r.note}</span>
+                      )}
+                      {!r.checked && !r.locked && (
+                        <span className="mt-1 block text-xs font-medium text-muted-foreground">
+                          Archived — available to reactivate at any time.
+                        </span>
+                      )}
                     </span>
                   </label>
                 </li>

@@ -9,15 +9,21 @@ export function tokenizeCsv(text: string, delimiter = ","): string[][] {
     const c = s[i];
     if (inQuotes) {
       if (c === '"') {
-        if (s[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
+        if (s[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else inQuotes = false;
       } else field += c;
       continue;
     }
     if (c === '"') inQuotes = true;
-    else if (c === delimiter) { row.push(field); field = ""; }
-    else if (c === "\n" || c === "\r") {
+    else if (c === delimiter) {
+      row.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
       if (c === "\r" && s[i + 1] === "\n") i++;
-      row.push(field); field = "";
+      row.push(field);
+      field = "";
       if (row.some((f) => f.trim() !== "")) rows.push(row.map((f) => f.trim()));
       row = [];
     } else field += c;
@@ -61,15 +67,27 @@ export function parseDate(raw: string, fmt: DateFormat): string | null {
   const iso = v.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
   const other = v.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
   if ((fmt === "YMD" || fmt === "auto") && iso) {
-    y = +iso[1]!; m = +iso[2]!; d = +iso[3]!;
+    y = +iso[1]!;
+    m = +iso[2]!;
+    d = +iso[3]!;
   } else if (other && fmt !== "YMD") {
-    const a = +other[1]!, b = +other[2]!;
-    y = +other[3]!; if (y < 100) y += 2000;
-    if (fmt === "DMY" || (fmt === "auto" && a > 12)) { d = a; m = b; } else { m = a; d = b; }
+    const a = +other[1]!,
+      b = +other[2]!;
+    y = +other[3]!;
+    if (y < 100) y += 2000;
+    if (fmt === "DMY" || (fmt === "auto" && a > 12)) {
+      d = a;
+      m = b;
+    } else {
+      m = a;
+      d = b;
+    }
   } else if (fmt === "auto") {
     const t = new Date(v);
     if (isNaN(t.getTime())) return null;
-    y = t.getFullYear(); m = t.getMonth() + 1; d = t.getDate();
+    y = t.getFullYear();
+    m = t.getMonth() + 1;
+    d = t.getDate();
   } else return null;
   if (m < 1 || m > 12 || d < 1 || d > 31) return null;
   const dt = new Date(Date.UTC(y, m - 1, d));
@@ -83,16 +101,31 @@ export function parseDate(raw: string, fmt: DateFormat): string | null {
  * the other mark is treated as a thousands separator and must appear in
  * valid groups of three.
  */
-export function parseAmount(raw: string, decimalSeparator: DecimalSeparator = "dot"): number | null {
+export function parseAmount(
+  raw: string,
+  decimalSeparator: DecimalSeparator = "dot",
+): number | null {
   let v = (raw ?? "").trim();
   if (!v) return null;
   let neg = false;
-  if (/^\(.*\)$/.test(v)) { neg = true; v = v.slice(1, -1).trim(); }
-  if (v.endsWith("-")) { neg = true; v = v.slice(0, -1).trim(); }
+  if (/^\(.*\)$/.test(v)) {
+    neg = true;
+    v = v.slice(1, -1).trim();
+  }
+  if (v.endsWith("-")) {
+    neg = true;
+    v = v.slice(0, -1).trim();
+  }
   if (/\bCR$/i.test(v)) v = v.replace(/CR$/i, "").trim();
-  if (/\bDR$/i.test(v)) { neg = true; v = v.replace(/DR$/i, "").trim(); }
+  if (/\bDR$/i.test(v)) {
+    neg = true;
+    v = v.replace(/DR$/i, "").trim();
+  }
   v = v.replace(/[$€£¥\s]/g, "");
-  if (v.startsWith("-")) { neg = !neg; v = v.slice(1); }
+  if (v.startsWith("-")) {
+    neg = !neg;
+    v = v.slice(1);
+  }
   if (v.startsWith("+")) v = v.slice(1);
   if (!v) return null;
 
@@ -113,10 +146,14 @@ export function parseAmount(raw: string, decimalSeparator: DecimalSeparator = "d
 
 /** Guess the decimal separator by sampling the amount column(s). */
 export function guessDecimalSeparator(rows: string[][], cols: number[]): DecimalSeparator {
-  let comma = 0, dot = 0;
+  let comma = 0,
+    dot = 0;
   for (const r of rows.slice(0, 50)) {
     for (const c of cols) {
-      const v = (r[c] ?? "").trim().replace(/[($€£¥\s)]/g, "").replace(/(CR|DR|-)$/i, "");
+      const v = (r[c] ?? "")
+        .trim()
+        .replace(/[($€£¥\s)]/g, "")
+        .replace(/(CR|DR|-)$/i, "");
       if (/,\d{2}$/.test(v) && !/\.\d{2}$/.test(v)) comma++;
       else if (/\.\d{2}$/.test(v) && !/,\d{2}$/.test(v)) dot++;
     }
@@ -146,7 +183,10 @@ export function guessMapping(rows: string[][]): CsvMapping {
     creditCol: creditCol >= 0 ? creditCol : 3,
     dateFormat: "auto",
     flipSign: false,
-    decimalSeparator: guessDecimalSeparator(sampleRows, split ? [debitCol, creditCol] : [amountCol]),
+    decimalSeparator: guessDecimalSeparator(
+      sampleRows,
+      split ? [debitCol, creditCol] : [amountCol],
+    ),
   };
 }
 
@@ -171,7 +211,14 @@ export function applyMapping(rows: string[][], m: CsvMapping): ParsedRow[] {
     if (!date) error = `Can't read date "${cols[m.dateCol] ?? ""}"`;
     else if (amount == null) error = "Can't read amount";
     else if (amount === 0) error = "Amount is zero";
-    out.push({ line, date: date ?? "", description: description.slice(0, 300), amountCents: amount ?? 0, externalId, error });
+    out.push({
+      line,
+      date: date ?? "",
+      description: description.slice(0, 300),
+      amountCents: amount ?? 0,
+      externalId,
+      error,
+    });
   });
   return out;
 }

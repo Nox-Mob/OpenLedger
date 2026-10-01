@@ -28,3 +28,4 @@
 - AI PDF requires org opt-in, upload ack, limits; must balance or send acceptMismatch.
 - Legal acceptance is append-only/versioned; U.S.-first drafts separate hosted/self-hosted terms and make no GDPR claim.
 - CI (.github/workflows/ci.yml) is report-only: never auto-fixes/commits; DB checks run on a disposable local DB via scripts/ci; SQL tests end with RAISE 'RESULT k=PASS;...'.
+- Startup never resets data: migrations are append-only and CI rejects DELETE/TRUNCATE/DROP TABLE in them; test scripts require a local DB; demo seed refuses DBs with real orgs.

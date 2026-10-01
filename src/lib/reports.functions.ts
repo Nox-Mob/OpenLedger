@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  computeBalance, computeCashSeries, computeIncome, computeProjectSpend, computeTrialBalance, inRange,
+  computeBalance,
+  computeCashSeries,
+  computeIncome,
+  computeProjectSpend,
+  computeTrialBalance,
+  inRange,
   type LedgerRow,
 } from "./report-math";
 import { addDays, fiscalYearStart, todayISO } from "./dates";
@@ -19,7 +24,9 @@ export async function fetchLedger(supabase: any, orgId: string, to?: string): Pr
   for (let from = 0; ; from += LEDGER_PAGE) {
     let query = supabase
       .from("entries")
-      .select("amount_cents, project_id, accounts(name, type), transactions!inner(org_id, status, transaction_date)")
+      .select(
+        "amount_cents, project_id, accounts(name, type), transactions!inner(org_id, status, transaction_date)",
+      )
       .eq("transactions.org_id", orgId)
       .eq("transactions.status", "posted")
       .order("id");
@@ -39,7 +46,11 @@ export async function fetchLedger(supabase: any, orgId: string, to?: string): Pr
 }
 
 async function fiscalStartMonth(supabase: any, orgId: string): Promise<number> {
-  const { data } = await supabase.from("organizations").select("fiscal_year_start_month").eq("id", orgId).single();
+  const { data } = await supabase
+    .from("organizations")
+    .select("fiscal_year_start_month")
+    .eq("id", orgId)
+    .single();
   return data?.fiscal_year_start_month ?? 1;
 }
 
@@ -52,7 +63,9 @@ async function orgToday(supabase: any, orgId: string): Promise<string> {
 export const incomeStatement = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ orgId: z.string().uuid(), from: isoDate.optional(), to: isoDate.optional() }).parse(input),
+    z
+      .object({ orgId: z.string().uuid(), from: isoDate.optional(), to: isoDate.optional() })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const rows = await fetchLedger(context.supabase, data.orgId, data.to);
@@ -61,7 +74,9 @@ export const incomeStatement = createServerFn({ method: "GET" })
 
 export const balanceSheet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input))
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
     const [rows, month] = await Promise.all([
@@ -73,7 +88,9 @@ export const balanceSheet = createServerFn({ method: "GET" })
 
 export const trialBalance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input))
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
     const rows = await fetchLedger(context.supabase, data.orgId, asOf);
@@ -102,7 +119,9 @@ export const projectSummary = createServerFn({ method: "GET" })
 
 export const cashHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid(), days: z.number().int().min(7).max(1100) }).parse(input))
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), days: z.number().int().min(7).max(1100) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const to = await orgToday(context.supabase, data.orgId);
     const from = addDays(to, -data.days);
