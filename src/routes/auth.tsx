@@ -1,3 +1,4 @@
+import { demoAllowedHere } from "@/lib/demo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
