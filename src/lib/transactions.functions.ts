@@ -36,7 +36,7 @@ export const listTransactions = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    let query = context.supabase
+    const query = context.supabase
       .from("transactions")
       .select(
         "id, transaction_date, posted_date, description, source, status, created_at, entries(id, account_id, amount_cents, memo, accounts(name, type), categories(name), projects(name), funds(name))",

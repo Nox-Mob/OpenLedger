@@ -51,7 +51,7 @@ function CloseBooksSettings() {
   function defaultFiscalYearEnd(): string {
     const startMonth = status?.fiscalYearStartMonth ?? 1;
     const now = new Date();
-    let year = now.getUTCFullYear();
+    const year = now.getUTCFullYear();
     const endMonth = startMonth === 1 ? 12 : startMonth - 1;
     const endYear = startMonth === 1 ? year - 1 : year;
     const lastDay = new Date(Date.UTC(endYear, endMonth, 0)).getUTCDate();
