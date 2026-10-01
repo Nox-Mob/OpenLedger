@@ -2,6 +2,7 @@ import { addDays, daysBetween } from "./dates";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCan } from "./permissions";
 
 /**
  * Reconciliation compares bank evidence to the ledger. It never edits amounts —
