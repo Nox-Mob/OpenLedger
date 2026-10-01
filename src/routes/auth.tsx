@@ -22,10 +22,7 @@ function AuthPage() {
   // a published app (project--<id>.lovable.app) never does.
   const [showDemo, setShowDemo] = useState(false);
   useEffect(() => {
-    const onPreviewLink =
-      typeof window !== "undefined" &&
-      /(^|\.)id-preview(-[a-z0-9]+)*--/i.test(window.location.hostname);
-    setShowDemo(import.meta.env.DEV || onPreviewLink);
+    setShowDemo(demoAllowedHere());
   }, []);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
