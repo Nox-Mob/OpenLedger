@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { isValidTimeZone } from "./dates";
 import { normalizeTerminology, cleanOverrides } from "./terminology";
 const overridesSchema = z
@@ -110,7 +111,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "update",
@@ -192,7 +193,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .eq("org_id", data.orgId);
     if (error) throw new Error(error.message);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "update",
@@ -252,7 +253,7 @@ export const createOrganization = createServerFn({ method: "POST" })
 
     await supabase.from("profiles").upsert({ id: userId });
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: org.id,
       user_id: userId,
       action: "create",
@@ -339,7 +340,7 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
           .eq("id", target.id)
           .eq("org_id", data.orgId);
         if (error) throw new Error(error.message);
-        await supabase.from("audit_log").insert({
+        await writeAudit({
           org_id: data.orgId,
           user_id: userId,
           action: "reactivate",
@@ -362,7 +363,7 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
         .select("id")
         .single();
       if (error) throw new Error(error.message);
-      await supabase.from("audit_log").insert({
+      await writeAudit({
         org_id: data.orgId,
         user_id: userId,
         action: "create",
@@ -382,7 +383,7 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
       .eq("id", target.id)
       .eq("org_id", data.orgId);
     if (error) throw new Error(error.message);
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "archive",

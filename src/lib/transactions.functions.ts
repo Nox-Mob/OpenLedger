@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -168,7 +169,7 @@ export const createTransaction = createServerFn({ method: "POST" })
         .insert(data.tagIds.map((tagId) => ({ transaction_id: tx.id, tag_id: tagId })));
     }
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "create",
@@ -226,7 +227,7 @@ export const voidTransaction = createServerFn({ method: "POST" })
       .eq("transaction_id", data.transactionId)
       .select("id");
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "void",

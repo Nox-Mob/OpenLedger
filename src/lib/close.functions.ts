@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -61,7 +62,7 @@ export const setBooksLock = createServerFn({ method: "POST" })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: data.lockedThrough ? "lock_books" : "unlock_books",
@@ -250,7 +251,7 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       .update({ books_locked_through: data.fiscalYearEnd })
       .eq("id", data.orgId);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "close_fiscal_year",

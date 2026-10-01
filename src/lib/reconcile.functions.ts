@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { addDays, daysBetween } from "./dates";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -31,7 +32,7 @@ async function audit(
   before: unknown,
   after: unknown,
 ) {
-  await supabase.from("audit_log").insert({
+  await writeAudit({
     org_id: orgId,
     user_id: userId,
     action,
