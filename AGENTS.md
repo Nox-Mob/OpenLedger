@@ -24,3 +24,5 @@
 - Report math lives in src/lib/report-math.ts (pure, tested); balance sheet rolls prior fiscal years into retained earnings / net assets.
 - Void: blocked if in a completed reconciliation; idempotent (posted→void only); unticks in-progress stamps and unlinks bank rows.
 - Tests: bunx vitest run <files>; tenant isolation SQL in supabase/tests/tenant_isolation.sql.
+- Double-post: transactions.idempotency_key unique per org; forms send one key per submission, bank posts use `bank:<id>`. Keep both.
+- Sample data lives only in supabase/seed/demo.sql (run by hand on dev/test DBs); never seed in migrations.

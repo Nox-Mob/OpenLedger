@@ -366,8 +366,13 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       description: bank.description,
       source: "import",
       created_by: userId,
+      // One ledger transaction per bank row, enforced by a unique index.
+      idempotency_key: `bank:${bank.id}`,
     });
-    if (txError) throw new Error(txError.message);
+    if (txError) {
+      if (txError.code === "23505") throw new Error("Already posted to the ledger");
+      throw new Error(txError.message);
+    }
 
     const { error: eError } = await supabase.from("entries").insert([
       { transaction_id: txId, account_id: bank.account_id, amount_cents: bank.amount_cents },
@@ -385,10 +390,17 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       throw new Error(eError.message);
     }
 
-    await supabase
+    const { data: claimed, error: cErr } = await supabase
       .from("bank_transactions")
       .update({ transaction_id: txId, needs_review: false })
-      .eq("id", data.bankTransactionId);
+      .eq("id", data.bankTransactionId)
+      .is("transaction_id", null)
+      .select("id");
+    if (cErr || !claimed?.length) {
+      // Someone else linked it first: undo our copy so the row is posted once.
+      await supabase.from("transactions").update({ status: "void" }).eq("id", txId);
+      throw new Error("Already posted to the ledger");
+    }
 
     await supabase.from("audit_log").insert({
       org_id: data.orgId,

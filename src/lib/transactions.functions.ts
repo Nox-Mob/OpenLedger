@@ -19,6 +19,8 @@ const createSchema = z.object({
   source: z.enum(["manual", "import", "opening_balance", "adjustment", "transfer"]).default("manual"),
   entries: z.array(entrySchema).min(2),
   tagIds: z.array(z.string().uuid()).optional(),
+  /** One per form submission; a repeat with the same key returns the first transaction. */
+  idempotencyKey: z.string().min(8).max(120).optional(),
 });
 
 export const listTransactions = createServerFn({ method: "GET" })
@@ -84,6 +86,16 @@ export const createTransaction = createServerFn({ method: "POST" })
       );
     }
 
+    if (data.idempotencyKey) {
+      const { data: prior } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("org_id", data.orgId)
+        .eq("idempotency_key", data.idempotencyKey)
+        .maybeSingle();
+      if (prior) return { id: prior.id as string, duplicate: true };
+    }
+
     const { data: tx, error: txError } = await supabase
       .from("transactions")
       .insert({
@@ -93,10 +105,19 @@ export const createTransaction = createServerFn({ method: "POST" })
         description: data.description,
         source: data.source,
         created_by: userId,
+        idempotency_key: data.idempotencyKey ?? null,
       })
       .select("id")
       .single();
-    if (txError) throw new Error(txError.message);
+    if (txError) {
+      // Lost a race with an identical concurrent submit: return the winner.
+      if (txError.code === "23505" && data.idempotencyKey) {
+        const { data: prior } = await supabase
+          .from("transactions").select("id").eq("org_id", data.orgId).eq("idempotency_key", data.idempotencyKey).maybeSingle();
+        if (prior) return { id: prior.id as string, duplicate: true };
+      }
+      throw new Error(txError.message);
+    }
 
     const entries = data.entries.map((e) => ({
       transaction_id: tx.id,
