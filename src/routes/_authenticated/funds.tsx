@@ -118,7 +118,7 @@ function FundsPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">Funds, Categories & Tags</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Organize your transactions — restricted funds for grants, categories for detail, tags for
+        Organize your transactions — basic fund tags (not full fund accounting yet) for grants, categories for detail, tags for
         anything.
       </p>
 

@@ -90,6 +90,20 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
       throw new Error("Opening balances can only use active accounts in this organization.");
     }
     const { supabase, userId } = context;
+    // One live opening balance per account: retries/double-clicks can't stack them.
+    const { data: existing } = await supabase
+      .from("entries")
+      .select("id, transactions!inner(id, source, status, org_id)")
+      .eq("account_id", data.accountId)
+      .eq("transactions.org_id", data.orgId)
+      .eq("transactions.source", "opening_balance")
+      .eq("transactions.status", "posted")
+      .limit(1);
+    if (existing?.length) {
+      throw new Error(
+        "This account already has an opening balance. Void it first if it needs to change.",
+      );
+    }
     const { data: tx, error: txError } = await supabase
       .from("transactions")
       .insert({
@@ -98,10 +112,14 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
         description: "Opening balance",
         source: "opening_balance",
         created_by: userId,
+        idempotency_key: `opening:${data.accountId}:${data.date}:${data.amountCents}`,
       })
       .select("id")
       .single();
-    if (txError) throw new Error(txError.message);
+    if (txError) {
+      if (txError.code === "23505") return { ok: true, duplicate: true };
+      throw new Error(txError.message);
+    }
 
     const { error } = await supabase.from("entries").insert([
       { transaction_id: tx.id, account_id: data.accountId, amount_cents: data.amountCents },

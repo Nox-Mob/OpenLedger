@@ -31,9 +31,12 @@ async def main():
             await page.wait_for_timeout(500)
         else: raise SystemExit("Sign-in failed: " + (await page.inner_text("body"))[:300])
         await page.wait_for_timeout(2000)
+        boxes = page.get_by_role("checkbox")
+        for i in range(await boxes.count()):
+            if not await boxes.nth(i).is_checked(): await boxes.nth(i).click()
         for btn in ("I understand", "Continue", "Accept"):
             loc = page.get_by_role("button", name=btn)
-            if await loc.count(): await loc.first.click()
+            if await loc.count() and await loc.first.is_enabled(): await loc.first.click(); await page.wait_for_timeout(1500)
         for path in PAGES:
             await page.goto(BASE + path, wait_until="networkidle")
             body = (await page.inner_text("body")).strip()

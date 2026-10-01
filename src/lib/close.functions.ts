@@ -1,7 +1,9 @@
+import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
+import { fiscalYearStart } from "./dates";
 
 // ---------- Books lock + year-end close (admin only) ----------
 
@@ -61,7 +63,7 @@ export const setBooksLock = createServerFn({ method: "POST" })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: data.lockedThrough ? "lock_books" : "unlock_books",
@@ -100,11 +102,10 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
       .eq("id", data.orgId)
       .single();
     const startMonth = (org?.fiscal_year_start_month ?? 1) as number;
-    const end = new Date(`${data.fiscalYearEnd}T00:00:00Z`);
-    const start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-    start.setUTCMonth(start.getUTCMonth() - 12);
-    start.setUTCDate(start.getUTCDate() + 1);
-    const startISO = start.toISOString().slice(0, 10);
+    const startISO = fiscalYearStart(
+      data.fiscalYearEnd,
+      (org?.fiscal_year_start_month ?? 1) as number,
+    );
 
     const { data: rows, error } = await supabase
       .from("entries")
@@ -173,11 +174,10 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       .select("fiscal_year_start_month")
       .eq("id", data.orgId)
       .single();
-    const end = new Date(`${data.fiscalYearEnd}T00:00:00Z`);
-    const start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-    start.setUTCMonth(start.getUTCMonth() - 12);
-    start.setUTCDate(start.getUTCDate() + 1);
-    const startISO = start.toISOString().slice(0, 10);
+    const startISO = fiscalYearStart(
+      data.fiscalYearEnd,
+      (org?.fiscal_year_start_month ?? 1) as number,
+    );
 
     const { data: rows, error } = await supabase
       .from("entries")
@@ -191,52 +191,17 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       .in("accounts.type", ["revenue", "expense"]);
     if (error) throw new Error(error.message);
 
-    // One closing entry per income-statement account, zeroing it out into equity.
-    const byAccount = new Map<string, number>();
-    for (const r of (rows ?? []) as any[]) {
-      byAccount.set(r.account_id, (byAccount.get(r.account_id) ?? 0) + r.amount_cents);
-    }
+    // Virtual close: reports derive retained earnings / net assets from the full ledger,
+    // so no closing transaction is posted (that would double-count). We record + lock.
     let netIncome = 0;
-    const closingEntries: { account_id: string; amount_cents: number }[] = [];
-    for (const [accountId, balance] of byAccount) {
-      if (balance === 0) continue;
-      closingEntries.push({ account_id: accountId, amount_cents: -balance });
-      netIncome += -balance; // equity side
-    }
-    if (closingEntries.length === 0) {
-      throw new Error("No income or expense activity in that fiscal year — nothing to close.");
-    }
-    closingEntries.push({ account_id: data.retainedEarningsAccountId, amount_cents: -netIncome });
-
-    // Lock first so the closing transaction (dated on the last day) is the last one in.
-    const { data: tx, error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        org_id: data.orgId,
-        transaction_date: data.fiscalYearEnd,
-        description: `Year-end close for fiscal year ending ${data.fiscalYearEnd}`,
-        source: "closing",
-        created_by: userId,
-        idempotency_key: data.idempotencyKey,
-      })
-      .select("id")
-      .single();
-    if (txError) {
-      if (txError.code === "23505") return { ok: true, duplicate: true };
-      throw new Error(txError.message);
-    }
-    const { error: eErr } = await supabase
-      .from("entries")
-      .insert(closingEntries.map((e) => ({ ...e, transaction_id: tx.id })));
-    if (eErr) {
-      await supabase.from("transactions").delete().eq("id", tx.id);
-      throw new Error(eErr.message);
-    }
+    for (const r of (rows ?? []) as any[]) netIncome += -r.amount_cents;
+    netIncome = netIncome === 0 ? 0 : netIncome;
+    void data.idempotencyKey;
 
     const { error: cErr } = await supabase.from("period_closes").insert({
       org_id: data.orgId,
       fiscal_year_end: data.fiscalYearEnd,
-      transaction_id: tx.id,
+      transaction_id: null,
       net_income_cents: netIncome,
       closed_by: userId,
     });
@@ -250,12 +215,12 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       .update({ books_locked_through: data.fiscalYearEnd })
       .eq("id", data.orgId);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "close_fiscal_year",
       entity: "period_close",
-      entity_id: tx.id,
+      entity_id: data.orgId,
       after: { fiscal_year_end: data.fiscalYearEnd, net_income_cents: netIncome },
     });
     return { ok: true, netIncomeCents: netIncome };

@@ -111,6 +111,14 @@ function ReconcileWorkspace() {
       <td className="px-3 py-2">
         {e.description}
         {badge && <span className="ml-2 rounded bg-muted px-1.5 text-[10px]">{badge}</span>}
+        {(e as any).beforePeriod && (
+          <span
+            className="ml-2 rounded bg-accent px-1.5 text-[10px] text-accent-foreground"
+            title="Dated before this statement period. Only tick it if it actually cleared on this statement."
+          >
+            Earlier period
+          </span>
+        )}
       </td>
       <td className="tnum px-3 py-2 text-right">{show(e.amountCents)}</td>
     </tr>

@@ -7,6 +7,7 @@ function mockSupabase(allRows: any[]) {
   const builder: any = {
     select: () => builder,
     eq: () => builder,
+    neq: () => builder,
     lte: () => builder,
     order: () => builder,
     range: (from: number, to: number) =>

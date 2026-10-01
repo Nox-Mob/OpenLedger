@@ -29,6 +29,8 @@ export async function fetchLedger(supabase: any, orgId: string, to?: string): Pr
       )
       .eq("transactions.org_id", orgId)
       .eq("transactions.status", "posted")
+      // Legacy physical closing entries would double-count derived retained earnings.
+      .neq("transactions.source", "closing")
       .order("id");
     if (to) query = query.lte("transactions.transaction_date", to);
     const { data, error } = await query.range(from, from + LEDGER_PAGE - 1);

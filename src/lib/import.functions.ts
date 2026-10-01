@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -157,7 +158,7 @@ export const importBankRows = createServerFn({ method: "POST" })
       .update({ rows_imported: imported, rows_duplicate: duplicates })
       .eq("id", batchId);
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "import",
@@ -236,7 +237,7 @@ export const undoImportBatch = createServerFn({ method: "POST" })
       .update({ status: "undone" })
       .eq("id", data.batchId)
       .eq("org_id", data.orgId);
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "undo_import",
@@ -574,7 +575,7 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       throw new Error("Already posted to the ledger");
     }
 
-    await supabase.from("audit_log").insert({
+    await writeAudit({
       org_id: data.orgId,
       user_id: userId,
       action: "post_from_bank",

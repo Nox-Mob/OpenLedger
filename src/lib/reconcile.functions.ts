@@ -1,3 +1,4 @@
+import { writeAudit } from "./audit";
 import { addDays, daysBetween } from "./dates";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -31,7 +32,7 @@ async function audit(
   before: unknown,
   after: unknown,
 ) {
-  await supabase.from("audit_log").insert({
+  await writeAudit({
     org_id: orgId,
     user_id: userId,
     action,
@@ -81,6 +82,8 @@ async function loadWorkspace(supabase: Supa, rec: any) {
       description: (e.memo || e.transactions.description) as string,
       amountCents: e.amount_cents as number,
       cleared: e.reconciliation_id === rec.id,
+      // Uncleared items from earlier periods stay visible as outstanding, but are flagged.
+      beforePeriod: (e.transactions.transaction_date as string) < rec.period_start,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
@@ -302,6 +305,7 @@ export const getReconciliation = createServerFn({ method: "GET" })
             description: e.memo || e.transactions?.description || "",
             amountCents: e.amount_cents,
             cleared: true,
+            beforePeriod: false,
           }))
           .sort((a, b) => a.date.localeCompare(b.date)),
         bankRows: [],
