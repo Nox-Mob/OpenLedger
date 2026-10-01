@@ -10,6 +10,11 @@ BEGIN
       email_change_token_new, email_change)
     VALUES (owner, 'victim-' || owner || '@example.test', '00000000-0000-0000-0000-000000000000',
       'authenticated', 'authenticated', '', '', '', '');
+    INSERT INTO auth.users (id, email, instance_id, aud, role, confirmation_token, recovery_token,
+      email_change_token_new, email_change)
+    VALUES ('11111111-1111-1111-1111-111111111111', 'stranger@example.test', '00000000-0000-0000-0000-000000000000',
+      'authenticated', 'authenticated', '', '', '', '')
+    ON CONFLICT (id) DO NOTHING;
     INSERT INTO public.organizations (id, name, created_by) VALUES (victim_org, 'Victim Org', owner);
   EXCEPTION WHEN others THEN
     SELECT id INTO victim_org FROM public.organizations LIMIT 1;
