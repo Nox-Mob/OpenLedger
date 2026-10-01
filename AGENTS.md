@@ -11,25 +11,19 @@
 
 # AGENTS.md — Open Ledger
 
-- Double-entry: createTransaction + deferred trigger require ≥2 entries, sum=0, positive and negative (void exempt).
-- amount_cents >0 debit, <0 credit; displayBalance() flips credit-normal types.
-- Never edit entries in place: void + recreate (audit trail).
-- Bank imports are evidence only (FITID, else hash incl. row_seq); batches undoable until a row posts.
-- Terminology is presentation-only: org level + term_overrides; screens add user overrides, reports/PDFs use org only.
-- Org data uses requireSupabaseAuth + member RLS; org settings/account setup are admin-only and audited.
-- Sample data: demo@demo.org / demo1234 (Acme + Riverside), manual dev/test seed only; hint only in dev/preview.
-- Reconciliation stamps entries.reconciliation_id; finish needs difference=0; completed ones lock entries via triggers.
-- Accounts come from the catalog; archive/reactivate, never delete. Archived accounts remain in history and reject new entries.
-- Dates are YYYY-MM-DD; todayISO uses org.timezone; never toISOString transaction dates.
-- Report math is pure/tested; balance sheet rolls prior years into retained earnings/net assets.
-- Void is idempotent, blocked in completed reconciliation, and unticks/unlinks in-progress evidence.
-- Tests: bun run test, bun run check:migrations, DATABASE_URL=... bun run test:db (supabase/tests/*.sql).
-- Double-post: unique org idempotency keys; forms send one per submission, bank uses `bank:<id>`.
-- AI PDF requires org opt-in, upload ack, limits; must balance or send acceptMismatch.
-- Legal acceptance is append-only/versioned; U.S.-first drafts separate hosted/self-hosted terms and make no GDPR claim.
-- CI (.github/workflows/ci.yml) is report-only: never auto-fixes/commits; DB checks run on a disposable local DB via scripts/ci; SQL tests end with RAISE 'RESULT k=PASS;...'.
-- Startup never resets data: migrations are append-only and CI rejects DELETE/TRUNCATE/DROP TABLE in them; test scripts require a local DB; demo seed refuses DBs with real orgs.
-- Ledger immutability is DB-enforced: transactions only posted→void; entries only reconciliation_id; bank rows evidence-only (link must match amount/account).
-- Audit rows are written only via writeAudit() (service role, src/lib/audit.ts); users have no INSERT on audit_log.
-- Year-end close is virtual (period_close + lock, no closing transaction); reports exclude legacy source='closing'.
-- Currency: two-decimal only (no JPY), frozen once transactions exist.
+- Double-entry: ≥2 entries, sum=0, both signs (deferred trigger; void exempt). amount_cents >0 debit, <0 credit.
+- DB-enforced immutability: transactions only posted→void; entries only reconciliation_id; bank rows are evidence (FITID/hash+row_seq; link must match amount/account).
+- Void: idempotent, blocked by completed reconciliation, unticks/unlinks in-progress evidence.
+- Reconciliation finish needs difference=0 (DB trigger); completed ones lock entries.
+- Audit rows only via writeAudit() (src/lib/audit.ts, service role); no user INSERT.
+- Org data: requireSupabaseAuth + assertCan + member RLS; settings/accounts admin-only.
+- Terminology is presentation-only; reports/PDFs use org level only.
+- Accounts: catalog-based, archive never delete.
+- Dates YYYY-MM-DD in org.timezone; never toISOString.
+- Reports: pure math; retained earnings derived; year-end close is virtual (no closing tx; legacy source='closing' excluded).
+- Currency: two-decimal only, frozen once transactions exist.
+- Idempotency keys: one per form submit; `bank:<id>`, `opening:<acct>:...`.
+- AI PDF: org opt-in, upload ack, limits, balance or acceptMismatch.
+- Legal acceptance append-only/versioned; U.S.-first; no GDPR claim.
+- Demo: demo@demo.org / demo1234, manual dev seed only.
+- CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
