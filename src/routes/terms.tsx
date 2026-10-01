@@ -26,14 +26,14 @@ function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      summary="These draft terms distinguish the hosted Open Ledger service from installations you operate yourself."
+      summary="These terms distinguish the hosted Open Ledger service from installations you operate yourself."
     >
       <section>
-        <h2>Important draft notice</h2>
+        <h2>Who operates the hosted service</h2>
         <p>
-          These terms use placeholder operator and jurisdiction details and must be reviewed by
-          qualified legal counsel before a public launch. The current hosted-service operator is
-          listed as {LEGAL_CONFIG.operatorName}, at {LEGAL_CONFIG.mailingAddress}.
+          The hosted Open Ledger service is operated by {LEGAL_CONFIG.operatorName}. These terms
+          govern your use of that hosted service. The governing-law and venue terms remain subject
+          to review by qualified legal counsel before public launch.
         </p>
       </section>
       <section>
@@ -103,7 +103,10 @@ function TermsPage() {
         <h2>8. Governing law and contact</h2>
         <p>
           Placeholder governing law and venue: {LEGAL_CONFIG.jurisdiction}. Questions:{" "}
-          {LEGAL_CONFIG.supportEmail}.
+          <a className="text-primary underline" href={`mailto:${LEGAL_CONFIG.supportEmail}`}>
+            {LEGAL_CONFIG.supportEmail}
+          </a>
+          .
         </p>
       </section>
     </LegalPage>
