@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrgContext } from "@/components/AppShell";
 import { getBooksStatus, setBooksLock, previewYearEndClose, closeFiscalYear } from "@/lib/close.functions";
 import { getAccountSetup } from "@/lib/org.functions";
-import { formatMoney } from "@/lib/money";
+import { formatCents } from "@/lib/money";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings/close")({
@@ -41,7 +41,8 @@ function CloseBooksSettings() {
   if (!org) return null;
   const isAdmin = org.role === "admin";
   const status = statusQuery.data;
-  const accounts = ((accountsQuery.data as any)?.accounts ?? []) as any[];
+  const accountsRaw: any = accountsQuery.data;
+  const accounts = (Array.isArray(accountsRaw) ? accountsRaw : accountsRaw?.accounts ?? []) as any[];
   const equityAccounts = accounts.filter((a) => a.type === "equity" && a.is_active !== false);
   const lockedThrough = status?.booksLockedThrough ?? null;
 
