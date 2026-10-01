@@ -23,8 +23,8 @@ async def main():
         page.on("response", lambda r: r.status >= 500 and problems.append(f"{page.url} HTTP {r.status} {r.url[:120]}"))
         await page.goto(f"{BASE}/auth", wait_until="networkidle")
         await page.wait_for_timeout(1500)
-        await page.get_by_label("Email").fill("demo@demo.org")
-        await page.get_by_label("Password").fill("demo1234")
+        await page.locator("input[type=email]").fill("demo@demo.org")
+        await page.locator("input[type=password]").fill("demo1234")
         await page.get_by_role("button", name="Sign in").click()
         for _ in range(40):
             if "/auth" not in page.url: break
