@@ -93,15 +93,32 @@ jobs:
         run: supabase db lint --level error --fail-on error
 
   lint:
-    name: Lint (report only)
+    name: Lint (code problems — blocking)
     runs-on: ubuntu-latest
-    # Style findings are reported but don't block; flip to false once the backlog is cleared.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: eslint
+        run: |
+          bunx eslint . --format stylish 2>&1 | tee lint.log
+          code=${PIPESTATUS[0]}
+          if [ $code -ne 0 ]; then
+            echo "### ❌ Lint errors (real code problems, build blocked)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"; grep -E "error" lint.log | head -40 >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $code
+
+  format:
+    name: Formatting (report only)
+    runs-on: ubuntu-latest
+    # Whitespace/style only. Reported, never auto-applied; run `bun run format` locally to fix.
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bunx eslint . --format stylish --max-warnings=-1 || (echo "### ⚠️ Lint findings (not blocking)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
+      - run: bun run format:check || (echo "### ⚠️ Files not formatted — run \`bun run format\` locally (not blocking)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
 
   dependency-audit:
     name: Dependency vulnerabilities
