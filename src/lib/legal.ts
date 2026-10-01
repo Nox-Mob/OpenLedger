@@ -1,15 +1,15 @@
 export const LEGAL_CONFIG = {
-  operatorName: "[HOSTING COMPANY LEGAL NAME]",
+  operatorName: "Alex Weeks Home Lab",
   mailingAddress: "[HOSTING COMPANY MAILING ADDRESS]",
   jurisdiction: "[STATE AND COUNTY]",
-  privacyEmail: "privacy@example.com",
-  supportEmail: "support@example.com",
+  privacyEmail: "support@awhl.com",
+  supportEmail: "support@awhl.com",
   effectiveDate: "October 1, 2026",
 } as const;
 
 export const LEGAL_VERSIONS = {
   terms: "2026-10-01",
-  privacy: "2026-10-01",
+  privacy: "2026-10-01-2",
   non_advice: "2026-10-01",
 } as const;
 

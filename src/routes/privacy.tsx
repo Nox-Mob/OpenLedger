@@ -8,13 +8,13 @@ export const Route = createFileRoute("/privacy")({
       { title: "Privacy Policy — Open Ledger" },
       {
         name: "description",
-        content: "How the hosted Open Ledger service handles account and bookkeeping data.",
+        content: "How Alex Weeks Home Lab protects Open Ledger data and preserves user ownership.",
       },
       { property: "og:title", content: "Privacy Policy — Open Ledger" },
       {
         property: "og:description",
         content:
-          "Privacy practices for hosted Open Ledger and responsibilities for self-hosted installations.",
+          "Open Ledger users own their data. We do not sell it or share it for anyone else's use.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -27,97 +27,173 @@ function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      summary="This U.S.-first draft explains data handling for the hosted service and separates it from self-hosted installations."
+      summary="You own your data, 100%. We do not sell it or share it for anyone else’s use. Because we aren’t like that."
     >
       <section>
-        <h2>Important draft notice</h2>
+        <h2>1. Scope and who we are</h2>
         <p>
-          This policy uses placeholder company and contact details and requires legal review before
-          launch. It does not claim GDPR compliance or describe an EU/UK offering.
+          This Privacy Policy describes how {LEGAL_CONFIG.operatorName} (“we,” “us,” or “our”)
+          handles information when it operates the hosted Open Ledger service, website, and related
+          support (together, the “Service”). It applies to account holders, organization members,
+          and visitors who use the hosted Service.
+        </p>
+        <p>
+          If you use a self-hosted copy of Open Ledger, the person or organization operating that
+          installation controls its data practices. This policy does not govern independent,
+          self-hosted installations that we do not operate.
         </p>
       </section>
       <section>
-        <h2>1. Who controls your data</h2>
+        <h2>2. Your data belongs to you</h2>
         <p>
-          For the hosted service, the placeholder operator is {LEGAL_CONFIG.operatorName},{" "}
-          {LEGAL_CONFIG.mailingAddress}. For a self-hosted installation, the person or organization
-          operating that installation controls its data practices; contact that operator directly.
+          You retain 100% ownership of the content and records you or your authorized users enter,
+          import, upload, or create through Open Ledger (“Your Data”). Using the Service does not
+          transfer ownership of Your Data to us. You give us only the limited permission needed to
+          host, process, back up, secure, and display Your Data so we can provide features you choose
+          to use. This permission ends when Your Data is deleted, except for temporary backup copies
+          and records we must retain for security or legal reasons.
         </p>
       </section>
       <section>
-        <h2>2. Information we process</h2>
+        <h2>3. Information we collect</h2>
         <ul>
           <li>
-            Account details, such as email address, display name, sign-in records, and organization
-            membership.
+            <strong>Account information:</strong> email address, display name, sign-in records,
+            password-verification information, and organization membership and role.
           </li>
           <li>
-            Bookkeeping records, including accounts, transactions, imported statement data,
-            projects, funds, reports, and settings.
+            <strong>Your bookkeeping data:</strong> organizations, accounts, transactions, imported
+            statements, attachments, projects, funds, reconciliations, reports, and settings.
           </li>
           <li>
-            Operational information needed for security, reliability, support, limits, and
-            troubleshooting.
+            <strong>Technical and usage information:</strong> IP address, browser and device details,
+            request times, security events, error information, and feature usage needed to operate,
+            protect, and troubleshoot the Service.
           </li>
-          <li>Legal acceptance records showing the document version and time accepted.</li>
+          <li>
+            <strong>Support communications:</strong> information you include when you contact us.
+          </li>
+          <li>
+            <strong>Consent and legal records:</strong> the document version and time you accepted
+            applicable terms, notices, or optional features.
+          </li>
         </ul>
+        <p>We do not intentionally collect information we do not need to provide the Service.</p>
       </section>
       <section>
-        <h2>3. How information is used</h2>
+        <h2>4. How we use information</h2>
         <p>
-          We use information to provide and secure the service, authenticate users, isolate
-          organizations, generate requested reports, support imports, enforce usage limits,
-          investigate errors, communicate about the service, and comply with law.
+          We use information only to provide and maintain Open Ledger; authenticate users and
+          enforce organization permissions; process transactions, imports, reconciliations, and
+          reports you request; protect accounts and prevent abuse; diagnose errors and improve
+          reliability; respond to support requests; communicate important Service or policy
+          changes; enforce limits; and meet binding legal obligations.
         </p>
       </section>
       <section>
-        <h2>4. AI-assisted PDF reading</h2>
+        <h2>5. We do not sell or share your data</h2>
         <p>
-          AI reading is off until an organization administrator enables it. Each upload also
-          requires a user acknowledgement. Extracted results may be wrong and must be reviewed. The
-          production policy must name the processing provider, retention terms, and any applicable
-          subcontractors before launch.
+          We do not sell, rent, trade, or license Your Data or personal information. We do not share
+          it with advertisers, data brokers, marketers, other Open Ledger organizations, or anyone
+          who wants to use it for their own purposes. We do not use Your Data to advertise to you or
+          to build advertising profiles. Because we aren’t like that.
+        </p>
+        <p>
+          To run the hosted Service, narrowly scoped infrastructure providers may process data on
+          our behalf for hosting, database, authentication, email delivery, security, backups, and
+          features you deliberately request. They are service providers, not owners of Your Data,
+          and may process it only to deliver those services to us. We disclose only what is needed
+          for that purpose. We may also disclose specific information if a valid law, court order,
+          or legal process requires it, or when necessary to prevent imminent harm or defend the
+          Service and its users. We will challenge overbroad requests when reasonably possible.
         </p>
       </section>
       <section>
-        <h2>5. Sharing</h2>
+        <h2>6. Optional AI-assisted PDF reading</h2>
         <p>
-          Information may be processed by infrastructure, authentication, email, security, and AI
-          service providers only as needed to operate requested features. We may also disclose
-          information when legally required, to protect rights and safety, or as part of a corporate
-          transaction. A counsel-reviewed provider list should be added before launch.
+          AI-assisted PDF reading is optional and off until an organization administrator enables
+          it. Each upload requires a separate acknowledgement. When you choose this feature, the
+          uploaded statement is sent to our AI processing provider solely to extract the requested
+          transaction information. Do not use this feature if you do not want that document
+          processed by the provider. AI output may be wrong and must be reviewed before posting.
         </p>
       </section>
       <section>
-        <h2>6. Retention and security</h2>
+        <h2>7. Cookies and local storage</h2>
         <p>
-          We use access controls and organization-level separation, but no system is perfectly
-          secure. Retention periods, backup schedules, deletion procedures, and incident contacts
-          must be finalized before production use. Users should keep independent copies of records
-          they must retain.
+          The Service uses cookies or similar browser storage needed to keep you signed in, protect
+          your session, remember essential preferences, and operate requested features. We do not
+          use advertising cookies or cross-site behavioral tracking.
         </p>
       </section>
       <section>
-        <h2>7. U.S. privacy choices</h2>
+        <h2>8. Retention and deletion</h2>
         <p>
-          You may request access, correction, export, or deletion by contacting{" "}
-          {LEGAL_CONFIG.privacyEmail}. Some records may be retained where required for security,
-          legal obligations, dispute resolution, or accounting integrity. State-specific notices and
-          request verification procedures must be reviewed before launch.
+          We retain account information and Your Data while your account or organization remains
+          active and as needed to provide the Service. You may request deletion by contacting us.
+          Deleted information may remain temporarily in encrypted backups until those backups age
+          out. We may retain limited security logs, acceptance records, or other information when
+          reasonably necessary to prevent fraud, resolve disputes, enforce agreements, or comply
+          with law. Deleting bookkeeping records may be limited where Open Ledger preserves an audit
+          trail; in that case, you may delete the organization or account instead.
         </p>
       </section>
       <section>
-        <h2>8. Children and changes</h2>
+        <h2>9. Security and account responsibility</h2>
         <p>
-          The hosted service is not directed to children under 13. We may update this policy and
-          will request acceptance when a material new version applies.
+          We use access controls, organization-level data separation, encrypted connections,
+          password protections, audit records, and other safeguards designed to protect information.
+          No system can guarantee absolute security. Keep your credentials confidential, limit
+          organization access to people you trust, promptly remove users who no longer need access,
+          and maintain independent copies of records you are legally required to keep.
         </p>
       </section>
       <section>
-        <h2>9. Contact</h2>
+        <h2>10. Your choices and rights</h2>
         <p>
-          Privacy questions and requests: {LEGAL_CONFIG.privacyEmail}. Mailing address:{" "}
-          {LEGAL_CONFIG.mailingAddress}.
+          You may ask to access, correct, export, or delete personal information associated with
+          your account. Organization administrators control access to organization records. We may
+          need to verify your identity and authority before completing a request. We will honor
+          applicable U.S. state privacy rights and will not discriminate against you for exercising
+          them. We do not sell or share personal information for cross-context behavioral
+          advertising, so there is no sale or advertising share to opt out of.
+        </p>
+      </section>
+      <section>
+        <h2>11. Data location</h2>
+        <p>
+          The hosted Service may process and store information in the United States or another
+          location where our service providers operate. If you access the Service from outside the
+          United States, your information may be transferred to and processed in the United States.
+          This policy does not represent that the Service is offered under, or certified for,
+          European Union or United Kingdom data-protection frameworks.
+        </p>
+      </section>
+      <section>
+        <h2>12. Children</h2>
+        <p>
+          The Service is intended for adults and organizations and is not directed to children under
+          13. We do not knowingly collect personal information from children under 13. If you
+          believe a child provided information to us, contact us so we can investigate and delete it.
+        </p>
+      </section>
+      <section>
+        <h2>13. Changes to this policy</h2>
+        <p>
+          We may update this policy as the Service or law changes. We will post the updated effective
+          date and, when a material change applies to registered users, provide notice and request
+          acceptance of the new version in the Service.
+        </p>
+      </section>
+      <section>
+        <h2>14. Contact us</h2>
+        <p>
+          Contact {LEGAL_CONFIG.operatorName} at{" "}
+          <a className="text-primary underline" href={`mailto:${LEGAL_CONFIG.privacyEmail}`}>
+            {LEGAL_CONFIG.privacyEmail}
+          </a>{" "}
+          with privacy questions, support requests, or requests to access, correct, export, or
+          delete your information.
         </p>
       </section>
     </LegalPage>
