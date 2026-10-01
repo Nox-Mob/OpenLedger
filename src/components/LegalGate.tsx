@@ -7,13 +7,17 @@ import { acceptCurrentLegalDocuments, getLegalStatus } from "@/lib/legal.functio
 
 export function LegalGate({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const status = useQuery({ queryKey: ["legal-status"], queryFn: () => getLegalStatus() });
+  const status = useQuery({ queryKey: ["legal-status"], queryFn: () => getLegalStatus(), retry: 1 });
   const [agreed, setAgreed] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (status.isLoading) return <div className="min-h-screen bg-background" />;
+  if (status.isLoading) return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-sm text-muted-foreground">
+      Checking the current notices…
+    </div>
+  );
   if (status.isError) return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
