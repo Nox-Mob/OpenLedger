@@ -20,13 +20,20 @@ function isAbort(e: unknown): boolean {
   return false;
 }
 const g = globalThis as {
-  process?: { on?: (ev: string, fn: (e: unknown) => void) => void };
+  process?: { on?: (ev: string, fn: (e: unknown) => void) => void; exit?: (code: number) => void };
   __olAbortGuard?: boolean;
 };
 if (typeof window === "undefined" && g.process?.on && !g.__olAbortGuard) {
   g.__olAbortGuard = true;
   g.process.on("unhandledRejection", (e) => {
     if (!isAbort(e)) console.error(e);
+  });
+  // The socket "aborted" error can also arrive as an uncaught exception. Drop only that;
+  // anything else still crashes the process as before.
+  g.process.on("uncaughtException", (e) => {
+    if (isAbort(e)) return;
+    console.error(e);
+    g.process?.exit?.(1);
   });
 }
 
