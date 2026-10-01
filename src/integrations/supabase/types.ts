@@ -560,7 +560,7 @@ export type Database = {
           id: string
           net_income_cents: number
           org_id: string
-          transaction_id: string
+          transaction_id: string | null
         }
         Insert: {
           closed_by: string
@@ -569,7 +569,7 @@ export type Database = {
           id?: string
           net_income_cents: number
           org_id: string
-          transaction_id: string
+          transaction_id?: string | null
         }
         Update: {
           closed_by?: string
@@ -578,7 +578,7 @@ export type Database = {
           id?: string
           net_income_cents?: number
           org_id?: string
-          transaction_id?: string
+          transaction_id?: string | null
         }
         Relationships: [
           {
