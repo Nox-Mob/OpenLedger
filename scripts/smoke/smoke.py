@@ -21,11 +21,16 @@ async def main():
         page.on("console", lambda m: m.type == "error" and not any(i in m.text for i in IGNORE)
                 and problems.append(f"{page.url} console: {m.text[:200]}"))
         page.on("response", lambda r: r.status >= 500 and problems.append(f"{page.url} HTTP {r.status} {r.url[:120]}"))
-        await page.goto(f"{BASE}/auth")
+        await page.goto(f"{BASE}/auth", wait_until="networkidle")
+        await page.wait_for_timeout(1500)
         await page.get_by_label("Email").fill("demo@demo.org")
         await page.get_by_label("Password").fill("demo1234")
         await page.get_by_role("button", name="Sign in").click()
-        await page.wait_for_url(lambda u: "/auth" not in u, timeout=20000)
+        for _ in range(40):
+            if "/auth" not in page.url: break
+            await page.wait_for_timeout(500)
+        else: raise SystemExit("Sign-in failed: " + (await page.inner_text("body"))[:300])
+        await page.wait_for_timeout(2000)
         for btn in ("I understand", "Continue", "Accept"):
             loc = page.get_by_role("button", name=btn)
             if await loc.count(): await loc.first.click()
