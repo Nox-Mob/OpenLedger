@@ -111,8 +111,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Audit (fails on high/critical)
+        # Reviewed exceptions — keep this list short and dated. Each must be dev-only tooling
+        # whose input is our own source code, never user data or anything shipped to the app.
+        #   2026-10-01 brace-expansion (eslint/typescript-eslint -> minimatch): only expands
+        #   glob patterns from our own lint config. Remove once eslint pulls >=1.1.20 / >=5.0.11.
         run: |
-          bun audit --audit-level=high 2>&1 | tee audit.log
+          bun audit --audit-level=high \
+            --ignore=GHSA-mh99-v99m-4gvg --ignore=GHSA-rgw5-rvv9-x895 \
+            --ignore=GHSA-qhr7-859c-m2p7 --ignore=GHSA-6j4f-fj2g-mc7p 2>&1 | tee audit.log
           code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
             echo "### ❌ High/critical vulnerable packages found — update them manually" >> "$GITHUB_STEP_SUMMARY"
