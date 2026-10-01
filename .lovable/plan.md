@@ -2,6 +2,13 @@
 
 Goal: no new features. Find and fix what would embarrass a first release: security gaps, crashes, dead ends, confusing states.
 
+## 0. Real data is never deleted on startup or restart (top priority)
+- A first scan found nothing in the app's startup, setup steps, or database setup that clears data. The only delete commands are in the database rule tests, and those run on a throwaway test database.
+- Add guards anyway: the database test scripts refuse to run unless they're pointed at a local throwaway database. The sample-data script refuses to run if it finds any organization other than the two demo ones. Database setup steps are only ever added to, never re-run from scratch.
+- Add a CI check that blocks the build if any database setup step contains a delete, truncate, or drop-table command.
+- Restart test: create a real-looking organization, restart the app and backend, and confirm everything is still there.
+- Document in AGENTS.md and the README: "Startup never resets data."
+
 ## 1. Security sweep
 - Run the full backend security scan and database linter; fix every real finding (missing access rules, overly broad grants, functions without a fixed search path).
 - Review every server action for a missing role check or missing organization check (one-pass audit against the permissions list).
