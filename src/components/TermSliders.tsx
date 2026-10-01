@@ -34,7 +34,9 @@ export function TermSliders({
         return (
           <div key={item.key} className="px-4 py-3">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                {item.label}
+              </span>
               <span className="text-sm font-medium">{opts[idx]}</span>
             </div>
             <Slider
@@ -49,7 +51,9 @@ export function TermSliders({
             />
             <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
               {opts.map((o, i) => (
-                <span key={i} className={i === idx ? "text-foreground" : ""}>{o}</span>
+                <span key={i} className={i === idx ? "text-foreground" : ""}>
+                  {o}
+                </span>
               ))}
             </div>
             {overridden && resetLabel && !disabled && (

@@ -38,7 +38,10 @@ export const setBooksLock = createServerFn({ method: "POST" })
       .object({
         orgId: z.string().uuid(),
         // null clears the lock (unlock)
-        lockedThrough: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+        lockedThrough: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
       })
       .parse(input),
   )
@@ -74,7 +77,9 @@ export const setBooksLock = createServerFn({ method: "POST" })
 export const previewYearEndClose = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ orgId: z.string().uuid(), fiscalYearEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(input),
+    z
+      .object({ orgId: z.string().uuid(), fiscalYearEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -103,7 +108,9 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await supabase
       .from("entries")
-      .select("amount_cents, accounts!inner(type, org_id), transactions!inner(status, transaction_date, org_id)")
+      .select(
+        "amount_cents, accounts!inner(type, org_id), transactions!inner(status, transaction_date, org_id)",
+      )
       .eq("transactions.org_id", data.orgId)
       .eq("transactions.status", "posted")
       .gte("transactions.transaction_date", startISO)
@@ -174,7 +181,9 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabase
       .from("entries")
-      .select("account_id, amount_cents, accounts!inner(type), transactions!inner(status, transaction_date, org_id)")
+      .select(
+        "account_id, amount_cents, accounts!inner(type), transactions!inner(status, transaction_date, org_id)",
+      )
       .eq("transactions.org_id", data.orgId)
       .eq("transactions.status", "posted")
       .gte("transactions.transaction_date", startISO)
@@ -216,9 +225,9 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       if (txError.code === "23505") return { ok: true, duplicate: true };
       throw new Error(txError.message);
     }
-    const { error: eErr } = await supabase.from("entries").insert(
-      closingEntries.map((e) => ({ ...e, transaction_id: tx.id })),
-    );
+    const { error: eErr } = await supabase
+      .from("entries")
+      .insert(closingEntries.map((e) => ({ ...e, transaction_id: tx.id })));
     if (eErr) {
       await supabase.from("transactions").delete().eq("id", tx.id);
       throw new Error(eErr.message);

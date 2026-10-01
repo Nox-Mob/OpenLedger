@@ -9,7 +9,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Open Ledger" },
-      { name: "description", content: "Sign in to Open Ledger, free open-source accounting for small businesses and nonprofits." },
+      {
+        name: "description",
+        content:
+          "Sign in to Open Ledger, free open-source accounting for small businesses and nonprofits.",
+      },
       { property: "og:title", content: "Sign in — Open Ledger" },
       { property: "og:description", content: "Sign in to Open Ledger." },
     ],
@@ -80,7 +84,10 @@ function AuthPage() {
     }
     if (mode === "signup") {
       const issue = passwordIssue(password);
-      if (issue) { setError(issue); return; }
+      if (issue) {
+        setError(issue);
+        return;
+      }
     }
     setBusy(true);
     try {
@@ -89,7 +96,8 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: "/" });
       } else {
-        if (!legalAgreement) throw new Error("Agree to the Terms and Privacy Policy to create an account.");
+        if (!legalAgreement)
+          throw new Error("Agree to the Terms and Privacy Policy to create an account.");
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setMessage("Account created. Check your email to verify it, then sign in.");
@@ -115,7 +123,6 @@ function AuthPage() {
     });
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -155,8 +162,24 @@ function AuthPage() {
             />
             {mode === "signup" && (
               <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-                <input type="checkbox" required checked={legalAgreement} onChange={(event) => setLegalAgreement(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" />
-                <span>I agree to the <Link to="/terms" className="text-foreground underline">Terms of Service</Link> and acknowledge the <Link to="/privacy" className="text-foreground underline">Privacy Policy</Link>.</span>
+                <input
+                  type="checkbox"
+                  required
+                  checked={legalAgreement}
+                  onChange={(event) => setLegalAgreement(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-primary"
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-foreground underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and acknowledge the{" "}
+                  <Link to="/privacy" className="text-foreground underline">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
               </label>
             )}
             <input
@@ -172,7 +195,8 @@ function AuthPage() {
             />
             {mode === "signup" && (
               <p className="text-xs text-muted-foreground">
-                At least 8 characters with an uppercase letter, a lowercase letter, a number, and a symbol.
+                At least 8 characters with an uppercase letter, a lowercase letter, a number, and a
+                symbol.
               </p>
             )}
             {needsVerification && (
@@ -196,7 +220,10 @@ function AuthPage() {
           </form>
 
           {mode === "signin" && (
-            <a href="/reset-password" className="mt-3 block text-center text-sm text-muted-foreground hover:text-foreground">
+            <a
+              href="/reset-password"
+              className="mt-3 block text-center text-sm text-muted-foreground hover:text-foreground"
+            >
               Forgot your password?
             </a>
           )}
@@ -224,9 +251,15 @@ function AuthPage() {
             </div>
           )}
           <div className="mt-5 flex justify-center gap-3 border-t pt-4 text-xs text-muted-foreground">
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link to="/not-advice" className="hover:text-foreground">Not advice</Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link to="/not-advice" className="hover:text-foreground">
+              Not advice
+            </Link>
           </div>
         </div>
       </div>

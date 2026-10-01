@@ -21,7 +21,9 @@ export const getLegalStatus = createServerFn({ method: "GET" })
 export const acceptCurrentLegalDocuments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ terms: z.literal(true), privacy: z.literal(true), nonAdvice: z.literal(true) }).parse(input),
+    z
+      .object({ terms: z.literal(true), privacy: z.literal(true), nonAdvice: z.literal(true) })
+      .parse(input),
   )
   .handler(async ({ context }) => {
     const rows = [

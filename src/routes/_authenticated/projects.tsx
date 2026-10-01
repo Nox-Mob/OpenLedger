@@ -59,16 +59,34 @@ function ProjectsPage() {
       <h1 className="font-display text-2xl font-bold">Projects</h1>
       <p className="mt-1 text-sm text-muted-foreground">Budget vs actual spending, per project.</p>
 
-      <form onSubmit={submit} className="mt-5 flex max-w-xl items-end gap-3 rounded-lg border bg-card p-4">
+      <form
+        onSubmit={submit}
+        className="mt-5 flex max-w-xl items-end gap-3 rounded-lg border bg-card p-4"
+      >
         <div className="flex-1">
           <label className="text-sm font-medium">Project name</label>
-          <input required value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="e.g. Summer Food Program" />
+          <input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputCls}
+            placeholder="e.g. Summer Food Program"
+          />
         </div>
         <div className="w-36">
           <label className="text-sm font-medium">Budget</label>
-          <input inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} className={`${inputCls} tnum`} placeholder="0.00" />
+          <input
+            inputMode="decimal"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            className={`${inputCls} tnum`}
+            placeholder="0.00"
+          />
         </div>
-        <button type="submit" className="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        <button
+          type="submit"
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
           <Plus className="h-4 w-4" /> Add
         </button>
       </form>
@@ -91,14 +109,19 @@ function ProjectsPage() {
             <tbody>
               {(summaryQuery.data ?? []).map((p) => {
                 const remaining = p.budgetCents - p.spentCents;
-                const pct = p.budgetCents > 0 ? Math.min(100, Math.round((p.spentCents / p.budgetCents) * 100)) : 0;
+                const pct =
+                  p.budgetCents > 0
+                    ? Math.min(100, Math.round((p.spentCents / p.budgetCents) * 100))
+                    : 0;
                 return (
                   <tr key={p.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{p.status}</td>
                     <td className="tnum px-4 py-3 text-right">{formatCents(p.budgetCents)}</td>
                     <td className="tnum px-4 py-3 text-right">{formatCents(p.spentCents)}</td>
-                    <td className={`tnum px-4 py-3 text-right ${remaining < 0 ? "text-destructive" : ""}`}>
+                    <td
+                      className={`tnum px-4 py-3 text-right ${remaining < 0 ? "text-destructive" : ""}`}
+                    >
                       {formatCents(remaining)}
                     </td>
                     <td className="px-4 py-3">

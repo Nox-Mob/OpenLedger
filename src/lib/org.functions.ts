@@ -1,6 +1,8 @@
 import { isValidTimeZone } from "./dates";
 import { normalizeTerminology, cleanOverrides } from "./terminology";
-const overridesSchema = z.record(z.string(), z.enum(["simplest", "simple", "accounting"])).transform(cleanOverrides);
+const overridesSchema = z
+  .record(z.string(), z.enum(["simplest", "simple", "accounting"]))
+  .transform(cleanOverrides);
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -13,7 +15,9 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled)")
+      .select(
+        "role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled)",
+      )
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -85,7 +89,9 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled")
+      .select(
+        "name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled",
+      )
       .eq("id", data.orgId)
       .single();
 
@@ -207,7 +213,10 @@ export const createOrganization = createServerFn({ method: "POST" })
         name: z.string().min(1).max(120),
         orgType: z.enum(["nonprofit", "business"]),
         accountKeys: z.array(z.string().max(60)).max(100).optional(),
-        currency: z.string().regex(/^[A-Z]{3}$/).optional(),
+        currency: z
+          .string()
+          .regex(/^[A-Z]{3}$/)
+          .optional(),
         fiscalYearStartMonth: z.number().int().min(1).max(12).optional(),
         timezone: z.string().max(64).refine(isValidTimeZone, "Unknown timezone").optional(),
         terminology: z.enum(["simplest", "simple", "accounting"]).optional(),
@@ -220,22 +229,19 @@ export const createOrganization = createServerFn({ method: "POST" })
     // Generate the id here: reading the row back (insert().select()) would be
     // blocked by RLS because the user isn't a member until user_roles exists.
     const org = { id: crypto.randomUUID() };
-    const { error: orgError } = await supabase
-      .from("organizations")
-      .insert({
-        id: org.id,
-        name: data.name,
-        org_type: data.orgType,
-        created_by: userId,
-        ...(data.currency ? { currency: data.currency } : {}),
-        ...(data.fiscalYearStartMonth ? { fiscal_year_start_month: data.fiscalYearStartMonth } : {}),
-        ...(data.terminology ? { terminology: data.terminology } : {}),
-        ...(data.timezone ? { timezone: data.timezone } : {}),
-      });
+    const { error: orgError } = await supabase.from("organizations").insert({
+      id: org.id,
+      name: data.name,
+      org_type: data.orgType,
+      created_by: userId,
+      ...(data.currency ? { currency: data.currency } : {}),
+      ...(data.fiscalYearStartMonth ? { fiscal_year_start_month: data.fiscalYearStartMonth } : {}),
+      ...(data.terminology ? { terminology: data.terminology } : {}),
+      ...(data.timezone ? { timezone: data.timezone } : {}),
+    });
     if (orgError) throw new Error(orgError.message);
 
     // The creator's admin row is added by the organizations_add_creator DB trigger.
-
 
     const keys = data.accountKeys ? new Set(data.accountKeys) : null;
     const accounts = catalogFor(data.orgType)
@@ -278,7 +284,8 @@ export const getAccountSetup = createServerFn({ method: "GET" })
       .eq("transactions.org_id", data.orgId);
     if (uErr) throw new Error(uErr.message);
     const counts = new Map<string, number>();
-    for (const e of (used ?? []) as any[]) counts.set(e.account_id, (counts.get(e.account_id) ?? 0) + 1);
+    for (const e of (used ?? []) as any[])
+      counts.set(e.account_id, (counts.get(e.account_id) ?? 0) + 1);
     return ((accounts ?? []) as any[]).map((a) => ({
       id: a.id as string,
       name: a.name as string,
@@ -305,11 +312,18 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireOrgAdmin(supabase, userId, data.orgId);
 
-    const { data: org } = await supabase.from("organizations").select("org_type").eq("id", data.orgId).single();
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("org_type")
+      .eq("id", data.orgId)
+      .single();
     const catalog = catalogFor((org?.org_type ?? "business") as OrgType);
     const item = data.catalogKey ? catalog.find((c) => c.key === data.catalogKey) : undefined;
 
-    const { data: existing } = await supabase.from("accounts").select("id, name, type, is_active").eq("org_id", data.orgId);
+    const { data: existing } = await supabase
+      .from("accounts")
+      .select("id, name, type, is_active")
+      .eq("org_id", data.orgId);
     const target = data.accountId
       ? (existing ?? []).find((a: any) => a.id === data.accountId)
       : item
@@ -319,24 +333,42 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     if (data.enabled) {
       if (target) {
         if (target.is_active) return { ok: true };
-        const { error } = await supabase.from("accounts").update({ is_active: true }).eq("id", target.id).eq("org_id", data.orgId);
+        const { error } = await supabase
+          .from("accounts")
+          .update({ is_active: true })
+          .eq("id", target.id)
+          .eq("org_id", data.orgId);
         if (error) throw new Error(error.message);
         await supabase.from("audit_log").insert({
-          org_id: data.orgId, user_id: userId, action: "reactivate", entity: "account",
-          entity_id: target.id, before: { is_active: false }, after: { is_active: true },
+          org_id: data.orgId,
+          user_id: userId,
+          action: "reactivate",
+          entity: "account",
+          entity_id: target.id,
+          before: { is_active: false },
+          after: { is_active: true },
         });
         return { ok: true };
       }
       if (!item) throw new Error("Unknown account.");
       const { data: created, error } = await supabase
         .from("accounts")
-        .insert({ org_id: data.orgId, name: item.name, type: item.type, subtype: item.subtype ?? null })
+        .insert({
+          org_id: data.orgId,
+          name: item.name,
+          type: item.type,
+          subtype: item.subtype ?? null,
+        })
         .select("id")
         .single();
       if (error) throw new Error(error.message);
       await supabase.from("audit_log").insert({
-        org_id: data.orgId, user_id: userId, action: "create", entity: "account",
-        entity_id: created.id, after: { name: item.name, type: item.type },
+        org_id: data.orgId,
+        user_id: userId,
+        action: "create",
+        entity: "account",
+        entity_id: created.id,
+        after: { name: item.name, type: item.type },
       });
       return { ok: true };
     }
@@ -344,11 +376,19 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     if (!target) return { ok: true };
     if (item?.required) throw new Error(`${item.name} is required and can't be removed.`);
     if (!target.is_active) return { ok: true };
-    const { error } = await supabase.from("accounts").update({ is_active: false }).eq("id", target.id).eq("org_id", data.orgId);
+    const { error } = await supabase
+      .from("accounts")
+      .update({ is_active: false })
+      .eq("id", target.id)
+      .eq("org_id", data.orgId);
     if (error) throw new Error(error.message);
     await supabase.from("audit_log").insert({
-      org_id: data.orgId, user_id: userId, action: "archive", entity: "account",
-      entity_id: target.id, before: { name: target.name, type: target.type, is_active: true },
+      org_id: data.orgId,
+      user_id: userId,
+      action: "archive",
+      entity: "account",
+      entity_id: target.id,
+      before: { name: target.name, type: target.type, is_active: true },
       after: { is_active: false },
     });
     return { ok: true };

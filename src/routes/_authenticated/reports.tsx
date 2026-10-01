@@ -23,7 +23,15 @@ export const Route = createFileRoute("/_authenticated/reports")({
 const inputCls =
   "rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring";
 
-function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; totalCents: number }>; total: number; totalLabel: string }) {
+function ReportTable({
+  rows,
+  total,
+  totalLabel,
+}: {
+  rows: Array<{ name: string; totalCents: number }>;
+  total: number;
+  totalLabel: string;
+}) {
   return (
     <table className="w-full text-sm">
       <tbody>
@@ -45,7 +53,10 @@ function ReportTable({ rows, total, totalLabel }: { rows: Array<{ name: string; 
 function ReportsPage() {
   const { org, reportTerms: terms, terminology } = useOrgContext();
   const [tab, setTab] = useState<"income" | "balance" | "trial">("income");
-  const yearStart = fiscalYearStart(todayISO(new Date(), org?.timezone), org?.fiscalYearStartMonth ?? 1);
+  const yearStart = fiscalYearStart(
+    todayISO(new Date(), org?.timezone),
+    org?.fiscalYearStartMonth ?? 1,
+  );
   const [from, setFrom] = useState(yearStart);
   const [to, setTo] = useState(todayISO(new Date(), org?.timezone));
   const [asOf, setAsOf] = useState(todayISO(new Date(), org?.timezone));
@@ -77,8 +88,10 @@ function ReportsPage() {
     setExporting(true);
     try {
       const pdf = await import("@/lib/report-pdf");
-      if (tab === "income" && income) await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
-      else if (tab === "balance" && balance) await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
+      if (tab === "income" && income)
+        await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
+      else if (tab === "balance" && balance)
+        await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not create PDF");
     } finally {
@@ -120,12 +133,19 @@ function ReportsPage() {
           Trial balance
         </button>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Cash basis · voided transactions are excluded.</p>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Cash basis · voided transactions are excluded.
+      </p>
 
       {tab !== "income" && (
         <div className="mt-4 flex items-center gap-3 text-sm">
           <label className="text-muted-foreground">As of</label>
-          <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={inputCls} />
+          <input
+            type="date"
+            value={asOf}
+            onChange={(e) => setAsOf(e.target.value)}
+            className={inputCls}
+          />
         </div>
       )}
 
@@ -133,24 +153,48 @@ function ReportsPage() {
         <div className="mt-6 max-w-2xl">
           <div className="flex items-center gap-3 text-sm">
             <label className="text-muted-foreground">From</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className={inputCls}
+            />
             <label className="text-muted-foreground">To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls} />
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className={inputCls}
+            />
           </div>
 
           <div className="mt-4 space-y-4">
             <div className="overflow-hidden rounded-lg border bg-card">
-              <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">{terms.revenue}</h2>
-              <ReportTable rows={income?.revenue ?? []} total={income?.totalRevenueCents ?? 0} totalLabel={`Total ${terms.revenue.toLowerCase()}`} />
+              <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">
+                {terms.revenue}
+              </h2>
+              <ReportTable
+                rows={income?.revenue ?? []}
+                total={income?.totalRevenueCents ?? 0}
+                totalLabel={`Total ${terms.revenue.toLowerCase()}`}
+              />
             </div>
             <div className="overflow-hidden rounded-lg border bg-card">
-              <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">{terms.expenses}</h2>
-              <ReportTable rows={income?.expenses ?? []} total={income?.totalExpensesCents ?? 0} totalLabel={`Total ${terms.expenses.toLowerCase()}`} />
+              <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">
+                {terms.expenses}
+              </h2>
+              <ReportTable
+                rows={income?.expenses ?? []}
+                total={income?.totalExpensesCents ?? 0}
+                totalLabel={`Total ${terms.expenses.toLowerCase()}`}
+              />
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="flex items-center justify-between">
                 <span className="font-display text-lg font-semibold">{terms.netIncome}</span>
-                <span className={`tnum text-lg font-semibold ${(income?.netCents ?? 0) < 0 ? "text-destructive" : "text-primary"}`}>
+                <span
+                  className={`tnum text-lg font-semibold ${(income?.netCents ?? 0) < 0 ? "text-destructive" : "text-primary"}`}
+                >
                   {formatCents(income?.netCents ?? 0)}
                 </span>
               </div>
@@ -163,11 +207,19 @@ function ReportsPage() {
         <div className="mt-6 max-w-2xl space-y-4">
           <div className="overflow-hidden rounded-lg border bg-card">
             <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">Assets</h2>
-            <ReportTable rows={balance.assets} total={balance.totalAssetsCents} totalLabel="Total assets" />
+            <ReportTable
+              rows={balance.assets}
+              total={balance.totalAssetsCents}
+              totalLabel="Total assets"
+            />
           </div>
           <div className="overflow-hidden rounded-lg border bg-card">
             <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">Liabilities</h2>
-            <ReportTable rows={balance.liabilities} total={balance.totalLiabilitiesCents} totalLabel="Total liabilities" />
+            <ReportTable
+              rows={balance.liabilities}
+              total={balance.totalLiabilitiesCents}
+              totalLabel="Total liabilities"
+            />
           </div>
           <div className="overflow-hidden rounded-lg border bg-card">
             <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">{terms.equity}</h2>
@@ -180,22 +232,36 @@ function ReportsPage() {
                   </tr>
                 ))}
                 <tr className="border-b">
-                  <td className="px-4 py-2.5 italic text-muted-foreground">{org.orgType === "nonprofit" ? "Net assets from prior years" : "Retained earnings (prior years)"}</td>
-                  <td className="tnum px-4 py-2.5 text-right">{formatCents(balance.retainedEarningsCents)}</td>
+                  <td className="px-4 py-2.5 italic text-muted-foreground">
+                    {org.orgType === "nonprofit"
+                      ? "Net assets from prior years"
+                      : "Retained earnings (prior years)"}
+                  </td>
+                  <td className="tnum px-4 py-2.5 text-right">
+                    {formatCents(balance.retainedEarningsCents)}
+                  </td>
                 </tr>
                 <tr className="border-b">
-                  <td className="px-4 py-2.5 italic text-muted-foreground">{terms.netIncome} (this fiscal year)</td>
-                  <td className="tnum px-4 py-2.5 text-right">{formatCents(balance.netIncomeCents)}</td>
+                  <td className="px-4 py-2.5 italic text-muted-foreground">
+                    {terms.netIncome} (this fiscal year)
+                  </td>
+                  <td className="tnum px-4 py-2.5 text-right">
+                    {formatCents(balance.netIncomeCents)}
+                  </td>
                 </tr>
                 <tr className="bg-muted/50 font-semibold">
                   <td className="px-4 py-2.5">Total {terms.equity.toLowerCase()}</td>
-                  <td className="tnum px-4 py-2.5 text-right">{formatCents(balance.totalEquityCents)}</td>
+                  <td className="tnum px-4 py-2.5 text-right">
+                    {formatCents(balance.totalEquityCents)}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-xs text-muted-foreground">
-            Check: assets {formatCents(balance.totalAssetsCents)} = liabilities {formatCents(balance.totalLiabilitiesCents)} + {terms.equity.toLowerCase()} {formatCents(balance.totalEquityCents)}
+            Check: assets {formatCents(balance.totalAssetsCents)} = liabilities{" "}
+            {formatCents(balance.totalLiabilitiesCents)} + {terms.equity.toLowerCase()}{" "}
+            {formatCents(balance.totalEquityCents)}
           </p>
         </div>
       )}
@@ -204,20 +270,34 @@ function ReportsPage() {
         <div className="mt-6 max-w-2xl overflow-hidden rounded-lg border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-              <tr><th className="px-4 py-2">Account</th><th className="px-4 py-2 text-right">Debit</th><th className="px-4 py-2 text-right">Credit</th></tr>
+              <tr>
+                <th className="px-4 py-2">Account</th>
+                <th className="px-4 py-2 text-right">Debit</th>
+                <th className="px-4 py-2 text-right">Credit</th>
+              </tr>
             </thead>
             <tbody>
               {trialQuery.data.lines.map((l) => (
                 <tr key={l.type + l.name} className="border-b">
                   <td className="px-4 py-2.5">{l.name}</td>
-                  <td className="tnum px-4 py-2.5 text-right">{l.debitCents ? formatCents(l.debitCents) : ""}</td>
-                  <td className="tnum px-4 py-2.5 text-right">{l.creditCents ? formatCents(l.creditCents) : ""}</td>
+                  <td className="tnum px-4 py-2.5 text-right">
+                    {l.debitCents ? formatCents(l.debitCents) : ""}
+                  </td>
+                  <td className="tnum px-4 py-2.5 text-right">
+                    {l.creditCents ? formatCents(l.creditCents) : ""}
+                  </td>
                 </tr>
               ))}
               <tr className="bg-muted/50 font-semibold">
-                <td className="px-4 py-2.5">Totals {trialQuery.data.balanced ? "(balanced)" : "(NOT balanced)"}</td>
-                <td className="tnum px-4 py-2.5 text-right">{formatCents(trialQuery.data.totalDebitCents)}</td>
-                <td className="tnum px-4 py-2.5 text-right">{formatCents(trialQuery.data.totalCreditCents)}</td>
+                <td className="px-4 py-2.5">
+                  Totals {trialQuery.data.balanced ? "(balanced)" : "(NOT balanced)"}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right">
+                  {formatCents(trialQuery.data.totalDebitCents)}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right">
+                  {formatCents(trialQuery.data.totalCreditCents)}
+                </td>
               </tr>
             </tbody>
           </table>

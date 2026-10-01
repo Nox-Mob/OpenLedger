@@ -7,7 +7,10 @@ import { assertCan } from "./permissions";
 const rowSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   description: z.string().min(1).max(300),
-  amountCents: z.number().int().refine((v) => v !== 0),
+  amountCents: z
+    .number()
+    .int()
+    .refine((v) => v !== 0),
   externalId: z.string().max(200).optional(),
 });
 type Row = z.infer<typeof rowSchema>;
@@ -32,10 +35,18 @@ async function fingerprint(orgId: string, accountId: string, row: Row, rowSeq?: 
 export const checkDuplicates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), rows: z.array(rowSchema).max(5000) }).parse(input),
+    z
+      .object({
+        orgId: z.string().uuid(),
+        accountId: z.string().uuid(),
+        rows: z.array(rowSchema).max(5000),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const fps = await Promise.all(data.rows.map((r, i) => fingerprint(data.orgId, data.accountId, r, i)));
+    const fps = await Promise.all(
+      data.rows.map((r, i) => fingerprint(data.orgId, data.accountId, r, i)),
+    );
     const existing = new Set<string>();
     for (let i = 0; i < fps.length; i += 200) {
       const { data: found, error } = await context.supabase
@@ -80,9 +91,16 @@ export const importBankRows = createServerFn({ method: "POST" })
     await assertCan(supabase, userId, data.orgId, "write");
     let mismatch: number | null = null;
     if (data.format === "pdf") {
-      const check = checkStatementBalance(data.beginningBalanceCents, data.rows.map((r) => r.amountCents), data.endingBalanceCents);
+      const check = checkStatementBalance(
+        data.beginningBalanceCents,
+        data.rows.map((r) => r.amountCents),
+        data.endingBalanceCents,
+      );
       if (check.status === "mismatch") {
-        if (!data.acceptMismatch) throw new Error("The rows don't add up to the statement's closing balance. Fix them or confirm you'll review.");
+        if (!data.acceptMismatch)
+          throw new Error(
+            "The rows don't add up to the statement's closing balance. Fix them or confirm you'll review.",
+          );
         mismatch = check.gapCents;
       }
     }
@@ -134,7 +152,10 @@ export const importBankRows = createServerFn({ method: "POST" })
     }
     const imported = inserted?.length ?? 0;
     const duplicates = data.rows.length - imported;
-    await supabase.from("import_batches").update({ rows_imported: imported, rows_duplicate: duplicates }).eq("id", batchId);
+    await supabase
+      .from("import_batches")
+      .update({ rows_imported: imported, rows_duplicate: duplicates })
+      .eq("id", batchId);
 
     await supabase.from("audit_log").insert({
       org_id: data.orgId,
@@ -142,7 +163,13 @@ export const importBankRows = createServerFn({ method: "POST" })
       action: "import",
       entity: "import_batch",
       entity_id: batchId,
-      after: { file: data.fileName, format: data.format, imported, duplicates, errors: data.errorCount },
+      after: {
+        file: data.fileName,
+        format: data.format,
+        imported,
+        duplicates,
+        errors: data.errorCount,
+      },
     });
 
     return { batchId, imported, duplicatesSkipped: duplicates };
@@ -180,7 +207,9 @@ export const listImportBatches = createServerFn({ method: "GET" })
 
 export const undoImportBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input))
+  .inputValidator((input) =>
+    z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
@@ -191,7 +220,10 @@ export const undoImportBatch = createServerFn({ method: "POST" })
       .not("transaction_id", "is", null)
       .limit(1);
     if (pErr) throw new Error(pErr.message);
-    if ((posted ?? []).length > 0) throw new Error("Some rows from this file are already in the ledger. Void those transactions first.");
+    if ((posted ?? []).length > 0)
+      throw new Error(
+        "Some rows from this file are already in the ledger. Void those transactions first.",
+      );
     const { data: removed, error } = await supabase
       .from("bank_transactions")
       .delete()
@@ -199,9 +231,17 @@ export const undoImportBatch = createServerFn({ method: "POST" })
       .eq("org_id", data.orgId)
       .select("id");
     if (error) throw new Error(error.message);
-    await supabase.from("import_batches").update({ status: "undone" }).eq("id", data.batchId).eq("org_id", data.orgId);
+    await supabase
+      .from("import_batches")
+      .update({ status: "undone" })
+      .eq("id", data.batchId)
+      .eq("org_id", data.orgId);
     await supabase.from("audit_log").insert({
-      org_id: data.orgId, user_id: userId, action: "undo_import", entity: "import_batch", entity_id: data.batchId,
+      org_id: data.orgId,
+      user_id: userId,
+      action: "undo_import",
+      entity: "import_batch",
+      entity_id: data.batchId,
       after: { removed: removed?.length ?? 0 },
     });
     return { removed: removed?.length ?? 0 };
@@ -219,19 +259,39 @@ export const listImportProfiles = createServerFn({ method: "GET" })
       .eq("org_id", data.orgId)
       .order("name");
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((r) => ({ id: r.id, accountId: r.account_id, name: r.name, mapping: r.mapping as any }));
+    return (rows ?? []).map((r) => ({
+      id: r.id,
+      accountId: r.account_id,
+      name: r.name,
+      mapping: r.mapping as any,
+    }));
   });
 
 export const saveImportProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), name: z.string().min(1).max(80), mapping: mappingSchema }).parse(input),
+    z
+      .object({
+        orgId: z.string().uuid(),
+        accountId: z.string().uuid(),
+        name: z.string().min(1).max(80),
+        mapping: mappingSchema,
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
     const { error } = await context.supabase
       .from("import_profiles")
-      .upsert({ org_id: data.orgId, account_id: data.accountId, name: data.name, mapping: data.mapping as any }, { onConflict: "account_id,name" });
+      .upsert(
+        {
+          org_id: data.orgId,
+          account_id: data.accountId,
+          name: data.name,
+          mapping: data.mapping as any,
+        },
+        { onConflict: "account_id,name" },
+      );
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -241,15 +301,20 @@ async function pdfUsage(supabase: any, orgId: string, userId: string) {
   const since = (ms: number) => new Date(now - ms).toISOString();
   const count = async (ms: number) => {
     const { count, error } = await supabase
-      .from("ai_usage").select("id", { count: "exact", head: true })
-      .eq("org_id", orgId).eq("user_id", userId).eq("kind", "pdf_extract").gte("created_at", since(ms));
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", orgId)
+      .eq("user_id", userId)
+      .eq("kind", "pdf_extract")
+      .gte("created_at", since(ms));
     if (error) throw new Error(error.message);
     return count ?? 0;
   };
   const day = await count(86_400_000);
   const month = await count(30 * 86_400_000);
   return {
-    dayUsed: day, monthUsed: month,
+    dayUsed: day,
+    monthUsed: month,
     remaining: Math.max(0, Math.min(PDF_LIMITS.perDay - day, PDF_LIMITS.perMonth - month)),
     limits: PDF_LIMITS,
   };
@@ -264,28 +329,59 @@ export const getPdfUsage = createServerFn({ method: "GET" })
 export const extractPdfStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      orgId: z.string().uuid(),
-      text: z.string().min(20).max(120_000),
-      pageCount: z.number().int().min(1).max(PDF_LIMITS.maxPages, `PDFs over ${PDF_LIMITS.maxPages} pages aren't supported`),
-      byteSize: z.number().int().min(1).max(PDF_LIMITS.maxBytes, "PDFs over 10 MB aren't supported"),
-      acknowledged: z.literal(true, { errorMap: () => ({ message: "Please confirm the AI notice first" }) }),
-    }).parse(input),
+    z
+      .object({
+        orgId: z.string().uuid(),
+        text: z.string().min(20).max(120_000),
+        pageCount: z
+          .number()
+          .int()
+          .min(1)
+          .max(PDF_LIMITS.maxPages, `PDFs over ${PDF_LIMITS.maxPages} pages aren't supported`),
+        byteSize: z
+          .number()
+          .int()
+          .min(1)
+          .max(PDF_LIMITS.maxBytes, "PDFs over 10 MB aren't supported"),
+        acknowledged: z.literal(true, {
+          errorMap: () => ({ message: "Please confirm the AI notice first" }),
+        }),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: org, error: oErr } = await supabase.from("organizations").select("ai_pdf_enabled").eq("id", data.orgId).single();
+    const { data: org, error: oErr } = await supabase
+      .from("organizations")
+      .select("ai_pdf_enabled")
+      .eq("id", data.orgId)
+      .single();
     if (oErr || !org) throw new Error("Organization not found");
-    if (!org.ai_pdf_enabled) throw new Error("An admin needs to turn on AI PDF reading in Settings first.");
-    const { data: canWrite } = await supabase.rpc("can_write_org", { _user_id: userId, _org_id: data.orgId });
+    if (!org.ai_pdf_enabled)
+      throw new Error("An admin needs to turn on AI PDF reading in Settings first.");
+    const { data: canWrite } = await supabase.rpc("can_write_org", {
+      _user_id: userId,
+      _org_id: data.orgId,
+    });
     if (!canWrite) throw new Error("You don't have permission to import here.");
     const usage = await pdfUsage(supabase, data.orgId, userId);
     if (usage.remaining <= 0)
-      throw new Error(usage.dayUsed >= PDF_LIMITS.perDay
-        ? `You've read ${PDF_LIMITS.perDay} PDFs today. Try again tomorrow.`
-        : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`);
+      throw new Error(
+        usage.dayUsed >= PDF_LIMITS.perDay
+          ? `You've read ${PDF_LIMITS.perDay} PDFs today. Try again tomorrow.`
+          : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`,
+      );
     const usageId = crypto.randomUUID();
-    const { error: uErr } = await supabase.from("ai_usage").insert({ id: usageId, org_id: data.orgId, user_id: userId, kind: "pdf_extract", page_count: data.pageCount, ok: false });
+    const { error: uErr } = await supabase
+      .from("ai_usage")
+      .insert({
+        id: usageId,
+        org_id: data.orgId,
+        user_id: userId,
+        kind: "pdf_extract",
+        page_count: data.pageCount,
+        ok: false,
+      });
     if (uErr) throw new Error(uErr.message);
 
     const key = process.env["LOVABLE_API_KEY"];
@@ -319,7 +415,11 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
                     type: "array",
                     items: {
                       type: "object",
-                      properties: { date: { type: "string" }, description: { type: "string" }, amount: { type: "number" } },
+                      properties: {
+                        date: { type: "string" },
+                        description: { type: "string" },
+                        amount: { type: "number" },
+                      },
                       required: ["date", "description", "amount"],
                     },
                   },
@@ -342,7 +442,8 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
     const json: any = await res.json();
     const args = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     const parsed = typeof args === "string" ? JSON.parse(args) : args;
-    const c = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? Math.round(n * 100) : null);
+    const c = (n: unknown) =>
+      typeof n === "number" && Number.isFinite(n) ? Math.round(n * 100) : null;
     return {
       statementStart: (parsed?.statement_start as string) ?? null,
       statementEnd: (parsed?.statement_end as string) ?? null,
@@ -370,7 +471,9 @@ export const listBankTransactions = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("bank_transactions")
-      .select("id, bank_date, description, amount_cents, transaction_id, needs_review, accounts(name)")
+      .select(
+        "id, bank_date, description, amount_cents, transaction_id, needs_review, accounts(name)",
+      )
       .eq("org_id", data.orgId)
       .order("bank_date", { ascending: false })
       .limit(300);

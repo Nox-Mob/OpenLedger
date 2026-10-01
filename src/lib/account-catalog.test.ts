@@ -9,7 +9,9 @@ describe("account catalog", () => {
       const list = catalogFor(org);
       it("has unique keys and unique name+type pairs", () => {
         expect(new Set(list.map((a) => a.key)).size).toBe(list.length);
-        expect(new Set(list.map((a) => `${a.type}:${a.name.toLowerCase()}`)).size).toBe(list.length);
+        expect(new Set(list.map((a) => `${a.type}:${a.name.toLowerCase()}`)).size).toBe(
+          list.length,
+        );
       });
       it("uses only valid account types", () => {
         for (const a of list) expect(TYPES).toContain(a.type);
@@ -43,6 +45,8 @@ describe("account catalog", () => {
   it("matchesCatalog ignores case and surrounding spaces but not type", () => {
     const c = catalogFor("business")[0]!;
     expect(matchesCatalog({ name: `  ${c.name.toUpperCase()} `, type: c.type }, c)).toBe(true);
-    expect(matchesCatalog({ name: c.name, type: c.type === "asset" ? "expense" : "asset" }, c)).toBe(false);
+    expect(
+      matchesCatalog({ name: c.name, type: c.type === "asset" ? "expense" : "asset" }, c),
+    ).toBe(false);
   });
 });

@@ -13,26 +13,76 @@ export function normalizeTerminology(v: unknown): Terminology {
 }
 
 export type TermKey =
-  | "assets" | "liabilities" | "equity" | "revenue" | "expenses"
-  | "debitCredit" | "netIncome" | "incomeStatement" | "balanceSheet" | "journal";
+  | "assets"
+  | "liabilities"
+  | "equity"
+  | "revenue"
+  | "expenses"
+  | "debitCredit"
+  | "netIncome"
+  | "incomeStatement"
+  | "balanceSheet"
+  | "journal";
 
 export type TermOverrides = Partial<Record<TermKey, Terminology>>;
 
 type Triple = [string, string, string];
-interface TermItem { key: TermKey; label: string; business: Triple; nonprofit?: Triple }
+interface TermItem {
+  key: TermKey;
+  label: string;
+  business: Triple;
+  nonprofit?: Triple;
+}
 
 /** Every configurable term with its three default wordings: [simplest, simple, double-entry]. */
 export const TERM_ITEMS: TermItem[] = [
   { key: "assets", label: "What you own", business: ["Money You Have", "Accounts", "Assets"] },
-  { key: "liabilities", label: "What you owe", business: ["Money You Owe", "Debts", "Liabilities"] },
-  { key: "equity", label: "What's left over", business: ["What's Yours", "Owner's Equity", "Equity"], nonprofit: ["Net Assets", "Net Assets", "Net Assets"] },
-  { key: "revenue", label: "Money coming in", business: ["Money In", "Income", "Revenue"], nonprofit: ["Money In", "Income", "Revenue & Support"] },
+  {
+    key: "liabilities",
+    label: "What you owe",
+    business: ["Money You Owe", "Debts", "Liabilities"],
+  },
+  {
+    key: "equity",
+    label: "What's left over",
+    business: ["What's Yours", "Owner's Equity", "Equity"],
+    nonprofit: ["Net Assets", "Net Assets", "Net Assets"],
+  },
+  {
+    key: "revenue",
+    label: "Money coming in",
+    business: ["Money In", "Income", "Revenue"],
+    nonprofit: ["Money In", "Income", "Revenue & Support"],
+  },
   { key: "expenses", label: "Money going out", business: ["Money Out", "Expenses", "Expenses"] },
-  { key: "debitCredit", label: "Entry sides", business: ["Increase / Decrease", "Increase / Decrease", "Debit / Credit"] },
-  { key: "netIncome", label: "Bottom line", business: ["Profit", "Net Income", "Net Income"], nonprofit: ["Net Change", "Net Change", "Change in Net Assets"] },
-  { key: "incomeStatement", label: "Income report", business: ["Income Statement", "Income Statement", "Profit & Loss"], nonprofit: ["Money In & Out", "Income & Expenses", "Statement of Activities"] },
-  { key: "balanceSheet", label: "Position report", business: ["What You Have & Owe", "Accounts Summary", "Balance Sheet"], nonprofit: ["What You Have & Owe", "Accounts Summary", "Statement of Financial Position"] },
-  { key: "journal", label: "Advanced entry", business: ["Transaction", "Transaction", "Journal Entry"] },
+  {
+    key: "debitCredit",
+    label: "Entry sides",
+    business: ["Increase / Decrease", "Increase / Decrease", "Debit / Credit"],
+  },
+  {
+    key: "netIncome",
+    label: "Bottom line",
+    business: ["Profit", "Net Income", "Net Income"],
+    nonprofit: ["Net Change", "Net Change", "Change in Net Assets"],
+  },
+  {
+    key: "incomeStatement",
+    label: "Income report",
+    business: ["Income Statement", "Income Statement", "Profit & Loss"],
+    nonprofit: ["Money In & Out", "Income & Expenses", "Statement of Activities"],
+  },
+  {
+    key: "balanceSheet",
+    label: "Position report",
+    business: ["What You Have & Owe", "Accounts Summary", "Balance Sheet"],
+    nonprofit: ["What You Have & Owe", "Accounts Summary", "Statement of Financial Position"],
+  },
+  {
+    key: "journal",
+    label: "Advanced entry",
+    business: ["Transaction", "Transaction", "Journal Entry"],
+  },
 ];
 
 export function termOptions(item: TermItem, orgType: OrgType): Triple {
@@ -68,7 +118,11 @@ export interface Terms {
   reconcile: string;
 }
 
-export function getTerms(orgType: OrgType, level: Terminology, overrides: TermOverrides = {}): Terms {
+export function getTerms(
+  orgType: OrgType,
+  level: Terminology,
+  overrides: TermOverrides = {},
+): Terms {
   const levels = {} as Record<TermKey, Terminology>;
   const w = {} as Record<TermKey, string>;
   for (const item of TERM_ITEMS) {

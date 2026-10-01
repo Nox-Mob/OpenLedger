@@ -114,7 +114,10 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-function makeCrud(table: "categories" | "tags" | "projects" | "funds", extraSchema?: z.ZodRawShape) {
+function makeCrud(
+  table: "categories" | "tags" | "projects" | "funds",
+  extraSchema?: z.ZodRawShape,
+) {
   const list = createServerFn({ method: "GET" })
     .middleware([requireSupabaseAuth])
     .inputValidator((input) => orgInput.parse(input))
@@ -131,7 +134,9 @@ function makeCrud(table: "categories" | "tags" | "projects" | "funds", extraSche
   const create = createServerFn({ method: "POST" })
     .middleware([requireSupabaseAuth])
     .inputValidator((input) =>
-      z.object({ orgId: z.string().uuid(), name: z.string().min(1).max(120), ...extraSchema }).parse(input),
+      z
+        .object({ orgId: z.string().uuid(), name: z.string().min(1).max(120), ...extraSchema })
+        .parse(input),
     )
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as any;
@@ -144,7 +149,9 @@ function makeCrud(table: "categories" | "tags" | "projects" | "funds", extraSche
   return { list, create };
 }
 
-const categories = makeCrud("categories", { type: z.enum(["revenue", "expense"]).default("expense") });
+const categories = makeCrud("categories", {
+  type: z.enum(["revenue", "expense"]).default("expense"),
+});
 export const listCategories = categories.list;
 export const createCategory = categories.create;
 

@@ -39,9 +39,15 @@ describe("csv", () => {
   });
   it("guesses the decimal separator from the file", () => {
     // comma-decimal amounts are quoted in a comma-delimited file
-    const eu = tokenizeCsv('Date,Description,Amount\n2026-09-01,Rent,"1234,56"\n2026-09-02,Sale,"50,00"\n');
+    const eu = tokenizeCsv(
+      'Date,Description,Amount\n2026-09-01,Rent,"1234,56"\n2026-09-02,Sale,"50,00"\n',
+    );
     expect(guessMapping(eu).decimalSeparator).toBe("comma");
-    expect(guessMapping(tokenizeCsv("Date,Description,Amount\n2026-09-01,Rent,1234.56\n2026-09-02,Sale,50.00\n")).decimalSeparator).toBe("dot");
+    expect(
+      guessMapping(
+        tokenizeCsv("Date,Description,Amount\n2026-09-01,Rent,1234.56\n2026-09-02,Sale,50.00\n"),
+      ).decimalSeparator,
+    ).toBe("dot");
   });
   it("parses dates", () => {
     expect(parseDate("09/03/2026", "MDY")).toBe("2026-09-03");
@@ -49,7 +55,9 @@ describe("csv", () => {
     expect(parseDate("31/02/2026", "DMY")).toBeNull();
   });
   it("maps split debit/credit and flags errors", () => {
-    const rows = tokenizeCsv("Date,Description,Debit,Credit\n2026-09-01,Rent,100.00,\n2026-09-02,Sale,,50\nbad,X,1,\n");
+    const rows = tokenizeCsv(
+      "Date,Description,Debit,Credit\n2026-09-01,Rent,100.00,\n2026-09-02,Sale,,50\nbad,X,1,\n",
+    );
     const m = guessMapping(rows);
     expect(m.amountMode).toBe("split");
     const out = applyMapping(rows, m);
@@ -68,6 +76,11 @@ describe("ofx", () => {
     const { rows, meta } = parseOfx(text);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ date: "2026-09-05", amountCents: -2500, externalId: "A1" });
-    expect(meta).toMatchObject({ statementStart: "2026-09-01", statementEnd: "2026-09-30", endingBalanceCents: 57500, beginningBalanceCents: 50000 });
+    expect(meta).toMatchObject({
+      statementStart: "2026-09-01",
+      statementEnd: "2026-09-30",
+      endingBalanceCents: 57500,
+      beginningBalanceCents: 50000,
+    });
   });
 });

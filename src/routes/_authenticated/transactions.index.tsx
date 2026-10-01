@@ -71,7 +71,9 @@ function TransactionsPage() {
             </thead>
             <tbody>
               {(txQuery.data ?? []).map((t) => {
-                const total = t.entries.filter((e) => e.amountCents > 0).reduce((a, e) => a + e.amountCents, 0);
+                const total = t.entries
+                  .filter((e) => e.amountCents > 0)
+                  .reduce((a, e) => a + e.amountCents, 0);
                 const isOpen = expanded === t.id;
                 return (
                   <Fragment key={t.id}>
@@ -84,10 +86,14 @@ function TransactionsPage() {
                       <td className="px-4 py-3">
                         {t.description}
                         {t.status === "void" && (
-                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">void</span>
+                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            void
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{t.source.replace("_", " ")}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {t.source.replace("_", " ")}
+                      </td>
                       <td className="tnum px-4 py-3 text-right">{formatCents(total)}</td>
                       <td className="px-4 py-3 text-right">
                         {t.status === "posted" && (
@@ -121,7 +127,9 @@ function TransactionsPage() {
                                 <tr key={e.id}>
                                   <td className="py-1 font-medium">{e.accountName}</td>
                                   <td className="py-1 text-muted-foreground">
-                                    {[e.categoryName, e.projectName, e.fundName, e.memo].filter(Boolean).join(" · ")}
+                                    {[e.categoryName, e.projectName, e.fundName, e.memo]
+                                      .filter(Boolean)
+                                      .join(" · ")}
                                   </td>
                                   <td className="tnum py-1 text-right">
                                     {e.amountCents > 0 ? formatCents(e.amountCents) : ""}
@@ -135,7 +143,8 @@ function TransactionsPage() {
                           </table>
                           {terms.levels.debitCredit !== "accounting" && (
                             <p className="mt-2 text-xs text-muted-foreground">
-                              Every transaction moves money between accounts — increases always equal decreases.
+                              Every transaction moves money between accounts — increases always
+                              equal decreases.
                             </p>
                           )}
                         </td>

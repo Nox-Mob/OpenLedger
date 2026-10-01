@@ -35,13 +35,17 @@ export function useOrgContext() {
   const orgs = orgsQuery.data ?? [];
   const org = orgs.find((o) => o.id === currentOrgId) ?? orgs[0] ?? null;
   // Wording is an organization-wide setting; the personal preference is only a fallback.
-  const terminology: Terminology =
-    normalizeTerminology((org as any)?.terminology ?? profileQuery.data?.terminology);
+  const terminology: Terminology = normalizeTerminology(
+    (org as any)?.terminology ?? profileQuery.data?.terminology,
+  );
   const orgType = (org?.orgType ?? "business") as OrgType;
   const orgOverrides = (org as any)?.termOverrides ?? {};
   // Reports and PDFs always use the org's wording; screens layer the user's personal choices on top.
   const reportTerms = getTerms(orgType, terminology, orgOverrides);
-  const terms = getTerms(orgType, terminology, { ...orgOverrides, ...(profileQuery.data?.termOverrides ?? {}) });
+  const terms = getTerms(orgType, terminology, {
+    ...orgOverrides,
+    ...(profileQuery.data?.termOverrides ?? {}),
+  });
 
   return {
     org,
@@ -118,25 +122,35 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-0.5 px-3">
-          {NAV.filter((item) => !("write" in item && item.write) || org?.role !== "viewer").map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.to === "/reconcile" ? terms.reconcile : item.label}
-            </Link>
-          ))}
+          {NAV.filter((item) => !("write" in item && item.write) || org?.role !== "viewer").map(
+            (item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={{ exact: item.to === "/" }}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                activeProps={{
+                  className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+                }}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.to === "/reconcile" ? terms.reconcile : item.label}
+              </Link>
+            ),
+          )}
         </nav>
 
         <div className="p-3">
           <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 px-3 text-[11px] text-sidebar-foreground/50">
-            <Link to="/terms" className="hover:text-sidebar-foreground">Terms</Link>
-            <Link to="/privacy" className="hover:text-sidebar-foreground">Privacy</Link>
-            <Link to="/not-advice" className="hover:text-sidebar-foreground">Not advice</Link>
+            <Link to="/terms" className="hover:text-sidebar-foreground">
+              Terms
+            </Link>
+            <Link to="/privacy" className="hover:text-sidebar-foreground">
+              Privacy
+            </Link>
+            <Link to="/not-advice" className="hover:text-sidebar-foreground">
+              Not advice
+            </Link>
           </div>
           <button
             onClick={signOut}

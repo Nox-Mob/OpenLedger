@@ -3,7 +3,15 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { LEGAL_CONFIG } from "@/lib/legal";
 
-export function LegalPage({ title, summary, children }: { title: string; summary: string; children: ReactNode }) {
+export function LegalPage({
+  title,
+  summary,
+  children,
+}: {
+  title: string;
+  summary: string;
+  children: ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -11,7 +19,9 @@ export function LegalPage({ title, summary, children }: { title: string; summary
           <Link to="/" className="flex items-center gap-2 font-display font-bold">
             <BookOpen className="h-5 w-5 text-primary" /> Open Ledger
           </Link>
-          <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Sign in</Link>
+          <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
+            Sign in
+          </Link>
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-5 py-12">
@@ -24,9 +34,15 @@ export function LegalPage({ title, summary, children }: { title: string; summary
       </main>
       <footer className="border-t bg-card">
         <div className="mx-auto flex max-w-4xl flex-wrap gap-x-5 gap-y-2 px-5 py-6 text-sm text-muted-foreground">
-          <Link to="/terms" className="hover:text-foreground">Terms</Link>
-          <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-          <Link to="/not-advice" className="hover:text-foreground">Not advice</Link>
+          <Link to="/terms" className="hover:text-foreground">
+            Terms
+          </Link>
+          <Link to="/privacy" className="hover:text-foreground">
+            Privacy
+          </Link>
+          <Link to="/not-advice" className="hover:text-foreground">
+            Not advice
+          </Link>
         </div>
       </footer>
     </div>

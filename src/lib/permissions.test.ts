@@ -15,7 +15,12 @@ describe("role authorization matrix", () => {
   });
 
   it("admin-only actions", () => {
-    for (const action of ["reopen_reconciliation", "manage_settings", "manage_members", "close_books"] as const) {
+    for (const action of [
+      "reopen_reconciliation",
+      "manage_settings",
+      "manage_members",
+      "close_books",
+    ] as const) {
       expect(can("admin", action)).toBe(true);
       expect(can("member", action)).toBe(false);
       expect(can("viewer", action)).toBe(false);

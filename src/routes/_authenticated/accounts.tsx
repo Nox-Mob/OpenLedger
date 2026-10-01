@@ -92,10 +92,19 @@ function AccountsPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="mt-4 grid max-w-2xl grid-cols-4 items-end gap-3 rounded-lg border bg-card p-4">
+        <form
+          onSubmit={submit}
+          className="mt-4 grid max-w-2xl grid-cols-4 items-end gap-3 rounded-lg border bg-card p-4"
+        >
           <div className="col-span-2">
             <label className="text-sm font-medium">Name</label>
-            <input required value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="e.g. PayPal" />
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. PayPal"
+            />
           </div>
           <div>
             <label className="text-sm font-medium">Type</label>
@@ -109,9 +118,18 @@ function AccountsPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Opening balance</label>
-            <input inputMode="decimal" value={opening} onChange={(e) => setOpening(e.target.value)} className={`${inputCls} tnum`} placeholder="0.00" />
+            <input
+              inputMode="decimal"
+              value={opening}
+              onChange={(e) => setOpening(e.target.value)}
+              className={`${inputCls} tnum`}
+              placeholder="0.00"
+            />
           </div>
-          <button type="submit" className="col-span-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <button
+            type="submit"
+            className="col-span-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
             Create account
           </button>
         </form>
@@ -128,7 +146,14 @@ function AccountsPage() {
                 <tbody>
                   {g.accounts.map((a) => (
                     <tr key={a.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{a.name}{!a.isActive && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">Archived</span>}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {a.name}
+                        {!a.isActive && (
+                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            Archived
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{a.subtype ?? ""}</td>
                       <td className="tnum px-4 py-3 text-right">
                         {formatCents(displayBalance(a.type, a.balanceCents))}

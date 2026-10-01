@@ -15,5 +15,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.user };
   },
-  component: () => <LegalGate><Outlet /></LegalGate>,
+  component: () => (
+    <LegalGate>
+      <Outlet />
+    </LegalGate>
+  ),
 });
