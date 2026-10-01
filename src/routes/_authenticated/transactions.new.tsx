@@ -92,9 +92,14 @@ function NewTransactionPage() {
     return { debit, credit, balanced: debit === credit && debit > 0 };
   }, [rows]);
 
+  // Same key for every retry of this form; a double click can't save twice.
+  const submitKeyRef = useRef(crypto.randomUUID());
+  const submittingRef = useRef(false);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!org) return;
+    if (!org || submittingRef.current) return;
+    submittingRef.current = true;
     setBusy(true);
     try {
       let entries: Array<{ accountId: string; amountCents: number; categoryId?: string | null; projectId?: string | null; fundId?: string | null; memo?: string | null }> = [];
@@ -145,6 +150,7 @@ function NewTransactionPage() {
           description: description || (mode === "transfer" ? "Transfer" : "Transaction"),
           source,
           entries,
+          idempotencyKey: submitKeyRef.current,
         },
       });
       toast.success("Transaction recorded");
@@ -154,6 +160,7 @@ function NewTransactionPage() {
     } catch (err: any) {
       toast.error(err.message ?? "Could not save transaction");
     } finally {
+      submittingRef.current = false;
       setBusy(false);
     }
   }

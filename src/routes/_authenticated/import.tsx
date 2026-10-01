@@ -62,6 +62,7 @@ function ImportPage() {
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [statement, setStatement] = useState<Statement>(emptyStatement);
   const [busy, setBusy] = useState<string | null>(null);
+  const [posting, setPosting] = useState<Set<string>>(new Set());
   const [offsets, setOffsets] = useState<Record<string, string>>({});
   const [profileName, setProfileName] = useState("");
 
@@ -244,6 +245,8 @@ function ImportPage() {
     if (!org) return;
     const offset = offsets[bankId];
     if (!offset) { toast.error("Choose what this row was for first"); return; }
+    if (posting.has(bankId)) return;
+    setPosting((p) => new Set(p).add(bankId));
     try {
       await postBankTransaction({ data: { orgId: org.id, bankTransactionId: bankId, offsetAccountId: offset } });
       toast.success("Posted to ledger");
@@ -251,6 +254,7 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (err: any) { toast.error(err.message ?? "Could not post"); }
+    finally { setPosting((p) => { const n = new Set(p); n.delete(bankId); return n; }); }
   }
 
   if (!org) return null;
@@ -479,7 +483,7 @@ function ImportPage() {
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     {!r.linkedTransactionId && (
-                      <button onClick={() => postRow(r.id)} className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">Post</button>
+                      <button onClick={() => postRow(r.id)} disabled={posting.has(r.id)} className="disabled:opacity-50 rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">Post</button>
                     )}
                   </td>
                 </tr>
