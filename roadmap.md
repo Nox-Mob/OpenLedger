@@ -56,7 +56,7 @@
 - [x] 13. Auth hygiene (verification, reset, rate limits, Google/email same address, 8+ char password w/ upper/lower/number/symbol + HIBP)
 - [x] 6. Lock-books-through date + year-end close
 ### Tier 2 (pull forward: 14, 15, 17)
-- [ ] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
+- [ ] 14. Nonprofit fund accounting — today funds are basic transaction tagging only (restricted net assets, releases, pledges, negative fund warning)
 - [ ] 15. CSV/XLSX exports + org backup/restore (formula-injection escaping)
 - [x] 17. Automated test suite + CI
 - [ ] 16. Invites, remove member, transfer ownership, org/account deletion

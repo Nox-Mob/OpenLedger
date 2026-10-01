@@ -29,3 +29,7 @@
 - Legal acceptance is append-only/versioned; U.S.-first drafts separate hosted/self-hosted terms and make no GDPR claim.
 - CI (.github/workflows/ci.yml) is report-only: never auto-fixes/commits; DB checks run on a disposable local DB via scripts/ci; SQL tests end with RAISE 'RESULT k=PASS;...'.
 - Startup never resets data: migrations are append-only and CI rejects DELETE/TRUNCATE/DROP TABLE in them; test scripts require a local DB; demo seed refuses DBs with real orgs.
+- Ledger immutability is DB-enforced: transactions only posted→void; entries only reconciliation_id; bank rows evidence-only (link must match amount/account).
+- Audit rows are written only via writeAudit() (service role, src/lib/audit.ts); users have no INSERT on audit_log.
+- Year-end close is virtual (period_close + lock, no closing transaction); reports exclude legacy source='closing'.
+- Currency: two-decimal only (no JPY), frozen once transactions exist.
