@@ -254,7 +254,7 @@ Use **Path 2 — Self-hosted Supabase with Docker** above on the same server, th
 - **Monitoring & backups.** Ship server logs to a log service, alert on 5xx rates and database CPU/connections, and test restoring a backup at least quarterly.
 - **Email.** Configure a custom SMTP provider in Auth so sign-up and password-reset emails aren't rate-limited.
 
-### 9. Running the tests
+### Running the tests
 
 ```sh
 bun run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
