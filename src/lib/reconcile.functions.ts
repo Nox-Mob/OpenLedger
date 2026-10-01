@@ -82,6 +82,8 @@ async function loadWorkspace(supabase: Supa, rec: any) {
       description: (e.memo || e.transactions.description) as string,
       amountCents: e.amount_cents as number,
       cleared: e.reconciliation_id === rec.id,
+      // Uncleared items from earlier periods stay visible as outstanding, but are flagged.
+      beforePeriod: (e.transactions.transaction_date as string) < rec.period_start,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
