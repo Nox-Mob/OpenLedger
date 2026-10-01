@@ -10,7 +10,7 @@ BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8080"
 PAGES = ["/", "/accounts", "/transactions", "/transactions/new", "/import", "/reconcile",
          "/reports", "/projects", "/funds", "/settings", "/settings/accounts", "/settings/members",
          "/settings/preferences", "/settings/close", "/terms", "/privacy", "/not-advice", "/no-such-page"]
-IGNORE = ("favicon", "AbortError", "aborted", "net::ERR_ABORTED")
+IGNORE = ("status of 404", "favicon", "AbortError", "aborted", "net::ERR_ABORTED")
 
 async def main():
     problems = []
