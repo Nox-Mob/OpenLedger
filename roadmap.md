@@ -75,6 +75,6 @@
 - [x] C. Pagination / SQL aggregation past 1,000 rows
 - [x] D. Strict amount parsing (decimal comma, >2 decimals, hex) + import locale + tests
 - [x] E. Dedup row-sequence fingerprint
-- [ ] F. Double-post guards (postBankTransaction conditional update, idempotency key)
-- [ ] G. Move demo seed out of migrations into supabase/seed.sql
+- [x] F. Double-post guards (postBankTransaction conditional update, idempotency key)
+- [x] G. Demo seed moved out of migrations into supabase/seed/demo.sql (manual, dev/test only)
 - [ ] H. PDF AI opt-in, balance validation, per-user rate limit
