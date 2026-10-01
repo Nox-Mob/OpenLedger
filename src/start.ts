@@ -1,24 +1,11 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { isAbort } from "./lib/abort";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 // A browser that closes a page mid-load makes Node's HTTP server emit "aborted" on the
 // request stream, outside any middleware. Swallow only that case so it can't surface as a crash.
-function isAbort(e: unknown): boolean {
-  for (let c: unknown = e, i = 0; c && i < 5; i++) {
-    if (
-      c instanceof Error &&
-      (c.name === "AbortError" ||
-        c.message === "aborted" ||
-        c.message === "This operation was aborted" ||
-        (c as { code?: string }).code === "ECONNRESET")
-    )
-      return true;
-    c = (c as { cause?: unknown }).cause;
-  }
-  return false;
-}
 const g = globalThis as {
   process?: { on?: (ev: string, fn: (e: unknown) => void) => void; exit?: (code: number) => void };
   __olAbortGuard?: boolean;
