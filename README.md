@@ -155,3 +155,13 @@ The database checks (`supabase/tests/*.sql`) run inside a transaction that alway
 ## License
 
 See LICENSE. This is pre-1.0 software — test it with sample data before trusting it with real books.
+
+## Before you release
+
+1. `bun run test`, `bun run lint`, `bun run format:check`, `bun run check:migrations` all pass.
+2. `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db` passes (local throwaway DB only — the script refuses anything else).
+3. `python3 scripts/smoke/smoke.py` against a dev server with the demo seed reports "No problems found."
+4. Replace the placeholder details in the Terms and Privacy pages after legal review.
+5. Leave `VITE_ALLOW_DEMO_LOGIN` unset in production so the shared demo login is refused.
+
+**Startup never resets data.** Migrations only ever add to the database; CI rejects any migration containing DELETE, TRUNCATE or DROP TABLE. Restarting the app or the database keeps every organization and transaction. The demo seed refuses to load into a database that has real organizations.
