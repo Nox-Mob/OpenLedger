@@ -14,7 +14,15 @@ export function LegalGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   if (status.isLoading) return <div className="min-h-screen bg-background" />;
-  if (status.isError) return children;
+  if (status.isError) return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="font-display text-xl font-bold">We couldn’t check the current notices</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Refresh the page to try again before continuing.</p>
+        <Button className="mt-5" onClick={() => status.refetch()}>Try again</Button>
+      </div>
+    </div>
+  );
   if (!status.data?.missing.length) return children;
 
   async function accept() {

@@ -41,7 +41,15 @@ function AccountsSetup() {
       const locked = c.required
         ? "Required"
         : null;
-      return { id: `c:${c.key}`, name: c.name, type: c.type, catalog: c, checked: acc?.isActive ?? !!c.required, locked };
+      return {
+        id: `c:${c.key}`,
+        name: c.name,
+        type: c.type,
+        catalog: c,
+        checked: acc?.isActive ?? !!c.required,
+        locked,
+        note: acc?.entryCount ? `Used by ${acc.entryCount} transaction line${acc.entryCount === 1 ? "" : "s"}; those records stay intact if archived.` : null,
+      };
     }),
     ...existing
       .filter((a) => !catalog.some((c) => matchesCatalog(a, c)))
@@ -51,6 +59,7 @@ function AccountsSetup() {
         type: a.type,
         checked: a.isActive,
         locked: null,
+        note: a.entryCount ? `Used by ${a.entryCount} transaction line${a.entryCount === 1 ? "" : "s"}; those records stay intact if archived.` : null,
       })),
   ];
 

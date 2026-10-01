@@ -9,6 +9,7 @@ export interface ChecklistRow {
   catalog?: CatalogAccount | undefined;
   checked: boolean;
   locked?: string | null | undefined; // reason it can't be changed
+  note?: string | null | undefined;
 }
 
 const ORDER = ["asset", "liability", "equity", "revenue", "expense"];
@@ -60,6 +61,7 @@ export function AccountChecklist({
                         <span className="block text-xs text-muted-foreground">An account your organization added.</span>
                       )}
                       {r.locked && <span className="mt-1 block text-xs font-medium text-primary">{r.locked}</span>}
+                      {r.note && <span className="mt-1 block text-xs text-muted-foreground">{r.note}</span>}
                       {!r.checked && !r.locked && <span className="mt-1 block text-xs font-medium text-muted-foreground">Archived — available to reactivate at any time.</span>}
                     </span>
                   </label>
