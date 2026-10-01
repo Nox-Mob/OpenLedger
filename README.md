@@ -152,7 +152,7 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    docker exec -i supabase-db psql -U postgres -d postgres < supabase/seed/demo.sql
    ```
 
-8. **Backups.** Dump nightly and copy off the machine:
+9. **Backups.** Dump nightly and copy off the machine:
 
    ```sh
    docker exec supabase-db pg_dump -U postgres postgres | gzip > backup-$(date +%F).sql.gz
