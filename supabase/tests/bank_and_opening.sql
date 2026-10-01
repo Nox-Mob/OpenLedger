@@ -61,8 +61,10 @@ BEGIN
   BEGIN
     INSERT INTO public.bank_transactions (id, org_id, account_id, bank_date, description, amount_cents, fingerprint)
     VALUES (brow2, org, cash, '2026-01-06', 'MISMATCH', 1000, 'fp-2');
-    UPDATE public.bank_transactions SET transaction_id = tx2 WHERE id = brow2; -- $10 row linking to $20 tx
-  EXCEPTION WHEN others THEN ok := true;
+    BEGIN
+      UPDATE public.bank_transactions SET transaction_id = tx2 WHERE id = brow2; -- $10 row linking to $20 tx
+    EXCEPTION WHEN others THEN ok := true;
+    END;
   END;
   r := r || 'bank_link_mismatch_rejected=' || CASE WHEN ok THEN 'PASS' ELSE 'FAIL' END || '; ';
 
