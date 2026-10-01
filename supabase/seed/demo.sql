@@ -1,12 +1,31 @@
 -- Open Ledger sample data (dev/testing only). NOT a migration — never runs automatically.
 -- Creates the shared demo login demo@demo.org / demo1234 and its two sample orgs
--- (Acme Demo Co, Riverside Community Kitchen). The demo login is a member of these only.
--- Run against a dev/test database as a superuser (e.g. psql -f supabase/seed/demo.sql).
--- Triggers are skipped during load so locked/reconciled rows restore exactly.
+-- (Acme Demo Co, Riverside Community Kitchen). Only the demo login is a member of them.
+-- Never run against a production database with real users.
+-- Usage (superuser on a dev/test database):  psql "$DB_URL" -f supabase/seed/demo.sql
+-- Re-runnable: every insert is ON CONFLICT DO NOTHING. Triggers are skipped during
+-- the load so already-reconciled rows restore exactly as captured.
 BEGIN;
 SET LOCAL session_replication_role = replica;
+
+-- Demo login (password demo1234). Token columns must be '' not NULL for sign-in to work.
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+VALUES ('00000000-0000-0000-0000-000000000000', 'd0e00000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'demo@demo.org',
+  extensions.crypt('demo1234', extensions.gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}', '{"display_name":"Demo"}', now(), now(),
+  '', '', '', '', '', '', '', '')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+VALUES ('d0e00000-0000-0000-0000-000000000003', 'd0e00000-0000-0000-0000-000000000003', jsonb_build_object('sub', 'd0e00000-0000-0000-0000-000000000003', 'email', 'demo@demo.org', 'email_verified', true), 'email', now(), now(), now())
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.profiles SELECT * FROM json_populate_record(NULL::public.profiles, '{"id":"d0e00000-0000-0000-0000-000000000003","display_name":"Nonprofit Demo","terminology":"simplest","created_at":"2026-09-30T05:14:08.975313+00:00","term_overrides":{}}') ON CONFLICT DO NOTHING;
 INSERT INTO public.organizations SELECT * FROM json_populate_record(NULL::public.organizations, '{"id":"d0e00000-0000-0000-0000-000000000002","name":"Acme Demo Co","org_type":"business","created_by":"d0e00000-0000-0000-0000-000000000003","created_at":"2026-09-30T05:07:17.355947+00:00","currency":"USD","fiscal_year_start_month":1,"terminology":"simplest","term_overrides":{},"timezone":"America/Chicago"}') ON CONFLICT DO NOTHING;
 INSERT INTO public.organizations SELECT * FROM json_populate_record(NULL::public.organizations, '{"id":"d0e00000-0000-0000-0000-000000000004","name":"Riverside Community Kitchen","org_type":"nonprofit","created_by":"d0e00000-0000-0000-0000-000000000003","created_at":"2026-09-30T05:14:08.975313+00:00","currency":"USD","fiscal_year_start_month":1,"terminology":"simplest","term_overrides":{},"timezone":"America/Chicago"}') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_roles SELECT * FROM json_populate_record(NULL::public.user_roles, '{"id":"d82ec75f-893e-4c43-bdac-8b6212553fa9","user_id":"d0e00000-0000-0000-0000-000000000003","org_id":"d0e00000-0000-0000-0000-000000000002","role":"admin"}') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_roles SELECT * FROM json_populate_record(NULL::public.user_roles, '{"id":"3828aa5f-c4ab-437b-9887-597817b4bed9","user_id":"d0e00000-0000-0000-0000-000000000003","org_id":"d0e00000-0000-0000-0000-000000000004","role":"admin"}') ON CONFLICT DO NOTHING;
 INSERT INTO public.accounts SELECT * FROM json_populate_record(NULL::public.accounts, '{"id":"d0e00000-0000-0000-0000-000000000010","org_id":"d0e00000-0000-0000-0000-000000000002","name":"Checking","type":"asset","subtype":null,"is_active":true,"created_at":"2026-09-30T05:07:17.355947+00:00"}') ON CONFLICT DO NOTHING;
 INSERT INTO public.accounts SELECT * FROM json_populate_record(NULL::public.accounts, '{"id":"d0e00000-0000-0000-0000-000000000011","org_id":"d0e00000-0000-0000-0000-000000000002","name":"Savings","type":"asset","subtype":null,"is_active":true,"created_at":"2026-09-30T05:07:17.355947+00:00"}') ON CONFLICT DO NOTHING;
 INSERT INTO public.accounts SELECT * FROM json_populate_record(NULL::public.accounts, '{"id":"d0e00000-0000-0000-0000-000000000012","org_id":"d0e00000-0000-0000-0000-000000000002","name":"Credit Card","type":"liability","subtype":null,"is_active":true,"created_at":"2026-09-30T05:07:17.355947+00:00"}') ON CONFLICT DO NOTHING;
