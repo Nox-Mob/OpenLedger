@@ -140,17 +140,17 @@ The database checks (`supabase/tests/*.sql`) run inside a transaction that alway
 
 ## Project layout
 
-| Path | What it is |
-| --- | --- |
-| `src/routes/` | Pages (TanStack Router file-based routing) |
+| Path                     | What it is                                                |
+| ------------------------ | --------------------------------------------------------- |
+| `src/routes/`            | Pages (TanStack Router file-based routing)                |
 | `src/lib/*.functions.ts` | Server functions — all org data access goes through these |
-| `src/lib/report-math.ts` | Pure report calculations (unit-tested) |
-| `src/lib/parsers/` | CSV / OFX / QFX / PDF bank-statement parsers |
-| `supabase/migrations/` | Database schema, RLS policies, triggers |
-| `supabase/seed/demo.sql` | Optional sample data (dev/test only) |
-| `supabase/tests/` | SQL-level security tests |
-| `AGENTS.md` | Architecture rules and invariants |
-| `roadmap.md` | Planned work |
+| `src/lib/report-math.ts` | Pure report calculations (unit-tested)                    |
+| `src/lib/parsers/`       | CSV / OFX / QFX / PDF bank-statement parsers              |
+| `supabase/migrations/`   | Database schema, RLS policies, triggers                   |
+| `supabase/seed/demo.sql` | Optional sample data (dev/test only)                      |
+| `supabase/tests/`        | SQL-level security tests                                  |
+| `AGENTS.md`              | Architecture rules and invariants                         |
+| `roadmap.md`             | Planned work                                              |
 
 ## License
 

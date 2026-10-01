@@ -49,9 +49,9 @@ function PrivacyPage() {
           You retain 100% ownership of the content and records you or your authorized users enter,
           import, upload, or create through Open Ledger (“Your Data”). Using the Service does not
           transfer ownership of Your Data to us. You give us only the limited permission needed to
-          host, process, back up, secure, and display Your Data so we can provide features you choose
-          to use. This permission ends when Your Data is deleted, except for temporary backup copies
-          and records we must retain for security or legal reasons.
+          host, process, back up, secure, and display Your Data so we can provide features you
+          choose to use. This permission ends when Your Data is deleted, except for temporary backup
+          copies and records we must retain for security or legal reasons.
         </p>
       </section>
       <section>
@@ -66,9 +66,9 @@ function PrivacyPage() {
             statements, attachments, projects, funds, reconciliations, reports, and settings.
           </li>
           <li>
-            <strong>Technical and usage information:</strong> IP address, browser and device details,
-            request times, security events, error information, and feature usage needed to operate,
-            protect, and troubleshoot the Service.
+            <strong>Technical and usage information:</strong> IP address, browser and device
+            details, request times, security events, error information, and feature usage needed to
+            operate, protect, and troubleshoot the Service.
           </li>
           <li>
             <strong>Support communications:</strong> information you include when you contact us.
@@ -86,8 +86,8 @@ function PrivacyPage() {
           We use information only to provide and maintain Open Ledger; authenticate users and
           enforce organization permissions; process transactions, imports, reconciliations, and
           reports you request; protect accounts and prevent abuse; diagnose errors and improve
-          reliability; respond to support requests; communicate important Service or policy
-          changes; enforce limits; and meet binding legal obligations.
+          reliability; respond to support requests; communicate important Service or policy changes;
+          enforce limits; and meet binding legal obligations.
         </p>
       </section>
       <section>
@@ -174,15 +174,16 @@ function PrivacyPage() {
         <p>
           The Service is intended for adults and organizations and is not directed to children under
           13. We do not knowingly collect personal information from children under 13. If you
-          believe a child provided information to us, contact us so we can investigate and delete it.
+          believe a child provided information to us, contact us so we can investigate and delete
+          it.
         </p>
       </section>
       <section>
         <h2>13. Changes to this policy</h2>
         <p>
-          We may update this policy as the Service or law changes. We will post the updated effective
-          date and, when a material change applies to registered users, provide notice and request
-          acceptance of the new version in the Service.
+          We may update this policy as the Service or law changes. We will post the updated
+          effective date and, when a material change applies to registered users, provide notice and
+          request acceptance of the new version in the Service.
         </p>
       </section>
       <section>
