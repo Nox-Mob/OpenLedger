@@ -144,6 +144,8 @@ function AuthPage() {
           <form onSubmit={submit} className="space-y-3">
             <input
               type="email"
+              aria-label="Email"
+              autoComplete="email"
               required
               placeholder="Email"
               value={email}
@@ -158,6 +160,8 @@ function AuthPage() {
             )}
             <input
               type="password"
+              aria-label="Password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               required
               minLength={mode === "signup" ? 8 : 1}
               placeholder="Password"
