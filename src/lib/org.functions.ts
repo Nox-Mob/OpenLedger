@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 import { catalogFor, matchesCatalog, type OrgType } from "./account-catalog";
+import { assertCan } from "./permissions";
 
 export const getMyOrgs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -58,15 +59,7 @@ export const setMyTermOverrides = createServerFn({ method: "POST" })
   });
 
 async function requireOrgAdmin(supabase: any, userId: string, orgId: string) {
-  const { data: roleRow } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("org_id", orgId)
-    .maybeSingle();
-  if (roleRow?.role !== "admin") {
-    throw new Error("Only organization admins can change these settings.");
-  }
+  await assertCan(supabase, userId, orgId, "manage_settings");
 }
 
 export const updateOrganization = createServerFn({ method: "POST" })
@@ -174,7 +167,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await requireOrgAdmin(supabase, userId, data.orgId);
+    await assertCan(supabase, userId, data.orgId, "manage_members");
     if (data.userId === userId && data.role !== "admin") {
       throw new Error("You can't demote yourself — ask another admin to do it.");
     }
