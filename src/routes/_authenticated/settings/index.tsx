@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/settings/")({
   component: OrgProfileSettings,
 });
 
-const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "JPY", "CHF"];
+const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "CHF"];
 const TIMEZONES: string[] = (() => {
   try {
     return (Intl as any).supportedValuesOf("timeZone") as string[];
