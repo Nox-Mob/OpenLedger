@@ -34,11 +34,56 @@ function AuthPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [legalAgreement, setLegalAgreement] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
+
+  function passwordIssue(pw: string): string | null {
+    if (pw.length < 8) return "Password must be at least 8 characters.";
+    if (!/[a-z]/.test(pw)) return "Password needs a lowercase letter.";
+    if (!/[A-Z]/.test(pw)) return "Password needs an uppercase letter.";
+    if (!/[0-9]/.test(pw)) return "Password needs a number.";
+    if (!/[^A-Za-z0-9]/.test(pw)) return "Password needs a symbol (e.g. ! @ # $).";
+    return null;
+  }
+
+  function friendlyError(err: any): string {
+    const msg = (err?.message ?? "Something went wrong") as string;
+    const code = (err?.code ?? "") as string;
+    if (code === "over_email_send_rate_limit" || /rate limit/i.test(msg))
+      return "Too many attempts. Wait a few minutes and try again.";
+    if (/email not confirmed/i.test(msg)) {
+      setNeedsVerification(true);
+      return "Your email isn't verified yet. Check your inbox, or resend the verification email below.";
+    }
+    if (/invalid login credentials/i.test(msg))
+      return "Wrong email or password. If you signed up with Google, use the Google button.";
+    if (/weak_password|password is known to be weak|breached/i.test(msg + code))
+      return "That password has appeared in a data breach. Choose a different one.";
+    return msg;
+  }
+
+  async function resendVerification() {
+    setError(null);
+    setMessage(null);
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) setError(friendlyError(error));
+    else setMessage("Verification email sent. Check your inbox.");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setMessage(null);
+    setNeedsVerification(false);
+    if (Date.now() < lockedUntil) {
+      setError("Too many attempts. Wait a moment and try again.");
+      return;
+    }
+    if (mode === "signup") {
+      const issue = passwordIssue(password);
+      if (issue) { setError(issue); return; }
+    }
     setBusy(true);
     try {
       if (mode === "signin") {
@@ -49,11 +94,17 @@ function AuthPage() {
         if (!legalAgreement) throw new Error("Agree to the Terms and Privacy Policy to create an account.");
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setMessage("Account created. Check your email to confirm, then sign in.");
+        setMessage("Account created. Check your email to verify it, then sign in.");
         setMode("signin");
       }
     } catch (err: any) {
-      setError(err.message ?? "Something went wrong");
+      const next = failedAttempts + 1;
+      setFailedAttempts(next);
+      if (next >= 5) {
+        setLockedUntil(Date.now() + 30_000);
+        setFailedAttempts(0);
+      }
+      setError(friendlyError(err));
     } finally {
       setBusy(false);
     }
@@ -111,12 +162,26 @@ function AuthPage() {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={mode === "signup" ? 8 : 1}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
+            {mode === "signup" && (
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters with an uppercase letter, a lowercase letter, a number, and a symbol.
+              </p>
+            )}
+            {needsVerification && (
+              <button
+                type="button"
+                onClick={resendVerification}
+                className="text-sm text-foreground underline underline-offset-2"
+              >
+                Resend verification email
+              </button>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && <p className="text-sm text-primary">{message}</p>}
             <button

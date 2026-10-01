@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCan } from "./permissions";
 
 const entrySchema = z.object({
   accountId: z.string().uuid(),
@@ -78,6 +79,7 @@ export const createTransaction = createServerFn({ method: "POST" })
   .inputValidator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, data.orgId, "write");
 
     const sum = data.entries.reduce((acc, e) => acc + e.amountCents, 0);
     if (sum !== 0) {
@@ -170,6 +172,7 @@ export const voidTransaction = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, data.orgId, "write");
     const { data: before } = await supabase
       .from("transactions")
       .select("id, description, status, entries(id, reconciliation_id, reconciliations(status))")

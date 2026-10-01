@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { checkStatementBalance, PDF_LIMITS } from "@/lib/parsers/statement-balance";
+import { assertCan } from "./permissions";
 
 const rowSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -76,6 +77,7 @@ export const importBankRows = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, data.orgId, "write");
     let mismatch: number | null = null;
     if (data.format === "pdf") {
       const check = checkStatementBalance(data.beginningBalanceCents, data.rows.map((r) => r.amountCents), data.endingBalanceCents);
@@ -181,6 +183,7 @@ export const undoImportBatch = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, data.orgId, "write");
     const { data: posted, error: pErr } = await supabase
       .from("bank_transactions")
       .select("id")
@@ -405,6 +408,7 @@ export const postBankTransaction = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCan(supabase, userId, data.orgId, "write");
 
     const { data: bank, error: bError } = await supabase
       .from("bank_transactions")

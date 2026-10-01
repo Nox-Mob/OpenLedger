@@ -57,9 +57,9 @@ export function useOrgContext() {
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/transactions/new", label: "New Transaction", icon: PlusCircle },
+  { to: "/transactions/new", label: "New Transaction", icon: PlusCircle, write: true },
   { to: "/accounts", label: "Accounts", icon: Landmark },
-  { to: "/import", label: "Import Bank File", icon: Upload },
+  { to: "/import", label: "Import Bank File", icon: Upload, write: true },
   { to: "/reconcile", label: "Reconcile", icon: ListChecks },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/funds", label: "Funds", icon: PiggyBank },
@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-0.5 px-3">
-          {NAV.map((item) => (
+          {NAV.filter((item) => !("write" in item && item.write) || org?.role !== "viewer").map((item) => (
             <Link
               key={item.to}
               to={item.to}

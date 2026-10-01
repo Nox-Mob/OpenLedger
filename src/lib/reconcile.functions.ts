@@ -2,6 +2,7 @@ import { addDays, daysBetween } from "./dates";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCan } from "./permissions";
 
 /**
  * Reconciliation compares bank evidence to the ledger. It never edits amounts —
@@ -190,6 +191,7 @@ export const startReconciliation = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "write");
     const { data: account, error: accountError } = await context.supabase
       .from("accounts")
       .select("id, is_active")
@@ -267,6 +269,7 @@ export const setCleared = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
+    await assertCan(supabase, userId, rec.org_id, "write");
     if (rec.status !== "in_progress") throw new Error("This reconciliation is completed. Reopen it to make changes.");
     let q = supabase
       .from("entries")
@@ -287,6 +290,7 @@ export const acceptMatches = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
+    await assertCan(supabase, userId, rec.org_id, "write");
     if (rec.status !== "in_progress") throw new Error("This reconciliation is completed.");
     const ws = await loadWorkspace(supabase, rec);
     const ids = ws.matches.map((m) => m.entryId).filter((id) => !ws.entries.find((e) => e.id === id)?.cleared);
@@ -304,6 +308,7 @@ export const completeReconciliation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
+    await assertCan(supabase, userId, rec.org_id, "write");
     if (rec.status !== "in_progress") throw new Error("Already completed");
     const ws = await loadWorkspace(supabase, rec);
     const s = summarize(rec, ws.entries);
@@ -326,9 +331,7 @@ export const reopenReconciliation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
-    const { data: role } = await supabase
-      .from("user_roles").select("role").eq("org_id", rec.org_id).eq("user_id", userId).maybeSingle();
-    if (role?.role !== "admin") throw new Error("Only admins can reopen a reconciliation.");
+    await assertCan(supabase, userId, rec.org_id, "reopen_reconciliation");
     if (rec.status !== "completed") throw new Error("Not completed");
     const { data: later } = await supabase
       .from("reconciliations").select("id").eq("account_id", rec.account_id).gt("period_end", rec.period_end).limit(1);

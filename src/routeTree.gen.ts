@@ -27,6 +27,7 @@ import { Route as AuthenticatedReconcileIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedReconcileIdRouteImport } from './routes/_authenticated/reconcile.$id'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedSettingsAccountsRouteImport } from './routes/_authenticated/settings/accounts'
+import { Route as AuthenticatedSettingsCloseRouteImport } from './routes/_authenticated/settings/close'
 import { Route as AuthenticatedSettingsMembersRouteImport } from './routes/_authenticated/settings/members'
 import { Route as AuthenticatedSettingsPreferencesRouteImport } from './routes/_authenticated/settings/preferences'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
@@ -125,6 +126,12 @@ const AuthenticatedSettingsAccountsRoute =
     path: '/accounts',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsCloseRoute =
+  AuthenticatedSettingsCloseRouteImport.update({
+    id: '/close',
+    path: '/close',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsMembersRoute =
   AuthenticatedSettingsMembersRouteImport.update({
     id: '/members',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
+  '/settings/close': typeof AuthenticatedSettingsCloseRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
+  '/settings/close': typeof AuthenticatedSettingsCloseRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/_authenticated/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
+  '/_authenticated/settings/close': typeof AuthenticatedSettingsCloseRoute
   '/_authenticated/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/_authenticated/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/reconcile/$id'
     | '/settings/accounts'
+    | '/settings/close'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/'
     | '/reconcile/$id'
     | '/settings/accounts'
+    | '/settings/close'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
@@ -284,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/reconcile/$id'
     | '/_authenticated/settings/accounts'
+    | '/_authenticated/settings/close'
     | '/_authenticated/settings/members'
     | '/_authenticated/settings/preferences'
     | '/_authenticated/transactions/new'
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountsRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/close': {
+      id: '/_authenticated/settings/close'
+      path: '/close'
+      fullPath: '/settings/close'
+      preLoaderRoute: typeof AuthenticatedSettingsCloseRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/members': {
       id: '/_authenticated/settings/members'
       path: '/members'
@@ -462,6 +482,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAccountsRoute: typeof AuthenticatedSettingsAccountsRoute
+  AuthenticatedSettingsCloseRoute: typeof AuthenticatedSettingsCloseRoute
   AuthenticatedSettingsMembersRoute: typeof AuthenticatedSettingsMembersRoute
   AuthenticatedSettingsPreferencesRoute: typeof AuthenticatedSettingsPreferencesRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
@@ -469,6 +490,7 @@ interface AuthenticatedSettingsRouteChildren {
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsAccountsRoute: AuthenticatedSettingsAccountsRoute,
+  AuthenticatedSettingsCloseRoute: AuthenticatedSettingsCloseRoute,
   AuthenticatedSettingsMembersRoute: AuthenticatedSettingsMembersRoute,
   AuthenticatedSettingsPreferencesRoute: AuthenticatedSettingsPreferencesRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
