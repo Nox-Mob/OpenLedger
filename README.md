@@ -27,99 +27,152 @@ psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql
 
 ## Self-hosting: full reproduction guide
 
-### 1. Prerequisites
+Pick **one** path for the database and sign-in service, then finish with the shared steps.
 
-- **Node.js 20+** (or Bun 1.1+). Install via [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) or [bun.sh](https://bun.sh).
-- **Git**.
-- A **Supabase project** — either a free project at [supabase.com](https://supabase.com) (easiest) or a [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting) stack. You need: the project URL, the publishable (anon) key, the service-role key, and the database connection string.
+| | Path 1 — Cloud-hosted Supabase | Path 2 — Self-hosted Supabase (Docker) |
+|---|---|---|
+| Where data lives | supabase.com | Your own server |
+| Effort | Easiest | More setup, 4 GB+ RAM |
+| Migrations run with | `psql` on your machine or `supabase db push` | `docker exec` into the `supabase-db` container (no host `psql` needed) |
 
-### 2. Get the code
+### Shared prerequisites
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-```
+- **Node.js 20+** (or Bun 1.1+) and **Git**.
+- Get the code:
 
-### 3. Create the database schema
+  ```sh
+  git clone <this-repository-url>
+  cd <repository-name>
+  cp .env.example .env
+  ```
 
-Apply every migration in `supabase/migrations/`, in filename order (the timestamps in the names define the order):
+---
 
-```sh
-for f in supabase/migrations/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
-```
+### Path 1 — Cloud-hosted Supabase (supabase.com)
 
-Or use the Supabase CLI:
+1. **Create a project** at [supabase.com](https://supabase.com).
+2. **Collect credentials** (Project Settings → API and → Database): project URL, publishable (anon) key, service-role key, and the database connection string (`SUPABASE_DB_URL`).
+3. **Install the Postgres client** if you don't have `psql` (Debian/Ubuntu: `sudo apt install -y postgresql-client`; macOS: `brew install libpq`). If you see `You must install at least one postgresql-client-<version> package`, this is the fix.
+4. **Apply every migration** in filename order:
 
-```sh
-supabase link --project-ref <your-project-ref>
-supabase db push
-```
+   ```sh
+   export SUPABASE_DB_URL="<your connection string>"
+   for f in supabase/migrations/*.sql; do
+     echo "Applying $f..."
+     psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+   done
+   ```
 
-This creates all tables, row-level-security policies, grants, triggers, and functions (double-entry validation, immutability guards, last-admin protection, reconciliation locks, etc.).
+   Or with the Supabase CLI: `supabase link --project-ref <ref> && supabase db push`.
+5. **Configure sign-in** (Authentication → Sign In / Providers): enable Email; keep email confirmation ON for production; optionally enable Google. Under URL Configuration set **Site URL** to your app's URL and add `<app-url>/reset-password` (and your local dev URL) to the redirect list.
+6. **Fill in `.env`:**
 
-Optionally verify tenant isolation afterwards:
+   ```sh
+   VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
+   SUPABASE_URL=https://<project-ref>.supabase.co
+   SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
+   SUPABASE_SERVICE_ROLE_KEY=<service-role key>
+   LOVABLE_API_KEY=<optional, enables AI PDF import>
+   ```
 
-```sh
-psql "$SUPABASE_DB_URL" -f supabase/tests/tenant_isolation.sql
-```
+7. *(Optional, dev/test only)* load sample data: `psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql`.
 
-### 4. Configure authentication
+Continue with **Run the app** below.
 
-In your Supabase project (Authentication → Sign In / Providers):
+---
 
-1. Enable **Email** sign-ups.
-2. Decide on email confirmation: leave it ON for production (users must confirm their email), or turn it off for a private test instance.
-3. (Optional) Enable **Google** sign-in: create OAuth credentials in Google Cloud Console, add them to the Google provider in Supabase, and add your app's URL to the allowed redirect URLs.
-4. Under Authentication → URL Configuration, set **Site URL** to your app's public URL (e.g. `https://books.example.com`) and add `https://books.example.com/reset-password` (and your local dev URL) to the redirect allow-list — password-reset emails link back there.
+### Path 2 — Self-hosted Supabase with Docker
 
-### 5. Set environment variables
+Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM**.
 
-Create a `.env` file in the project root (it is git-ignored):
+1. **Install Supabase's Docker stack.** The quickest way is the official script:
 
-```sh
-# Client + server
-VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=<your publishable/anon key>
+   ```sh
+   curl -fsSL https://supabase.link/setup.sh | sh
+   ```
 
-# Server-only (used by server functions)
-SUPABASE_URL=https://<your-project-ref>.supabase.co
-SUPABASE_PUBLISHABLE_KEY=<your publishable/anon key>
-SUPABASE_SERVICE_ROLE_KEY=<your service-role key>
+   The script supports **Linux only** (Debian/Ubuntu and RHEL/CentOS/Fedora) and will:
 
-# Optional: enables the AI-assisted PDF statement import.
-# Without it, CSV/OFX/QFX imports still work; PDF import is disabled.
-LOVABLE_API_KEY=<a Lovable AI gateway key>
-```
+   - Install prerequisites (`git`, `openssl`, `jq`) and Docker Engine if not already present
+   - Sparse-clone the `docker/` directory from the main Supabase repository
+   - Create a project directory (`supabase-project` by default) and copy the configuration files into it
+   - Record the installed release version in `.supabase-version` for future `update.sh` upgrades
+   - Prompt for the main URLs (`SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `SITE_URL`, `PROXY_DOMAIN`) and write them to `.env`
+   - Generate all secrets, including a random `DASHBOARD_PASSWORD`, and the asymmetric JWT signing key pair (runs `generate-keys.sh` and `add-new-auth-keys.sh`, and enables the matching entries in `docker-compose.yml`)
+   - Pull the Docker images
 
-Never commit this file. The service-role key bypasses row-level security — keep it server-side only.
+   > The shortened link points to `setup.sh` — inspect it first if you prefer (`curl -fsSL https://supabase.link/setup.sh -o setup.sh`, read it, then `sh setup.sh`). Use `-y` to run non-interactively with default values. Manual alternative: `git clone --depth 1 https://github.com/supabase/supabase && cd supabase/docker && cp .env.example .env`, set `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `DASHBOARD_PASSWORD` yourself, then `docker compose pull && docker compose up -d`.
 
-### 6. Install and run
+2. **Log out and back in.** If the script installed Docker, it added you to the `docker` group; otherwise the `docker` commands below need `sudo`.
+3. **Start the stack and view credentials:**
+
+   ```sh
+   cd supabase-project && sh run.sh start
+   sh run.sh secrets      # shows ANON_KEY, SERVICE_ROLE_KEY, POSTGRES_PASSWORD, ...
+   ```
+
+   The API gateway listens on port `8000`: your project URL is `http://<server-ip>:8000` (or your TLS URL if you put a proxy in front).
+4. **Apply every migration inside the database container.** Go back to *this app's* project folder and run the migrations through Docker — you do **not** need `psql` installed on the host:
+
+   ```sh
+   # Confirm the database container name (usually supabase-db)
+   docker ps --filter "name=db" --format "{{.Names}}"
+
+   for file in supabase/migrations/*.sql; do
+     echo "Applying $file..."
+     docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$file"
+   done
+   ```
+
+   If `docker ps` shows a different name (e.g. `supabase-project-db-1`), use that instead of `supabase-db`.
+5. **Fill in `.env`** — the browser and server values are the same here:
+
+   ```sh
+   VITE_SUPABASE_URL=http://<server-ip>:8000
+   VITE_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY>
+   SUPABASE_URL=http://<server-ip>:8000
+   SUPABASE_PUBLISHABLE_KEY=<ANON_KEY>
+   SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
+   LOVABLE_API_KEY=<optional, enables AI PDF import>
+   ```
+
+6. **Check the sign-in URLs.** If your app's URL differs from what you entered during setup, edit `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` (include `<app-url>/reset-password`) in `supabase-project/.env`, then `docker compose restart auth`.
+7. *(Optional, dev/test only)* load sample data:
+
+   ```sh
+   docker exec -i supabase-db psql -U postgres -d postgres < supabase/seed/demo.sql
+   ```
+
+8. **Backups.** Dump nightly and copy off the machine:
+
+   ```sh
+   docker exec supabase-db pg_dump -U postgres postgres | gzip > backup-$(date +%F).sql.gz
+   # test a restore at least once:
+   gunzip -c backup.sql.gz | docker exec -i supabase-db psql -U postgres postgres
+   ```
+
+Updating Supabase later: run the stack's `update.sh` from `supabase-project` (version recorded in `.supabase-version`). App and Supabase updates are independent; neither touches your data. New app migrations are applied with the same `docker exec` loop (already-applied ones may report "already exists" — only new files matter).
+
+---
+
+### Run the app (both paths)
 
 ```sh
 bun install        # or: npm install
 bun run dev        # or: npm run dev
 ```
 
-Open http://localhost:8080, create your first account on the sign-in page, and the app walks you through creating your first organization (name/type → accounts → display settings).
+Open http://localhost:8080, create your first account, and the app walks you through creating your first organization. With sample data loaded you can sign in as `demo@demo.org` / `demo1234`.
 
-### 7. (Optional) Load the sample data
-
-On a dev/test database only:
-
-```sh
-psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql
-```
-
-Then sign in as `demo@demo.org` / `demo1234` to explore two fully worked example organizations (a business and a nonprofit), including transactions, bank imports, and reconciliations.
-
-### 8. Production build
+Production build:
 
 ```sh
 bun run build
-bun run preview    # serves the production build locally
+bun run preview    # serves the production build
 ```
 
-The app is a server-rendered TanStack Start app: pages **and** server functions (transactions, imports, reports, closing) run on the server. A static-file host alone will not work. All state lives in the database and storage, so app servers are stateless and can be replaced or multiplied freely.
+The app is server-rendered: pages **and** server functions run on the server, so a static-file host alone will not work. App servers are stateless and can be replaced or multiplied freely.
 
 ---
 
@@ -177,71 +230,9 @@ books.example.com {
 
 Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun run build && sudo systemctl restart open-ledger`. Restarting never touches data.
 
-#### Fully self-contained alternative: self-hosted Supabase with Docker Compose
+#### Fully self-contained alternative
 
-If you don't want any hosted dependency, run Supabase itself on the same machine with Docker Compose. Allow **4 GB+ RAM** (the Supabase stack runs Postgres, Auth, PostgREST, Storage, and more as separate containers).
-
-1. **Install Docker and the Compose plugin** on the server ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/)).
-2. **Get the official self-hosting stack.** The fastest way is Supabase's own setup script, which does the whole preparation for you:
-
-   ```sh
-   curl -fsSL https://supabase.link/setup.sh | sh
-   ```
-
-   The script supports **Linux only** (Debian/Ubuntu and RHEL/CentOS/Fedora) and will:
-
-   - Install prerequisites (`git`, `openssl`, `jq`) and Docker Engine if not already present
-   - Sparse-clone the `docker/` directory from the main Supabase repository
-   - Create a project directory (`supabase-project` by default) and copy the configuration files into it
-   - Record the installed release version in `.supabase-version` for future `update.sh` upgrades
-   - Prompt for the main URLs (`SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `SITE_URL`, `PROXY_DOMAIN`) and write them to `.env`
-   - Generate all secrets, including a random `DASHBOARD_PASSWORD`, and the asymmetric JWT signing key pair (it runs `generate-keys.sh` and `add-new-auth-keys.sh`, and enables the matching entries in `docker-compose.yml`)
-   - Pull the Docker images
-
-   > Piping a script straight into a shell is a matter of trust. The shortened link points to `setup.sh` — inspect it before running (`curl -fsSL https://supabase.link/setup.sh -o setup.sh`, read it, then `sh setup.sh`), pass `-y` to run non-interactively with default values, or do the whole thing manually:
-   >
-   > ```sh
-   > git clone --depth 1 https://github.com/supabase/supabase
-   > cd supabase/docker
-   > cp .env.example .env
-   > ```
-   >
-   > The manual path skips the script's conveniences: you generate the secrets and keys yourself (step 4 below) and pull the images with `docker compose pull`.
-
-3. **Log out and back in.** When the script installs Docker for you, it also adds your user to the `docker` group. Log out and back in before continuing — otherwise the `docker` commands below need `sudo`.
-4. **Start the stack and view your credentials:**
-
-   ```sh
-   cd supabase-project && sh run.sh start
-   ```
-
-   View the generated credentials any time via:
-
-   ```sh
-   sh run.sh secrets
-   ```
-
-   Postgres then listens on port `5432` and the API gateway (Kong) on `8000`. Your project URL is `http://<server-ip>:8000` (or `https://api.books.example.com` if you put a TLS proxy in front — recommended for anything but a home lab).
-
-   On the manual path, instead edit `docker/.env` yourself: set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`, generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments, then `docker compose pull && docker compose up -d`. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
-5. **Apply the schema.** Point the migration loop from step 3 of the setup guide at the local Postgres:
-
-   ```sh
-   export SUPABASE_DB_URL="postgresql://postgres:<POSTGRES_PASSWORD>@127.0.0.1:5432/postgres"
-   for f in supabase/migrations/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
-   ```
-
-6. **Point the app at it.** In the app's `.env`, use `http://<server-ip>:8000` (or your TLS URL) for `VITE_SUPABASE_URL` / `SUPABASE_URL`, the `ANON_KEY` for the publishable keys, and the `SERVICE_ROLE_KEY` for the service-role key (`sh run.sh secrets` shows both).
-7. **Check the auth URLs.** The script prompts for `SITE_URL` and the other public URLs during setup. If your app's URL changes later, update `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` in the project's `.env` (include the `/reset-password` redirect) and restart the auth container (`docker compose restart auth`).
-8. **Backups.** The database lives in the `db` container's Postgres volume. Dump it nightly and copy the dump off the machine:
-
-   ```sh
-   docker compose exec -T db pg_dump -U postgres postgres | gzip > backup-$(date +%F).sql.gz
-   ```
-
-   Schedule this with cron and copy the result to another machine or object storage. Test a restore at least once (`gunzip -c backup.sql.gz | docker compose exec -T db psql -U postgres postgres`).
-
-Updating Supabase later: from the project directory, follow the stack's own `update.sh` (the installed release version is recorded in `.supabase-version`), or on the manual path `git pull` in the supabase checkout, `docker compose pull`, `docker compose up -d`. App updates and Supabase updates are independent; neither touches your data.
+Use **Path 2 — Self-hosted Supabase with Docker** above on the same server, then run the app as shown here.
 
 ### Option B — at scale (many organizations / users)
 
