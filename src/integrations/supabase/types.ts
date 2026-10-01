@@ -681,6 +681,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          idempotency_key: string | null
           org_id: string
           posted_date: string | null
           source: Database["public"]["Enums"]["transaction_source"]
@@ -693,6 +694,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
+          idempotency_key?: string | null
           org_id: string
           posted_date?: string | null
           source?: Database["public"]["Enums"]["transaction_source"]
@@ -705,6 +707,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          idempotency_key?: string | null
           org_id?: string
           posted_date?: string | null
           source?: Database["public"]["Enums"]["transaction_source"]
