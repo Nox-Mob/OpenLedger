@@ -177,7 +177,46 @@ books.example.com {
 
 Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun run build && sudo systemctl restart open-ledger`. Restarting never touches data.
 
-Fully self-contained alternative: run [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting) with Docker Compose on the same machine (allow 4 GB+ RAM) and point the env vars at it. Back up its Postgres volume nightly (`pg_dump`) and copy the dump off the machine.
+#### Fully self-contained alternative: self-hosted Supabase with Docker Compose
+
+If you don't want any hosted dependency, run Supabase itself on the same machine with Docker Compose. Allow **4 GB+ RAM** (the Supabase stack runs Postgres, Auth, PostgREST, Storage, and more as separate containers).
+
+1. **Install Docker and the Compose plugin** on the server ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/)).
+2. **Get the official self-hosting stack:**
+
+   ```sh
+   git clone --depth 1 https://github.com/supabase/supabase
+   cd supabase/docker
+   cp .env.example .env
+   ```
+
+3. **Edit `docker/.env`.** At minimum, set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`. Generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
+4. **Start the stack:**
+
+   ```sh
+   docker compose pull
+   docker compose up -d
+   ```
+
+   Postgres then listens on port `5432` and the API gateway (Kong) on `8000`. Your project URL is `http://<server-ip>:8000` (or `https://api.books.example.com` if you put a TLS proxy in front — recommended for anything but a home lab).
+5. **Apply the schema.** Point the migration loop from step 3 of the setup guide at the local Postgres:
+
+   ```sh
+   export SUPABASE_DB_URL="postgresql://postgres:<POSTGRES_PASSWORD>@127.0.0.1:5432/postgres"
+   for f in supabase/migrations/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
+   ```
+
+6. **Point the app at it.** In the app's `.env`, use `http://<server-ip>:8000` (or your TLS URL) for `VITE_SUPABASE_URL` / `SUPABASE_URL`, `ANON_KEY` for the publishable keys, and `SERVICE_ROLE_KEY` for the service-role key.
+7. **Configure auth URLs** in `docker/.env` (`SITE_URL`, `ADDITIONAL_REDIRECT_URLS`) to match your app's public URL, including the `/reset-password` redirect, then `docker compose restart auth`.
+8. **Backups.** The database lives in the `db` container's Postgres volume. Dump it nightly and copy the dump off the machine:
+
+   ```sh
+   docker compose exec -T db pg_dump -U postgres postgres | gzip > backup-$(date +%F).sql.gz
+   ```
+
+   Schedule this with cron and copy the result to another machine or object storage. Test a restore at least once (`gunzip -c backup.sql.gz | docker compose exec -T db psql -U postgres postgres`).
+
+Updating Supabase later: `git pull` in the supabase checkout, `docker compose pull`, `docker compose up -d`. App updates and Supabase updates are independent; neither touches your data.
 
 ### Option B — at scale (many organizations / users)
 
