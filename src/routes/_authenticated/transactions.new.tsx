@@ -5,6 +5,7 @@ import { AppShell, useOrgContext } from "@/components/AppShell";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
 import { parseToCents, todayISO, formatCents } from "@/lib/money";
+import { safeRandomUUID } from "@/lib/utils";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -102,7 +103,7 @@ function NewTransactionPage() {
   }, [rows]);
 
   // Same key for every retry of this form; a double click can't save twice.
-  const submitKeyRef = useRef(crypto.randomUUID());
+  const submitKeyRef = useRef(safeRandomUUID());
   const submittingRef = useRef(false);
 
   async function submit(e: React.FormEvent) {

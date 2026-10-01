@@ -10,6 +10,7 @@ import {
 } from "@/lib/close.functions";
 import { getAccountSetup } from "@/lib/org.functions";
 import { formatCents } from "@/lib/money";
+import { safeRandomUUID } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings/close")({
@@ -107,7 +108,7 @@ function CloseBooksSettings() {
           orgId: org.id,
           fiscalYearEnd,
           retainedEarningsAccountId: equityAccountId,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: safeRandomUUID(),
         },
       });
       if ((r as any).duplicate) toast.info("That fiscal year was already closed.");
