@@ -52,7 +52,7 @@
 ### Phase C — integrity & access
 - [ ] 8. Import correctness (row-seq fingerprint, amount formats, PDF balance check, encoding, size limits)
 - [ ] 10. Role authorization matrix + last-admin protection server-side
-- [ ] 11. Double-submit / concurrency guards (idempotency keys)
+- [x] 11. Double-submit / concurrency guards (idempotency keys — done as part of F)
 - [ ] 12. Lock account type once used; archive instead of delete
 ### Phase D — parallel
 - [ ] 9. AI disclosure + opt-in, Terms, Privacy, "not advice" notice
