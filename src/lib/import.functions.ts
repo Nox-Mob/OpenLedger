@@ -221,11 +221,58 @@ export const saveImportProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** AI-assisted extraction of a statement's text. Result is always reviewed by the user before import. */
+async function pdfUsage(supabase: any, orgId: string, userId: string) {
+  const now = Date.now();
+  const since = (ms: number) => new Date(now - ms).toISOString();
+  const count = async (ms: number) => {
+    const { count, error } = await supabase
+      .from("ai_usage").select("id", { count: "exact", head: true })
+      .eq("org_id", orgId).eq("user_id", userId).eq("kind", "pdf_extract").gte("created_at", since(ms));
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  };
+  const day = await count(86_400_000);
+  const month = await count(30 * 86_400_000);
+  return {
+    dayUsed: day, monthUsed: month,
+    remaining: Math.max(0, Math.min(PDF_LIMITS.perDay - day, PDF_LIMITS.perMonth - month)),
+    limits: PDF_LIMITS,
+  };
+}
+
+export const getPdfUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => pdfUsage(context.supabase, data.orgId, context.userId));
+
+/** AI-assisted extraction of a statement's text. Opt-in per org, acknowledged per upload, rate-limited per person. Result is always reviewed before import. */
 export const extractPdfStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ text: z.string().min(20).max(120_000) }).parse(input))
-  .handler(async ({ data }) => {
+  .inputValidator((input) =>
+    z.object({
+      orgId: z.string().uuid(),
+      text: z.string().min(20).max(120_000),
+      pageCount: z.number().int().min(1).max(PDF_LIMITS.maxPages, `PDFs over ${PDF_LIMITS.maxPages} pages aren't supported`),
+      byteSize: z.number().int().min(1).max(PDF_LIMITS.maxBytes, "PDFs over 10 MB aren't supported"),
+      acknowledged: z.literal(true, { errorMap: () => ({ message: "Please confirm the AI notice first" }) }),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: org, error: oErr } = await supabase.from("organizations").select("ai_pdf_enabled").eq("id", data.orgId).single();
+    if (oErr || !org) throw new Error("Organization not found");
+    if (!org.ai_pdf_enabled) throw new Error("An admin needs to turn on AI PDF reading in Settings first.");
+    const { data: canWrite } = await supabase.rpc("can_write_org", { _user_id: userId, _org_id: data.orgId });
+    if (!canWrite) throw new Error("You don't have permission to import here.");
+    const usage = await pdfUsage(supabase, data.orgId, userId);
+    if (usage.remaining <= 0)
+      throw new Error(usage.dayUsed >= PDF_LIMITS.perDay
+        ? `You've read ${PDF_LIMITS.perDay} PDFs today. Try again tomorrow.`
+        : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`);
+    const usageId = crypto.randomUUID();
+    const { error: uErr } = await supabase.from("ai_usage").insert({ id: usageId, org_id: data.orgId, user_id: userId, kind: "pdf_extract", page_count: data.pageCount, ok: false });
+    if (uErr) throw new Error(uErr.message);
+
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("AI service is not configured");
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
