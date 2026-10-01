@@ -79,3 +79,4 @@
 - [x] G. Demo seed moved out of migrations into supabase/seed/demo.sql (manual, dev/test only)
 - [x] H. PDF AI opt-in, balance validation, per-user rate limit
 - [ ] Reduce 114 legacy `any` types (lint warnings) and run `bun run format` once to clear formatting backlog
+- [ ] Startup/restart must never delete or reset real data (audit migrations, seeds, scripts, CI for destructive SQL)
