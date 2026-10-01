@@ -195,9 +195,6 @@ If you don't want any hosted dependency, run Supabase itself on the same machine
    > git clone --depth 1 https://github.com/supabase/supabase
    > cd supabase/docker
    > cp .env.example .env
-   > ```
-
-
 3. **Edit `docker/.env`.** At minimum, set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`. Generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
 4. **Start the stack:**
 
