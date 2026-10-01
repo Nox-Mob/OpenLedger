@@ -119,7 +119,85 @@ bun run build
 bun run preview    # serves the production build locally
 ```
 
-Deploy the build output to any host that runs a Node-compatible server (the app is a TanStack Start SSR app). Set the same environment variables from step 5 in your host's configuration. Make sure your host runs the SSR server, not just static files — server functions (transactions, imports, reports) require it.
+The app is a server-rendered TanStack Start app: pages **and** server functions (transactions, imports, reports, closing) run on the server. A static-file host alone will not work. All state lives in the database and storage, so app servers are stateless and can be replaced or multiplied freely.
+
+---
+
+## Deploying
+
+### Before any deployment
+
+1. Copy `.env.example` to `.env` (or your host's secret store) and fill it in. `.env` is git-ignored — never commit it. The service-role key is server-only.
+2. Apply migrations to the production database (`supabase db push`). Migrations are append-only; never run `supabase/seed/demo.sql` in production.
+3. Set Auth → URL Configuration (Site URL + `/reset-password` redirect) to your production domain.
+4. Leave `VITE_ALLOW_DEMO_LOGIN` unset.
+5. Run the release checklist below.
+
+### Option A — a single server (small office, home lab)
+
+One Linux VM (1 vCPU / 1 GB RAM is enough for a handful of users) plus a hosted Supabase project.
+
+```sh
+# on the server
+git clone <repo> /opt/open-ledger && cd /opt/open-ledger
+cp .env.example .env && nano .env      # fill in values; chmod 600 .env
+bun install --frozen-lockfile
+bun run build
+```
+
+Run it under a process manager so it restarts on crash and boot, e.g. systemd (`/etc/systemd/system/open-ledger.service`):
+
+```ini
+[Unit]
+Description=Open Ledger
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/open-ledger
+EnvironmentFile=/opt/open-ledger/.env
+ExecStart=/usr/local/bin/bun run preview --host 127.0.0.1 --port 8080
+Restart=always
+User=openledger
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```sh
+sudo systemctl enable --now open-ledger
+```
+
+Put a TLS reverse proxy in front (Caddy is simplest — it gets certificates automatically):
+
+```
+books.example.com {
+  reverse_proxy 127.0.0.1:8080
+}
+```
+
+Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun run build && sudo systemctl restart open-ledger`. Restarting never touches data.
+
+Fully self-contained alternative: run [self-hosted Supabase](https://supabase.com/docs/guides/self-hosting) with Docker Compose on the same machine (allow 4 GB+ RAM) and point the env vars at it. Back up its Postgres volume nightly (`pg_dump`) and copy the dump off the machine.
+
+### Option B — at scale (many organizations / users)
+
+```text
+ users ──> CDN / load balancer (TLS)
+              │
+     ┌────────┼────────┐
+   app #1   app #2   app #N      (stateless, identical env vars)
+     └────────┼────────┘
+              │
+   Supabase: Postgres (+ connection pooler, read replicas)
+             Auth, Storage (bank statement files)
+```
+
+- **App tier.** The build targets edge/Worker runtimes, so the lowest-effort scale path is Cloudflare Workers (`wrangler deploy`, secrets via `wrangler secret put`). Alternatively build a container image and run N replicas behind a load balancer (Kubernetes, ECS, Fly.io, Render). No sticky sessions needed — auth is a bearer token on every request. Add a `/` health check.
+- **Database.** Use a paid Supabase plan (or managed Postgres you operate) with point-in-time recovery enabled. Use the connection pooler for server traffic. Scale compute vertically first; reports already page through rows, so add read replicas only when report traffic dominates.
+- **Secrets.** Store keys in the platform's secret manager, not files on disk. Rotate the service-role and publishable keys on a schedule and immediately if one leaks; redeploy the app tier after rotating.
+- **Releases.** Let CI (`.github/workflows/ci.yml`) pass, apply migrations first (they are additive, so old app versions keep working), then roll out app replicas gradually.
+- **Monitoring & backups.** Ship server logs to a log service, alert on 5xx rates and database CPU/connections, and test restoring a backup at least quarterly.
+- **Email.** Configure a custom SMTP provider in Auth so sign-up and password-reset emails aren't rate-limited.
 
 ### 9. Running the tests
 
