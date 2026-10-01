@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-0.5 px-3">
-          {NAV.map((item) => (
+          {NAV.filter((item) => !("write" in item && item.write) || org?.role !== "viewer").map((item) => (
             <Link
               key={item.to}
               to={item.to}
