@@ -121,7 +121,10 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const net = netIncomeFromEntries(
-      ((rows ?? []) as any[]).map((r) => ({ amountCents: r.amount_cents, accountType: r.accounts.type })),
+      ((rows ?? []) as any[]).map((r) => ({
+        amountCents: r.amount_cents,
+        accountType: r.accounts.type,
+      })),
     );
     return {
       fiscalYearStart: startISO,
@@ -193,7 +196,10 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
     // Virtual close: reports derive retained earnings / net assets from the full ledger,
     // so no closing transaction is posted (that would double-count). We record + lock.
     const netIncome = netIncomeFromEntries(
-      ((rows ?? []) as any[]).map((r) => ({ amountCents: r.amount_cents, accountType: r.accounts.type })),
+      ((rows ?? []) as any[]).map((r) => ({
+        amountCents: r.amount_cents,
+        accountType: r.accounts.type,
+      })),
     );
     void data.idempotencyKey;
 

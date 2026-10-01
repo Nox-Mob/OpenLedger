@@ -117,3 +117,32 @@ describe("projects", () => {
     expect(computeProjectSpend(ledger).get("p1")).toBe(350_00);
   });
 });
+
+describe("year-end net income", () => {
+  const rows = (rev: number, exp: number) => [
+    { amountCents: -rev, accountType: "revenue" },
+    { amountCents: exp, accountType: "expense" },
+    { amountCents: rev - exp, accountType: "asset" }, // ignored
+  ];
+  it("profit: $10,000 revenue − $6,000 expense = $4,000", async () => {
+    const { netIncomeFromEntries } = await import("./report-math");
+    expect(netIncomeFromEntries(rows(1_000_000, 600_000))).toBe(400_000);
+  });
+  it("loss: $6,000 revenue − $10,000 expense = −$4,000", async () => {
+    const { netIncomeFromEntries } = await import("./report-math");
+    expect(netIncomeFromEntries(rows(600_000, 1_000_000))).toBe(-400_000);
+  });
+  it("July fiscal year only counts Jul 1 – Jun 30", async () => {
+    const { netIncomeFromEntries } = await import("./report-math");
+    const start = fiscalYearStart("2026-06-30", 7);
+    expect(start).toBe("2025-07-01");
+    const all = [
+      { amountCents: -500_00, accountType: "revenue", date: "2025-06-30" },
+      { amountCents: -1_000_00, accountType: "revenue", date: "2025-07-01" },
+      { amountCents: 300_00, accountType: "expense", date: "2026-06-30" },
+      { amountCents: 900_00, accountType: "expense", date: "2026-07-01" },
+    ];
+    const inYear = all.filter((r) => r.date >= start && r.date <= "2026-06-30");
+    expect(netIncomeFromEntries(inYear)).toBe(700_00);
+  });
+});
