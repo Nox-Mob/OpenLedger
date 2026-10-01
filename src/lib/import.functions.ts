@@ -225,9 +225,12 @@ export const undoImportBatch = createServerFn({ method: "POST" })
       throw new Error(
         "Some rows from this file are already in the ledger. Void those transactions first.",
       );
-    const { data: removed, error } = await supabase
+    // Users have no DELETE on bank evidence; the server removes unposted rows after assertCan.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: removed, error } = await supabaseAdmin
       .from("bank_transactions")
       .delete()
+      .is("transaction_id", null)
       .eq("batch_id", data.batchId)
       .eq("org_id", data.orgId)
       .select("id");
