@@ -26,6 +26,7 @@ function CloseBooksSettings() {
   const [equityAccountId, setEquityAccountId] = useState("");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<{ fiscalYearStart: string; fiscalYearEnd: string; netIncomeCents: number } | null>(null);
+  const [fyEnd, setFyEnd] = useState<string | null>(null);
 
   const statusQuery = useQuery({
     queryKey: ["books-status", org?.id],
@@ -56,7 +57,6 @@ function CloseBooksSettings() {
     const lastDay = new Date(Date.UTC(endYear, endMonth, 0)).getUTCDate();
     return `${endYear}-${String(endMonth).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
   }
-  const [fyEnd, setFyEnd] = useState<string | null>(null);
   const fiscalYearEnd = fyEnd ?? defaultFiscalYearEnd();
 
   async function saveLock(clear = false) {
