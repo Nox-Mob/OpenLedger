@@ -32,8 +32,7 @@ function TermsPage() {
         <h2>Who operates the hosted service</h2>
         <p>
           The hosted Open Ledger service is operated by {LEGAL_CONFIG.operatorName}. These terms
-          govern your use of that hosted service. The governing-law and venue terms remain subject
-          to review by qualified legal counsel before public launch.
+          govern your use of that hosted service.
         </p>
       </section>
       <section>
@@ -102,7 +101,45 @@ function TermsPage() {
       <section>
         <h2>8. Governing law and contact</h2>
         <p>
-          Placeholder governing law and venue: {LEGAL_CONFIG.jurisdiction}. Questions:{" "}
+          These Terms and any dispute arising from or relating to Open Ledger or the hosted Service
+          are governed by the laws of the {LEGAL_CONFIG.jurisdiction}, without regard to its
+          conflict-of-law rules. Any legal action or proceeding must be brought exclusively in a
+          state or federal court located in the State of Oklahoma, and each party consents to the
+          personal jurisdiction and venue of those courts.
+        </p>
+        <p>
+          This governing-law and venue provision supersedes and replaces every prior or
+          contemporaneous agreement, representation, understanding, or statement concerning venue,
+          whether written, oral, expressed, or implied.
+        </p>
+      </section>
+      <section>
+        <h2>9. Indemnification</h2>
+        <p>
+          To the extent permitted by law, you agree to defend, indemnify, and hold harmless{" "}
+          {LEGAL_CONFIG.operatorName}, its owners, officers, employees, contractors, and agents from
+          claims, damages, losses, liabilities, judgments, costs, and reasonable attorneys’ fees
+          arising from or related to your use or misuse of the hosted Service, Your Data, your
+          violation of these Terms or applicable law, or your infringement of another person’s
+          rights. This obligation does not apply to the extent a claim results from the indemnified
+          party’s own gross negligence or willful misconduct.
+        </p>
+      </section>
+      <section>
+        <h2>10. Severability and survival</h2>
+        <p>
+          If any provision of these Terms is held invalid, illegal, or unenforceable, it will be
+          enforced to the greatest extent permitted by law, and the remaining provisions will remain
+          in full force and effect. Provisions that by their nature should survive termination will
+          survive, including provisions concerning ownership, no professional advice, warranty
+          disclaimers, limits of liability, indemnification, governing law, venue, and dispute
+          resolution.
+        </p>
+      </section>
+      <section>
+        <h2>11. Contact</h2>
+        <p>
+          Questions about these Terms may be sent to{" "}
           <a className="text-primary underline" href={`mailto:${LEGAL_CONFIG.supportEmail}`}>
             {LEGAL_CONFIG.supportEmail}
           </a>
