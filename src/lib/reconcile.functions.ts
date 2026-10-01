@@ -305,6 +305,7 @@ export const getReconciliation = createServerFn({ method: "GET" })
             description: e.memo || e.transactions?.description || "",
             amountCents: e.amount_cents,
             cleared: true,
+            beforePeriod: false,
           }))
           .sort((a, b) => a.date.localeCompare(b.date)),
         bankRows: [],
