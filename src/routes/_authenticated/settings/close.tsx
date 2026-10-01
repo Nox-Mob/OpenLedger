@@ -107,7 +107,7 @@ function CloseBooksSettings() {
           orgId: org.id,
           fiscalYearEnd,
           retainedEarningsAccountId: equityAccountId,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: safeRandomUUID(),
         },
       });
       if ((r as any).duplicate) toast.info("That fiscal year was already closed.");

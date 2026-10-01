@@ -102,7 +102,7 @@ function NewTransactionPage() {
   }, [rows]);
 
   // Same key for every retry of this form; a double click can't save twice.
-  const submitKeyRef = useRef(crypto.randomUUID());
+  const submitKeyRef = useRef(safeRandomUUID());
   const submittingRef = useRef(false);
 
   async function submit(e: React.FormEvent) {
