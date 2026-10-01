@@ -182,30 +182,48 @@ Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun 
 If you don't want any hosted dependency, run Supabase itself on the same machine with Docker Compose. Allow **4 GB+ RAM** (the Supabase stack runs Postgres, Auth, PostgREST, Storage, and more as separate containers).
 
 1. **Install Docker and the Compose plugin** on the server ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/)).
-2. **Get the official self-hosting stack.** The fastest way is Supabase's own setup script, which clones the repo and prepares the `docker/.env` file for you:
+2. **Get the official self-hosting stack.** The fastest way is Supabase's own setup script, which does the whole preparation for you:
 
    ```sh
    curl -fsSL https://supabase.link/setup.sh | sh
-   cd supabase/docker
    ```
 
-   > Piping a script straight into a shell is a matter of trust. If you'd rather inspect it first, download it (`curl -fsSL https://supabase.link/setup.sh -o setup.sh`), read it, then run `sh setup.sh` — or do it manually:
+   The script supports **Linux only** (Debian/Ubuntu and RHEL/CentOS/Fedora) and will:
+
+   - Install prerequisites (`git`, `openssl`, `jq`) and Docker Engine if not already present
+   - Sparse-clone the `docker/` directory from the main Supabase repository
+   - Create a project directory (`supabase-project` by default) and copy the configuration files into it
+   - Record the installed release version in `.supabase-version` for future `update.sh` upgrades
+   - Prompt for the main URLs (`SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `SITE_URL`, `PROXY_DOMAIN`) and write them to `.env`
+   - Generate all secrets, including a random `DASHBOARD_PASSWORD`, and the asymmetric JWT signing key pair (it runs `generate-keys.sh` and `add-new-auth-keys.sh`, and enables the matching entries in `docker-compose.yml`)
+   - Pull the Docker images
+
+   > Piping a script straight into a shell is a matter of trust. The shortened link points to `setup.sh` — inspect it before running (`curl -fsSL https://supabase.link/setup.sh -o setup.sh`, read it, then `sh setup.sh`), pass `-y` to run non-interactively with default values, or do the whole thing manually:
    >
    > ```sh
    > git clone --depth 1 https://github.com/supabase/supabase
    > cd supabase/docker
    > cp .env.example .env
    > ```
+   >
+   > The manual path skips the script's conveniences: you generate the secrets and keys yourself (step 4 below) and pull the images with `docker compose pull`.
 
-3. **Edit `docker/.env`.** At minimum, set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`. Generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
-4. **Start the stack:**
+3. **Log out and back in.** When the script installs Docker for you, it also adds your user to the `docker` group. Log out and back in before continuing — otherwise the `docker` commands below need `sudo`.
+4. **Start the stack and view your credentials:**
 
    ```sh
-   docker compose pull
-   docker compose up -d
+   cd supabase-project && sh run.sh start
+   ```
+
+   View the generated credentials any time via:
+
+   ```sh
+   sh run.sh secrets
    ```
 
    Postgres then listens on port `5432` and the API gateway (Kong) on `8000`. Your project URL is `http://<server-ip>:8000` (or `https://api.books.example.com` if you put a TLS proxy in front — recommended for anything but a home lab).
+
+   On the manual path, instead edit `docker/.env` yourself: set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`, generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments, then `docker compose pull && docker compose up -d`. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
 5. **Apply the schema.** Point the migration loop from step 3 of the setup guide at the local Postgres:
 
    ```sh
@@ -213,8 +231,8 @@ If you don't want any hosted dependency, run Supabase itself on the same machine
    for f in supabase/migrations/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
    ```
 
-6. **Point the app at it.** In the app's `.env`, use `http://<server-ip>:8000` (or your TLS URL) for `VITE_SUPABASE_URL` / `SUPABASE_URL`, `ANON_KEY` for the publishable keys, and `SERVICE_ROLE_KEY` for the service-role key.
-7. **Configure auth URLs** in `docker/.env` (`SITE_URL`, `ADDITIONAL_REDIRECT_URLS`) to match your app's public URL, including the `/reset-password` redirect, then `docker compose restart auth`.
+6. **Point the app at it.** In the app's `.env`, use `http://<server-ip>:8000` (or your TLS URL) for `VITE_SUPABASE_URL` / `SUPABASE_URL`, the `ANON_KEY` for the publishable keys, and the `SERVICE_ROLE_KEY` for the service-role key (`sh run.sh secrets` shows both).
+7. **Check the auth URLs.** The script prompts for `SITE_URL` and the other public URLs during setup. If your app's URL changes later, update `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` in the project's `.env` (include the `/reset-password` redirect) and restart the auth container (`docker compose restart auth`).
 8. **Backups.** The database lives in the `db` container's Postgres volume. Dump it nightly and copy the dump off the machine:
 
    ```sh
@@ -223,7 +241,7 @@ If you don't want any hosted dependency, run Supabase itself on the same machine
 
    Schedule this with cron and copy the result to another machine or object storage. Test a restore at least once (`gunzip -c backup.sql.gz | docker compose exec -T db psql -U postgres postgres`).
 
-Updating Supabase later: `git pull` in the supabase checkout, `docker compose pull`, `docker compose up -d`. App updates and Supabase updates are independent; neither touches your data.
+Updating Supabase later: from the project directory, follow the stack's own `update.sh` (the installed release version is recorded in `.supabase-version`), or on the manual path `git pull` in the supabase checkout, `docker compose pull`, `docker compose up -d`. App updates and Supabase updates are independent; neither touches your data.
 
 ### Option B — at scale (many organizations / users)
 
