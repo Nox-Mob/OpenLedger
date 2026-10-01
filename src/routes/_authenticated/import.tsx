@@ -65,12 +65,15 @@ function ImportPage() {
   const [posting, setPosting] = useState<Set<string>>(new Set());
   const [offsets, setOffsets] = useState<Record<string, string>>({});
   const [profileName, setProfileName] = useState("");
+  const [aiAck, setAiAck] = useState(false);
+  const [acceptMismatch, setAcceptMismatch] = useState(false);
 
   const enabled = !!org;
   const accountsQuery = useQuery({ queryKey: ["accounts", org?.id], queryFn: () => listAccounts({ data: { orgId: org!.id } }), enabled });
   const bankQuery = useQuery({ queryKey: ["bank", org?.id], queryFn: () => listBankTransactions({ data: { orgId: org!.id } }), enabled });
   const batchQuery = useQuery({ queryKey: ["batches", org?.id], queryFn: () => listImportBatches({ data: { orgId: org!.id } }), enabled });
   const profileQuery = useQuery({ queryKey: ["import-profiles", org?.id], queryFn: () => listImportProfiles({ data: { orgId: org!.id } }), enabled });
+  const pdfUsageQuery = useQuery({ queryKey: ["pdf-usage", org?.id], queryFn: () => getPdfUsage({ data: { orgId: org!.id } }), enabled: enabled && !!org?.aiPdfEnabled });
 
   const accounts = accountsQuery.data ?? [];
   const bankAccounts = accounts.filter((a) => a.type === "asset" || a.type === "liability");
@@ -83,8 +86,15 @@ function ImportPage() {
     error: rows.filter((r) => r.status === "error").length,
   }), [rows]);
 
+  const balanceCheck = useMemo(() => {
+    if (format !== "pdf") return null;
+    const c = (v: string) => (v.trim() ? parseAmount(v) : null);
+    return checkStatementBalance(c(statement.beginning), rows.filter((r) => r.status !== "error").map((r) => r.amountCents), c(statement.ending));
+  }, [format, rows, statement]);
+  const blockedByBalance = balanceCheck?.status === "mismatch" && !acceptMismatch;
+
   function reset() {
-    setFileName(""); setFormat(null); setCsvRows([]); setMapping(null); setRows([]); setStatement(emptyStatement);
+    setFileName(""); setFormat(null); setCsvRows([]); setMapping(null); setRows([]); setStatement(emptyStatement); setAcceptMismatch(false);
   }
 
   async function markDuplicates(parsed: ParsedRow[]): Promise<PreviewRow[]> {
@@ -123,6 +133,10 @@ function ImportPage() {
         });
         setRows(await markDuplicates(parsed));
       } else if (ext === "pdf") {
+        if (!org?.aiPdfEnabled) throw new Error("Reading PDF statements uses AI and is off for this organization. An admin can turn it on in Settings.");
+        if (!aiAck) throw new Error("Tick the AI notice under the file box before uploading a PDF.");
+        if (file.size > PDF_LIMITS.maxBytes) throw new Error("PDFs over 10 MB aren't supported.");
+        if (pdfUsageQuery.data && pdfUsageQuery.data.remaining <= 0) throw new Error("You've reached your PDF reading limit for now.");
         setFormat("pdf");
         setBusy("Reading the PDF…");
         const { extractPdfText } = await import("@/lib/parsers/pdf-text");
@@ -130,7 +144,9 @@ function ImportPage() {
         if (text.replace(/--- Page \d+ ---/g, "").trim().length < 40)
           throw new Error("This PDF has no readable text (it may be a scanned image). Try the bank's CSV or OFX download instead.");
         setBusy("Finding transactions…");
-        const result = await extractPdfStatement({ data: { text } });
+        const pageCount = Math.max(1, (text.match(/--- Page \d+ ---/g) ?? []).length);
+        const result = await extractPdfStatement({ data: { orgId: org.id, text, pageCount, byteSize: file.size, acknowledged: true } })
+          .finally(() => queryClient.invalidateQueries({ queryKey: ["pdf-usage"] }));
         setStatement({
           start: result.statementStart ?? "", end: result.statementEnd ?? "",
           beginning: centsToInput(result.beginningBalanceCents), ending: centsToInput(result.endingBalanceCents),

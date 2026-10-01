@@ -4,8 +4,9 @@ export async function extractPdfText(file: File): Promise<string> {
   const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
   const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  if (doc.numPages > 40) throw new Error("PDFs over 40 pages aren't supported. Split the statement or use CSV/OFX.");
   const pages: string[] = [];
-  for (let p = 1; p <= Math.min(doc.numPages, 30); p++) {
+  for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
     const lines = new Map<number, string[]>();
