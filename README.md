@@ -206,7 +206,7 @@ If you don't want any hosted dependency, run Supabase itself on the same machine
    > cp .env.example .env
    > ```
    >
-   > The manual path skips the script's conveniences: you generate the secrets and keys yourself (step 3 below) and pull the images with `docker compose pull`.
+   > The manual path skips the script's conveniences: you generate the secrets and keys yourself (step 4 below) and pull the images with `docker compose pull`.
 
 3. **Log out and back in.** When the script installs Docker for you, it also adds your user to the `docker` group. Log out and back in before continuing — otherwise the `docker` commands below need `sudo`.
 4. **Start the stack and view your credentials:**
