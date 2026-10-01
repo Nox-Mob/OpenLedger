@@ -7,9 +7,22 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
   } catch (error) {
-    const interrupted =
-      error instanceof Error &&
-      (error.name === "AbortError" || error.message === "aborted" || error.message === "This operation was aborted");
+    // Walk the cause chain: the framework wraps the socket's "aborted" error.
+    let interrupted = false;
+    let current: unknown = error;
+    for (let depth = 0; current && depth < 5; depth++) {
+      if (
+        current instanceof Error &&
+        (current.name === "AbortError" ||
+          current.message === "aborted" ||
+          current.message === "This operation was aborted" ||
+          (current as { code?: string }).code === "ECONNRESET")
+      ) {
+        interrupted = true;
+        break;
+      }
+      current = (current as { cause?: unknown }).cause;
+    }
     if (interrupted) {
       // The browser navigated away before the response finished. This is a
       // normal cancelled request, not an application crash or error page.
