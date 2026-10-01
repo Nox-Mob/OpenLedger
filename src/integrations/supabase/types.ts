@@ -510,6 +510,7 @@ export type Database = {
       organizations: {
         Row: {
           ai_pdf_enabled: boolean
+          books_locked_through: string | null
           created_at: string
           created_by: string
           currency: string
@@ -523,6 +524,7 @@ export type Database = {
         }
         Insert: {
           ai_pdf_enabled?: boolean
+          books_locked_through?: string | null
           created_at?: string
           created_by: string
           currency?: string
@@ -536,6 +538,7 @@ export type Database = {
         }
         Update: {
           ai_pdf_enabled?: boolean
+          books_locked_through?: string | null
           created_at?: string
           created_by?: string
           currency?: string
@@ -548,6 +551,51 @@ export type Database = {
           timezone?: string
         }
         Relationships: []
+      }
+      period_closes: {
+        Row: {
+          closed_by: string
+          created_at: string
+          fiscal_year_end: string
+          id: string
+          net_income_cents: number
+          org_id: string
+          transaction_id: string
+        }
+        Insert: {
+          closed_by: string
+          created_at?: string
+          fiscal_year_end: string
+          id?: string
+          net_income_cents: number
+          org_id: string
+          transaction_id: string
+        }
+        Update: {
+          closed_by?: string
+          created_at?: string
+          fiscal_year_end?: string
+          id?: string
+          net_income_cents?: number
+          org_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "period_closes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "period_closes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -857,6 +905,7 @@ export type Database = {
         | "opening_balance"
         | "adjustment"
         | "transfer"
+        | "closing"
       transaction_status: "posted" | "void"
     }
     CompositeTypes: {
@@ -997,6 +1046,7 @@ export const Constants = {
         "opening_balance",
         "adjustment",
         "transfer",
+        "closing",
       ],
       transaction_status: ["posted", "void"],
     },
