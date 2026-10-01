@@ -141,3 +141,12 @@ function addDaysUTC(iso: string, n: number): string {
   const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
+
+/** Net income (revenue − expenses) from raw signed entries of revenue/expense accounts. */
+export function netIncomeFromEntries(rows: { amountCents: number; accountType: string }[]): number {
+  let net = 0;
+  for (const r of rows) {
+    if (r.accountType === "revenue" || r.accountType === "expense") net -= r.amountCents;
+  }
+  return net === 0 ? 0 : net;
+}

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
 import { fiscalYearStart } from "./dates";
+import { netIncomeFromEntries } from "./report-math";
 
 // ---------- Books lock + year-end close (admin only) ----------
 
@@ -119,15 +120,16 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
       .in("accounts.type", ["revenue", "expense"]);
     if (error) throw new Error(error.message);
 
-    let net = 0;
-    for (const r of (rows ?? []) as any[]) {
-      // revenue is credit-normal (negative = income), expense debit-normal
-      net += r.accounts.type === "revenue" ? -r.amount_cents : r.amount_cents;
-    }
+    const net = netIncomeFromEntries(
+      ((rows ?? []) as any[]).map((r) => ({
+        amountCents: r.amount_cents,
+        accountType: r.accounts.type,
+      })),
+    );
     return {
       fiscalYearStart: startISO,
       fiscalYearEnd: data.fiscalYearEnd,
-      netIncomeCents: net === 0 ? 0 : -net, // income positive; avoids returning -0
+      netIncomeCents: net,
       startMonth,
     };
   });
@@ -193,9 +195,12 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
 
     // Virtual close: reports derive retained earnings / net assets from the full ledger,
     // so no closing transaction is posted (that would double-count). We record + lock.
-    let netIncome = 0;
-    for (const r of (rows ?? []) as any[]) netIncome += -r.amount_cents;
-    netIncome = netIncome === 0 ? 0 : netIncome;
+    const netIncome = netIncomeFromEntries(
+      ((rows ?? []) as any[]).map((r) => ({
+        amountCents: r.amount_cents,
+        accountType: r.accounts.type,
+      })),
+    );
     void data.idempotencyKey;
 
     const { error: cErr } = await supabase.from("period_closes").insert({
