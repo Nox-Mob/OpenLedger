@@ -17,7 +17,8 @@ One written rulebook of who can do what, enforced on the server and in the datab
 
 ## 13. Auth hygiene
 - Email verification required before first sign-in (no auto-confirm); "resend verification email" on the sign-in page.
-- Password reset already exists; add a minimum strength rule and leaked-password check.
+- Password reset already exists; add password strength rules: minimum 8 characters requiring an uppercase letter, lowercase letter, number, and symbol — checked in the form before submit and enforced server-side via Supabase's password policy.
+- Leaked-password check (HIBP) enabled, so passwords found in known data breaches are rejected.
 - Sign-in / reset rate limiting: friendly "too many attempts, wait a minute" message.
 - Google and email for the same address: link to one account, with an explanation if someone tries the other method.
 - Sign out clears cached data and can't be undone with the Back button.
