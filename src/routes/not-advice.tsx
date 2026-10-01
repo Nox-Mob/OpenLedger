@@ -65,8 +65,11 @@ function NotAdvicePage() {
       <section>
         <h2>Questions</h2>
         <p>
-          Questions about this notice may be sent to {LEGAL_CONFIG.supportEmail}. Placeholder
-          contact details must be replaced and reviewed by counsel before launch.
+          Questions about this notice may be sent to{" "}
+          <a className="text-primary underline" href={`mailto:${LEGAL_CONFIG.supportEmail}`}>
+            {LEGAL_CONFIG.supportEmail}
+          </a>
+          .
         </p>
       </section>
     </LegalPage>

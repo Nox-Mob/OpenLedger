@@ -8,7 +8,7 @@ export const LEGAL_CONFIG = {
 } as const;
 
 export const LEGAL_VERSIONS = {
-  terms: "2026-10-01",
+  terms: "2026-10-01-2",
   privacy: "2026-10-01-2",
   non_advice: "2026-10-01",
 } as const;
