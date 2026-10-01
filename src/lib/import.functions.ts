@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { checkStatementBalance, PDF_LIMITS } from "@/lib/parsers/statement-balance";
 
 const rowSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -69,11 +70,20 @@ export const importBankRows = createServerFn({ method: "POST" })
         statementEnd: dateStr.nullish(),
         beginningBalanceCents: z.number().int().nullish(),
         endingBalanceCents: z.number().int().nullish(),
+        acceptMismatch: z.boolean().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    let mismatch: number | null = null;
+    if (data.format === "pdf") {
+      const check = checkStatementBalance(data.beginningBalanceCents, data.rows.map((r) => r.amountCents), data.endingBalanceCents);
+      if (check.status === "mismatch") {
+        if (!data.acceptMismatch) throw new Error("The rows don't add up to the statement's closing balance. Fix them or confirm you'll review.");
+        mismatch = check.gapCents;
+      }
+    }
     const batchId = crypto.randomUUID();
     const { error: bErr } = await supabase.from("import_batches").insert({
       id: batchId,
@@ -85,6 +95,7 @@ export const importBankRows = createServerFn({ method: "POST" })
       statement_end: data.statementEnd ?? null,
       beginning_balance_cents: data.beginningBalanceCents ?? null,
       ending_balance_cents: data.endingBalanceCents ?? null,
+      balance_mismatch_cents: mismatch,
       rows_total: data.rows.length + data.errorCount,
       rows_error: data.errorCount,
       created_by: userId,
