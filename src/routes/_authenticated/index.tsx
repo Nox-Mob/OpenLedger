@@ -30,7 +30,7 @@ function DashboardPage() {
   useEffect(() => {
     if (!isLoading && orgs.length === 0) navigate({ to: "/onboarding" });
     if (!isLoading && org) setStoredOrgId(org.id);
-  }, [isLoading, orgs.length, org?.id]);
+  }, [isLoading, orgs.length, org, navigate]);
 
   const monthStart = todayISO(new Date(), org?.timezone).slice(0, 8) + "01";
 

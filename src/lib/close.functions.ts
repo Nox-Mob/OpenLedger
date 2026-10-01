@@ -119,7 +119,7 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
     return {
       fiscalYearStart: startISO,
       fiscalYearEnd: data.fiscalYearEnd,
-      netIncomeCents: -net === 0 ? 0 : -net === -0 ? 0 : -net, // income positive
+      netIncomeCents: net === 0 ? 0 : -net, // income positive; avoids returning -0
       startMonth,
     };
   });

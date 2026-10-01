@@ -49,7 +49,8 @@ function OnboardingPage() {
 
   function toggle(key: string, on: boolean) {
     const next = new Set(keys);
-    on ? next.add(key) : next.delete(key);
+    if (on) next.add(key);
+    else next.delete(key);
     setPicked({ ...picked, [orgType]: next });
   }
 

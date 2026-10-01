@@ -34,7 +34,13 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Reported, not blocking: 114 legacy uses; tighten file by file.
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   eslintPluginPrettier,
+  // Formatting is checked separately (`bun run format:check`) so lint errors mean real code problems.
+  { rules: { "prettier/prettier": "off" } },
+  // Generated / vendored files are not ours to edit.
+  { ignores: ["src/integrations/supabase/**", "src/routeTree.gen.ts"] },
 );
