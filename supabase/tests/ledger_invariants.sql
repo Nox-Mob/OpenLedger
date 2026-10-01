@@ -11,10 +11,15 @@ DECLARE
   tx uuid;
   ok boolean;
 BEGIN
-  INSERT INTO auth.users (id, email, instance_id, aud, role, confirmation_token, recovery_token,
-    email_change_token_new, email_change)
-  VALUES (usr, 'ci-' || usr || '@example.test', '00000000-0000-0000-0000-000000000000', 'authenticated',
-    'authenticated', '', '', '', '');
+  -- Fresh CI databases: create a throwaway user. Restricted connections: reuse an existing creator.
+  BEGIN
+    INSERT INTO auth.users (id, email, instance_id, aud, role, confirmation_token, recovery_token,
+      email_change_token_new, email_change)
+    VALUES (usr, 'ci-' || usr || '@example.test', '00000000-0000-0000-0000-000000000000', 'authenticated',
+      'authenticated', '', '', '', '');
+  EXCEPTION WHEN others THEN
+    SELECT created_by INTO usr FROM public.organizations WHERE created_by IS NOT NULL LIMIT 1;
+  END;
   INSERT INTO public.organizations (id, name, created_by) VALUES (org, 'CI Org', usr);
   INSERT INTO public.accounts (id, org_id, name, type) VALUES (cash, org, 'Cash', 'asset'), (rev, org, 'Sales', 'revenue');
 
