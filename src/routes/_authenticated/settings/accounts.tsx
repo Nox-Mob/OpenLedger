@@ -40,10 +40,8 @@ function AccountsSetup() {
       const acc = existing.find((a) => matchesCatalog(a, c));
       const locked = c.required
         ? "Required"
-        : acc && acc.entryCount > 0
-          ? `In use by ${acc.entryCount} transaction line${acc.entryCount === 1 ? "" : "s"} — can't be removed`
-          : null;
-      return { id: `c:${c.key}`, name: c.name, type: c.type, catalog: c, checked: !!acc || !!c.required, locked };
+        : null;
+      return { id: `c:${c.key}`, name: c.name, type: c.type, catalog: c, checked: acc?.isActive ?? !!c.required, locked };
     }),
     ...existing
       .filter((a) => !catalog.some((c) => matchesCatalog(a, c)))
@@ -51,8 +49,8 @@ function AccountsSetup() {
         id: a.id,
         name: a.name,
         type: a.type,
-        checked: true,
-        locked: a.entryCount > 0 ? `In use by ${a.entryCount} transaction line${a.entryCount === 1 ? "" : "s"} — can't be removed` : null,
+        checked: a.isActive,
+        locked: null,
       })),
   ];
 
@@ -67,7 +65,7 @@ function AccountsSetup() {
       });
       await queryClient.invalidateQueries({ queryKey: ["account-setup"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success(next ? `${row.name} added` : `${row.name} removed`);
+      toast.success(next ? `${row.name} active` : `${row.name} archived`);
     } catch (err: any) {
       toast.error(err.message ?? "Could not update account");
     } finally {
@@ -79,7 +77,7 @@ function AccountsSetup() {
     <div className="max-w-2xl rounded-lg border bg-card p-5">
       <h2 className="font-display text-lg font-semibold">Accounts</h2>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">
-        Tick the accounts {org.name} uses. Accounts that already have transactions stay on so your history stays intact.
+        Tick the accounts {org.name} uses for new activity. Archiving never removes past transactions or reports.
         {!isAdmin && " Only admins can change these."}
       </p>
       <AccountChecklist rows={rows} terms={terms} onToggle={toggle} disabled={!isAdmin || !!busy || setup.isLoading} />

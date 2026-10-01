@@ -60,6 +60,7 @@ export function AccountChecklist({
                         <span className="block text-xs text-muted-foreground">An account your organization added.</span>
                       )}
                       {r.locked && <span className="mt-1 block text-xs font-medium text-primary">{r.locked}</span>}
+                      {!r.checked && !r.locked && <span className="mt-1 block text-xs font-medium text-muted-foreground">Archived — available to reactivate at any time.</span>}
                     </span>
                   </label>
                 </li>
