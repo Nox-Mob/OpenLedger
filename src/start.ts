@@ -7,6 +7,14 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
   } catch (error) {
+    const interrupted =
+      error instanceof Error &&
+      (error.name === "AbortError" || error.message === "aborted" || error.message === "This operation was aborted");
+    if (interrupted) {
+      // The browser navigated away before the response finished. This is a
+      // normal cancelled request, not an application crash or error page.
+      return new Response(null, { status: 499 });
+    }
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }

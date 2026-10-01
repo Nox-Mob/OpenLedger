@@ -71,7 +71,7 @@ function NewTransactionPage() {
     enabled: !!org,
   });
 
-  const accounts = accountsQuery.data ?? [];
+  const accounts = (accountsQuery.data ?? []).filter((account) => account.isActive);
   const moneyAccounts = accounts.filter((a) => a.type === "asset" || a.type === "liability");
   const inAccounts = accounts.filter((a) => a.type === "revenue");
   const outAccounts = accounts.filter((a) => a.type === "expense");

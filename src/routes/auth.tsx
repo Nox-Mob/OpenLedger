@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [legalAgreement, setLegalAgreement] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,6 +46,7 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: "/" });
       } else {
+        if (!legalAgreement) throw new Error("Agree to the Terms and Privacy Policy to create an account.");
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setMessage("Account created. Check your email to confirm, then sign in.");
@@ -100,6 +102,12 @@ function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
+            {mode === "signup" && (
+              <label className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+                <input type="checkbox" required checked={legalAgreement} onChange={(event) => setLegalAgreement(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" />
+                <span>I agree to the <Link to="/terms" className="text-foreground underline">Terms of Service</Link> and acknowledge the <Link to="/privacy" className="text-foreground underline">Privacy Policy</Link>.</span>
+              </label>
+            )}
             <input
               type="password"
               required
@@ -148,6 +156,11 @@ function AuthPage() {
               </button>
             </div>
           )}
+          <div className="mt-5 flex justify-center gap-3 border-t pt-4 text-xs text-muted-foreground">
+            <Link to="/terms" className="hover:text-foreground">Terms</Link>
+            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link to="/not-advice" className="hover:text-foreground">Not advice</Link>
+          </div>
         </div>
       </div>
     </div>

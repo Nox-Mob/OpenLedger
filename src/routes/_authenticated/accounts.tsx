@@ -33,7 +33,7 @@ function AccountsPage() {
 
   const accountsQuery = useQuery({
     queryKey: ["accounts", org?.id],
-    queryFn: () => listAccounts({ data: { orgId: org!.id } }),
+    queryFn: () => listAccounts({ data: { orgId: org!.id, includeArchived: true } }),
     enabled: !!org,
   });
 
@@ -45,7 +45,7 @@ function AccountsPage() {
       const cents = parseToCents(opening);
       if (cents && cents !== 0 && (type === "asset" || type === "liability")) {
         const accounts = accountsQuery.data ?? [];
-        const equity = accounts.find((a) => a.type === "equity");
+        const equity = accounts.find((a) => a.type === "equity" && a.isActive);
         if (equity) {
           const { data: fresh } = await accountsQuery.refetch();
           const newAcc = (fresh ?? []).find((a) => a.name === name);
@@ -128,7 +128,7 @@ function AccountsPage() {
                 <tbody>
                   {g.accounts.map((a) => (
                     <tr key={a.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{a.name}</td>
+                      <td className="px-4 py-3 font-medium">{a.name}{!a.isActive && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">Archived</span>}</td>
                       <td className="px-4 py-3 text-muted-foreground">{a.subtype ?? ""}</td>
                       <td className="tnum px-4 py-3 text-right">
                         {formatCents(displayBalance(a.type, a.balanceCents))}

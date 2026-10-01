@@ -415,6 +415,16 @@ export const postBankTransaction = createServerFn({ method: "POST" })
     if (bError || !bank) throw new Error("Bank transaction not found");
     if (bank.transaction_id) throw new Error("Already posted to the ledger");
 
+    const { data: accounts, error: accountError } = await supabase
+      .from("accounts")
+      .select("id, is_active")
+      .eq("org_id", data.orgId)
+      .in("id", [bank.account_id, data.offsetAccountId]);
+    if (accountError) throw new Error(accountError.message);
+    if ((accounts ?? []).length !== 2 || accounts?.some((account) => !account.is_active)) {
+      throw new Error("Posting can only use active accounts in this organization.");
+    }
+
     const txId = crypto.randomUUID();
     const { error: txError } = await supabase.from("transactions").insert({
       id: txId,

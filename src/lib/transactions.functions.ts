@@ -86,6 +86,17 @@ export const createTransaction = createServerFn({ method: "POST" })
       );
     }
 
+    const accountIds = [...new Set(data.entries.map((entry) => entry.accountId))];
+    const { data: accounts, error: accountError } = await supabase
+      .from("accounts")
+      .select("id, is_active")
+      .eq("org_id", data.orgId)
+      .in("id", accountIds);
+    if (accountError) throw new Error(accountError.message);
+    if ((accounts ?? []).length !== accountIds.length || accounts?.some((account) => !account.is_active)) {
+      throw new Error("New transactions can only use active accounts in this organization.");
+    }
+
     if (data.idempotencyKey) {
       const { data: prior } = await supabase
         .from("transactions")

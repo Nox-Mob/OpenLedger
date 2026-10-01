@@ -11,18 +11,19 @@
 
 # AGENTS.md — Open Ledger
 
-- Double-entry enforced in createTransaction + deferred DB trigger: posted tx needs ≥2 entries, sum=0, ≥1 debit and ≥1 credit (void exempt). Never bypass.
+- Double-entry: createTransaction + deferred trigger require ≥2 entries, sum=0, positive and negative (void exempt).
 - amount_cents >0 debit, <0 credit; displayBalance() flips credit-normal types.
 - Never edit entries in place: void + recreate (audit trail).
-- Bank imports are evidence only (SHA-256 fingerprint dedup; FITID wins, else content hash incl. row_seq); import_batch undoable until a row posts.
+- Bank imports are evidence only (FITID, else hash incl. row_seq); batches undoable until a row posts.
 - Terminology is presentation-only: org level + term_overrides; screens add user overrides, reports/PDFs use org only.
-- All org data via requireSupabaseAuth server fns in src/lib/*.functions.ts; RLS by org membership. Org settings/account setup admin-only (requireOrgAdmin) and audit-logged.
-- Sample data: demo@demo.org / demo1234 (Acme + Riverside only), only in supabase/seed/demo.sql (manual, dev/test); /auth hint DEV/preview only; never seed in migrations.
+- Org data uses requireSupabaseAuth + member RLS; org settings/account setup are admin-only and audited.
+- Sample data: demo@demo.org / demo1234 (Acme + Riverside), manual dev/test seed only; hint only in dev/preview.
 - Reconciliation stamps entries.reconciliation_id; finish needs difference=0; completed ones lock entries via triggers.
-- Starter accounts come from src/lib/account-catalog.ts; accounts with entries can't be removed.
-- Dates are YYYY-MM-DD strings; use src/lib/dates.ts ("today" = todayISO(now, org.timezone), UTC-only math). Never toISOString a transaction date.
-- Report math lives in src/lib/report-math.ts (pure, tested); balance sheet rolls prior fiscal years into retained earnings / net assets.
-- Void: blocked if in a completed reconciliation; idempotent (posted→void only); unticks in-progress stamps and unlinks bank rows.
+- Accounts come from the catalog; archive/reactivate, never delete. Archived accounts remain in history and reject new entries.
+- Dates are YYYY-MM-DD; todayISO uses org.timezone; never toISOString transaction dates.
+- Report math is pure/tested; balance sheet rolls prior years into retained earnings/net assets.
+- Void is idempotent, blocked in completed reconciliation, and unticks/unlinks in-progress evidence.
 - Tests: bunx vitest run <files>, supabase/tests/tenant_isolation.sql.
-- Double-post: transactions.idempotency_key unique per org; forms send one key per submission, bank posts use `bank:<id>`. Keep both.
-- AI PDF: org opt-in + per-upload ack + per-user limits (ai_usage) checked server-side; PDF imports must balance or send acceptMismatch.
+- Double-post: unique org idempotency keys; forms send one per submission, bank uses `bank:<id>`.
+- AI PDF requires org opt-in, upload ack, limits; must balance or send acceptMismatch.
+- Legal acceptance is append-only/versioned; U.S.-first drafts separate hosted/self-hosted terms and make no GDPR claim.

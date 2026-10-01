@@ -138,6 +138,13 @@ export const suggestReconciliation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ orgId: uuid, accountId: uuid }).parse(i))
   .handler(async ({ data, context }) => {
+    const { data: account, error: accountError } = await context.supabase
+      .from("accounts")
+      .select("id, is_active")
+      .eq("id", data.accountId)
+      .eq("org_id", data.orgId)
+      .maybeSingle();
+    if (accountError || !account?.is_active) throw new Error("Choose an active account in this organization.");
     const { data: last } = await context.supabase
       .from("reconciliations")
       .select("period_end, ending_balance_cents")
@@ -183,6 +190,13 @@ export const startReconciliation = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
+    const { data: account, error: accountError } = await context.supabase
+      .from("accounts")
+      .select("id, is_active")
+      .eq("id", data.accountId)
+      .eq("org_id", data.orgId)
+      .maybeSingle();
+    if (accountError || !account?.is_active) throw new Error("Choose an active account in this organization.");
     const { supabase, userId } = context;
     const { data: open } = await supabase
       .from("reconciliations")

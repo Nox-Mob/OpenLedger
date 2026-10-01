@@ -52,7 +52,7 @@ function ReconcileIndex() {
   }, [suggestQuery.data]);
 
   if (!org) return null;
-  const accounts = (accountsQuery.data ?? []).filter((a) => a.type === "asset" || a.type === "liability");
+  const accounts = (accountsQuery.data ?? []).filter((a) => a.isActive && (a.type === "asset" || a.type === "liability"));
   const recs = recsQuery.data ?? [];
   const openForAccount = recs.find((r) => r.accountId === accountId && r.status === "in_progress");
 

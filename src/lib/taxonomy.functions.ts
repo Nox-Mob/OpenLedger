@@ -2,18 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const orgInput = z.object({ orgId: z.string().uuid() });
+const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
 
 export const listAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: accounts, error } = await context.supabase
+    let query = context.supabase
       .from("accounts")
       .select("id, name, type, subtype, is_active")
       .eq("org_id", data.orgId)
       .order("type")
       .order("name");
+    if (!data.includeArchived) query = query.eq("is_active", true);
+    const { data: accounts, error } = await query;
     if (error) throw new Error(error.message);
 
     const { data: entries, error: eError } = await context.supabase
@@ -75,6 +77,15 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: selected, error: selectedError } = await context.supabase
+      .from("accounts")
+      .select("id, is_active")
+      .eq("org_id", data.orgId)
+      .in("id", [data.accountId, data.equityAccountId]);
+    if (selectedError) throw new Error(selectedError.message);
+    if ((selected ?? []).length !== 2 || selected?.some((account) => !account.is_active)) {
+      throw new Error("Opening balances can only use active accounts in this organization.");
+    }
     const { supabase, userId } = context;
     const { data: tx, error: txError } = await supabase
       .from("transactions")

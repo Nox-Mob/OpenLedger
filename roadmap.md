@@ -53,9 +53,9 @@
 - [ ] 8. Import correctness (row-seq fingerprint, amount formats, PDF balance check, encoding, size limits)
 - [ ] 10. Role authorization matrix + last-admin protection server-side
 - [x] 11. Double-submit / concurrency guards (idempotency keys — done as part of F)
-- [ ] 12. Archive/reactivate accounts instead of deleting them; account type lock is done
+- [x] 12. Archive/reactivate accounts instead of deleting them; account type lock is done
 ### Phase D — parallel
-- [ ] 9. U.S.-first legal release: separate hosted/self-hosted Terms and Privacy placeholders, versioned acceptance at signup/updates, and once-per-version "not advice" notice; GDPR deferred
+- [x] 9. U.S.-first legal release: separate hosted/self-hosted Terms and Privacy placeholders, versioned acceptance at signup/updates, and once-per-version "not advice" notice; GDPR deferred
 - [ ] 13. Auth hygiene (verification, reset, rate limits, Google/email same address)
 - [ ] 6. Lock-books-through date + year-end close
 ### Tier 2 (pull forward: 14, 15, 17)

@@ -77,7 +77,7 @@ function ImportPage() {
   const profileQuery = useQuery({ queryKey: ["import-profiles", org?.id], queryFn: () => listImportProfiles({ data: { orgId: org!.id } }), enabled });
   const pdfUsageQuery = useQuery({ queryKey: ["pdf-usage", org?.id], queryFn: () => getPdfUsage({ data: { orgId: org!.id } }), enabled: enabled && !!org?.aiPdfEnabled });
 
-  const accounts = accountsQuery.data ?? [];
+  const accounts = (accountsQuery.data ?? []).filter((account) => account.isActive);
   const bankAccounts = accounts.filter((a) => a.type === "asset" || a.type === "liability");
   const offsetAccounts = accounts.filter((a) => a.type === "revenue" || a.type === "expense");
   const profiles = (profileQuery.data ?? []).filter((p) => p.accountId === accountId);
