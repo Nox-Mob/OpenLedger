@@ -52,6 +52,44 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          ok: boolean
+          org_id: string
+          page_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          ok?: boolean
+          org_id: string
+          page_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          ok?: boolean
+          org_id?: string
+          page_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -325,6 +363,7 @@ export type Database = {
       import_batches: {
         Row: {
           account_id: string
+          balance_mismatch_cents: number | null
           beginning_balance_cents: number | null
           created_at: string
           created_by: string | null
@@ -344,6 +383,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
+          balance_mismatch_cents?: number | null
           beginning_balance_cents?: number | null
           created_at?: string
           created_by?: string | null
@@ -363,6 +403,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
+          balance_mismatch_cents?: number | null
           beginning_balance_cents?: number | null
           created_at?: string
           created_by?: string | null
@@ -444,6 +485,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          ai_pdf_enabled: boolean
           created_at: string
           created_by: string
           currency: string
@@ -456,6 +498,7 @@ export type Database = {
           timezone: string
         }
         Insert: {
+          ai_pdf_enabled?: boolean
           created_at?: string
           created_by: string
           currency?: string
@@ -468,6 +511,7 @@ export type Database = {
           timezone?: string
         }
         Update: {
+          ai_pdf_enabled?: boolean
           created_at?: string
           created_by?: string
           currency?: string
