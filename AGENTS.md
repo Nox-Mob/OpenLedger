@@ -23,7 +23,8 @@
 - Dates are YYYY-MM-DD; todayISO uses org.timezone; never toISOString transaction dates.
 - Report math is pure/tested; balance sheet rolls prior years into retained earnings/net assets.
 - Void is idempotent, blocked in completed reconciliation, and unticks/unlinks in-progress evidence.
-- Tests: bunx vitest run <files>, supabase/tests/tenant_isolation.sql.
+- Tests: bun run test, bun run check:migrations, DATABASE_URL=... bun run test:db (supabase/tests/*.sql).
 - Double-post: unique org idempotency keys; forms send one per submission, bank uses `bank:<id>`.
 - AI PDF requires org opt-in, upload ack, limits; must balance or send acceptMismatch.
 - Legal acceptance is append-only/versioned; U.S.-first drafts separate hosted/self-hosted terms and make no GDPR claim.
+- CI (.github/workflows/ci.yml) is report-only: never auto-fixes/commits; DB checks run on a disposable local DB via scripts/ci; SQL tests end with RAISE 'RESULT k=PASS;...'.
