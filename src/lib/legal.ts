@@ -1,0 +1,28 @@
+export const LEGAL_CONFIG = {
+  operatorName: "[HOSTING COMPANY LEGAL NAME]",
+  mailingAddress: "[HOSTING COMPANY MAILING ADDRESS]",
+  jurisdiction: "[STATE AND COUNTY]",
+  privacyEmail: "privacy@example.com",
+  supportEmail: "support@example.com",
+  effectiveDate: "October 1, 2026",
+} as const;
+
+export const LEGAL_VERSIONS = {
+  terms: "2026-10-01",
+  privacy: "2026-10-01",
+  non_advice: "2026-10-01",
+} as const;
+
+export type LegalDocumentType = keyof typeof LEGAL_VERSIONS;
+
+export function missingLegalDocuments(
+  accepted: Array<{ documentType: string; version: string }>,
+): LegalDocumentType[] {
+  return (Object.keys(LEGAL_VERSIONS) as LegalDocumentType[]).filter(
+    (documentType) =>
+      !accepted.some(
+        (item) =>
+          item.documentType === documentType && item.version === LEGAL_VERSIONS[documentType],
+      ),
+  );
+}
