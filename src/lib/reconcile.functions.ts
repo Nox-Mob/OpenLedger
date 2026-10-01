@@ -31,17 +31,15 @@ async function audit(
   before: unknown,
   after: unknown,
 ) {
-  await supabase
-    .from("audit_log")
-    .insert({
-      org_id: orgId,
-      user_id: userId,
-      action,
-      entity: "reconciliation",
-      entity_id: id,
-      before,
-      after,
-    });
+  await supabase.from("audit_log").insert({
+    org_id: orgId,
+    user_id: userId,
+    action,
+    entity: "reconciliation",
+    entity_id: id,
+    before,
+    after,
+  });
 }
 
 async function loadRec(supabase: Supa, id: string) {

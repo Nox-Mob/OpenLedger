@@ -281,17 +281,15 @@ export const saveImportProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
-    const { error } = await context.supabase
-      .from("import_profiles")
-      .upsert(
-        {
-          org_id: data.orgId,
-          account_id: data.accountId,
-          name: data.name,
-          mapping: data.mapping as any,
-        },
-        { onConflict: "account_id,name" },
-      );
+    const { error } = await context.supabase.from("import_profiles").upsert(
+      {
+        org_id: data.orgId,
+        account_id: data.accountId,
+        name: data.name,
+        mapping: data.mapping as any,
+      },
+      { onConflict: "account_id,name" },
+    );
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -372,16 +370,14 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
           : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`,
       );
     const usageId = crypto.randomUUID();
-    const { error: uErr } = await supabase
-      .from("ai_usage")
-      .insert({
-        id: usageId,
-        org_id: data.orgId,
-        user_id: userId,
-        kind: "pdf_extract",
-        page_count: data.pageCount,
-        ok: false,
-      });
+    const { error: uErr } = await supabase.from("ai_usage").insert({
+      id: usageId,
+      org_id: data.orgId,
+      user_id: userId,
+      kind: "pdf_extract",
+      page_count: data.pageCount,
+      ok: false,
+    });
     if (uErr) throw new Error(uErr.message);
 
     const key = process.env["LOVABLE_API_KEY"];
