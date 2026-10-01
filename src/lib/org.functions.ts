@@ -12,7 +12,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("user_roles")
-      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides)")
+      .select("role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled)")
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
@@ -25,6 +25,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         timezone: (row.organizations?.timezone ?? "America/Chicago") as string,
         terminology: normalizeTerminology(row.organizations?.terminology),
         termOverrides: cleanOverrides(row.organizations?.term_overrides),
+        aiPdfEnabled: !!row.organizations?.ai_pdf_enabled,
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -81,6 +82,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         timezone: z.string().max(64).refine(isValidTimeZone, "Unknown timezone"),
         terminology: z.enum(["simplest", "simple", "accounting"]),
         termOverrides: overridesSchema,
+        aiPdfEnabled: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -90,7 +92,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
     const { data: before } = await supabase
       .from("organizations")
-      .select("name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides")
+      .select("name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled")
       .eq("id", data.orgId)
       .single();
 
@@ -104,6 +106,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         timezone: data.timezone,
         terminology: data.terminology,
         term_overrides: data.termOverrides as any,
+        ...(data.aiPdfEnabled !== undefined ? { ai_pdf_enabled: data.aiPdfEnabled } : {}),
       })
       .eq("id", data.orgId);
     if (error) throw new Error(error.message);
@@ -123,6 +126,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
         timezone: data.timezone,
         terminology: data.terminology,
         term_overrides: data.termOverrides,
+        ai_pdf_enabled: data.aiPdfEnabled ?? before?.ai_pdf_enabled ?? false,
       },
     });
 

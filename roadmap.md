@@ -77,4 +77,4 @@
 - [x] E. Dedup row-sequence fingerprint
 - [x] F. Double-post guards (postBankTransaction conditional update, idempotency key)
 - [x] G. Demo seed moved out of migrations into supabase/seed/demo.sql (manual, dev/test only)
-- [ ] H. PDF AI opt-in, balance validation, per-user rate limit
+- [x] H. PDF AI opt-in, balance validation, per-user rate limit
