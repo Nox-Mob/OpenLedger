@@ -228,6 +228,7 @@ export const saveImportProfile = createServerFn({ method: "POST" })
     z.object({ orgId: z.string().uuid(), accountId: z.string().uuid(), name: z.string().min(1).max(80), mapping: mappingSchema }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "write");
     const { error } = await context.supabase
       .from("import_profiles")
       .upsert({ org_id: data.orgId, account_id: data.accountId, name: data.name, mapping: data.mapping as any }, { onConflict: "account_id,name" });

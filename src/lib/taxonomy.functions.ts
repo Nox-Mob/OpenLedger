@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCan } from "./permissions";
 
 const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
 
@@ -53,6 +54,7 @@ export const createAccount = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
     const { error } = await context.supabase.from("accounts").insert({
       org_id: data.orgId,
       name: data.name,
@@ -77,6 +79,7 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "write");
     const { data: selected, error: selectedError } = await context.supabase
       .from("accounts")
       .select("id, is_active")
@@ -132,6 +135,7 @@ function makeCrud(table: "categories" | "tags" | "projects" | "funds", extraSche
     )
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as any;
+      await assertCan(context.supabase, context.userId, orgId, "write");
       const { error } = await context.supabase.from(table).insert({ org_id: orgId, name, ...rest });
       if (error) throw new Error(error.message);
       return { ok: true };
