@@ -56,7 +56,7 @@ function DashboardPage() {
 
   const accounts = accountsQuery.data ?? [];
   const cashCents = accounts
-    .filter((a) => a.type === "asset")
+    .filter((a) => a.isActive && a.type === "asset")
     .reduce((sum, a) => sum + a.balanceCents, 0);
   const month = monthQuery.data;
 

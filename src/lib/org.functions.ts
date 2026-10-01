@@ -274,7 +274,7 @@ export const getAccountSetup = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: accounts, error } = await supabase
       .from("accounts")
-      .select("id, name, type, subtype")
+      .select("id, name, type, subtype, is_active")
       .eq("org_id", data.orgId)
       .order("type")
       .order("name");
@@ -291,6 +291,7 @@ export const getAccountSetup = createServerFn({ method: "GET" })
       name: a.name as string,
       type: a.type as string,
       subtype: (a.subtype ?? null) as string | null,
+      isActive: a.is_active as boolean,
       entryCount: counts.get(a.id) ?? 0,
     }));
   });
@@ -315,7 +316,7 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     const catalog = catalogFor((org?.org_type ?? "business") as OrgType);
     const item = data.catalogKey ? catalog.find((c) => c.key === data.catalogKey) : undefined;
 
-    const { data: existing } = await supabase.from("accounts").select("id, name, type").eq("org_id", data.orgId);
+    const { data: existing } = await supabase.from("accounts").select("id, name, type, is_active").eq("org_id", data.orgId);
     const target = data.accountId
       ? (existing ?? []).find((a: any) => a.id === data.accountId)
       : item
@@ -323,7 +324,16 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
         : undefined;
 
     if (data.enabled) {
-      if (target) return { ok: true };
+      if (target) {
+        if (target.is_active) return { ok: true };
+        const { error } = await supabase.from("accounts").update({ is_active: true }).eq("id", target.id).eq("org_id", data.orgId);
+        if (error) throw new Error(error.message);
+        await supabase.from("audit_log").insert({
+          org_id: data.orgId, user_id: userId, action: "reactivate", entity: "account",
+          entity_id: target.id, before: { is_active: false }, after: { is_active: true },
+        });
+        return { ok: true };
+      }
       if (!item) throw new Error("Unknown account.");
       const { data: created, error } = await supabase
         .from("accounts")
@@ -340,16 +350,13 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
 
     if (!target) return { ok: true };
     if (item?.required) throw new Error(`${item.name} is required and can't be removed.`);
-    const { count } = await supabase
-      .from("entries")
-      .select("id", { count: "exact", head: true })
-      .eq("account_id", target.id);
-    if ((count ?? 0) > 0) throw new Error(`${target.name} is used by transactions, so it can't be removed.`);
-    const { error } = await supabase.from("accounts").delete().eq("id", target.id);
-    if (error) throw new Error(`${target.name} is linked to bank imports or statement checks, so it can't be removed.`);
+    if (!target.is_active) return { ok: true };
+    const { error } = await supabase.from("accounts").update({ is_active: false }).eq("id", target.id).eq("org_id", data.orgId);
+    if (error) throw new Error(error.message);
     await supabase.from("audit_log").insert({
-      org_id: data.orgId, user_id: userId, action: "delete", entity: "account",
-      entity_id: target.id, before: { name: target.name, type: target.type },
+      org_id: data.orgId, user_id: userId, action: "archive", entity: "account",
+      entity_id: target.id, before: { name: target.name, type: target.type, is_active: true },
+      after: { is_active: false },
     });
     return { ok: true };
   });
