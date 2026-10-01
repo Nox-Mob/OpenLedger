@@ -182,13 +182,20 @@ Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun 
 If you don't want any hosted dependency, run Supabase itself on the same machine with Docker Compose. Allow **4 GB+ RAM** (the Supabase stack runs Postgres, Auth, PostgREST, Storage, and more as separate containers).
 
 1. **Install Docker and the Compose plugin** on the server ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/)).
-2. **Get the official self-hosting stack:**
+2. **Get the official self-hosting stack.** The fastest way is Supabase's own setup script, which clones the repo and prepares the `docker/.env` file for you:
 
    ```sh
-   git clone --depth 1 https://github.com/supabase/supabase
+   curl -fsSL https://supabase.link/setup.sh | sh
    cd supabase/docker
-   cp .env.example .env
    ```
+
+   > Piping a script straight into a shell is a matter of trust. If you'd rather inspect it first, download it (`curl -fsSL https://supabase.link/setup.sh -o setup.sh`), read it, then run `sh setup.sh` — or do it manually:
+   >
+   > ```sh
+   > git clone --depth 1 https://github.com/supabase/supabase
+   > cd supabase/docker
+   > cp .env.example .env
+   > ```
 
 3. **Edit `docker/.env`.** At minimum, set fresh values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and `DASHBOARD_PASSWORD`. Generate the two keys from your `JWT_SECRET` using the tool linked in that file's comments. These replace the keys a hosted project would give you — the publishable key is `ANON_KEY`, the service-role key is `SERVICE_ROLE_KEY`.
 4. **Start the stack:**
