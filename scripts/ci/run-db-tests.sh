@@ -5,6 +5,10 @@
 # Report only: it never changes the schema or data.
 set -uo pipefail
 DB="${DATABASE_URL:?DATABASE_URL must point at a disposable test database}"
+case "$DB" in
+  *@127.0.0.1:*|*@localhost:*|*@localhost/*|*@127.0.0.1/*) ;;
+  *) [[ "${ALLOW_REMOTE_TEST_DB:-}" == "yes-this-is-disposable" ]] || { echo "::error::Refusing to run: DATABASE_URL is not a local throwaway database. Real data is never touched by tests."; exit 1; } ;;
+esac
 fail=0
 summary="${GITHUB_STEP_SUMMARY:-/dev/null}"
 echo "## Database safety checks" >> "$summary"

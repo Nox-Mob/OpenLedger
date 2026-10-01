@@ -6,6 +6,12 @@
 -- Re-runnable: every insert is ON CONFLICT DO NOTHING. Triggers are skipped during
 -- the load so already-reconciled rows restore exactly as captured.
 BEGIN;
+-- Safety: refuse to load into a database holding any real (non-demo) organization.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM public.organizations WHERE id::text NOT LIKE 'd0e00000-%') THEN
+    RAISE EXCEPTION 'Refusing to load demo data: this database has real organizations.';
+  END IF;
+END $$;
 SET LOCAL session_replication_role = replica;
 
 -- Demo login (password demo1234). Token columns must be '' not NULL for sign-in to work.
