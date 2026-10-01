@@ -5,6 +5,7 @@ import { AppShell, useOrgContext } from "@/components/AppShell";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
 import { parseToCents, todayISO, formatCents } from "@/lib/money";
+import { safeRandomUUID } from "@/lib/utils";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
