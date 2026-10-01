@@ -14,7 +14,8 @@ export function parseToCents(input: string): number | null {
   if (!cleaned) return null;
   const value = Number(cleaned);
   if (!Number.isFinite(value)) return null;
-  return Math.round(value * 100);
+  // toPrecision strips binary float noise (1.005*100 = 100.49999…) before rounding.
+  return Math.round(Number((value * 100).toPrecision(15)));
 }
 
 export { todayISO } from "./dates";

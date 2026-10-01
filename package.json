@@ -9,6 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:db": "bash scripts/ci/run-db-tests.sh",
+    "check:migrations": "node scripts/ci/check-migrations.mjs",
     "format": "prettier --write ."
   },
   "overrides": {

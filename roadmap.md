@@ -61,7 +61,7 @@
 ### Tier 2 (pull forward: 14, 15, 17)
 - [ ] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
 - [ ] 15. CSV/XLSX exports + org backup/restore (formula-injection escaping)
-- [ ] 17. Automated test suite + CI
+- [x] 17. Automated test suite + CI
 - [ ] 16. Invites, remove member, transfer ownership, org/account deletion
 - [ ] 18. Budgets entry  - [ ] 19. MFA  - [ ] 20. "Cash basis" labels; A/R, A/P later
 - [ ] 21. Observability + audit log viewer + backups  - [ ] 22. Performance at 10k–50k entries

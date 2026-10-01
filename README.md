@@ -124,10 +124,17 @@ Deploy the build output to any host that runs a Node-compatible server (the app 
 ### 9. Running the tests
 
 ```sh
-bunx vitest run
+bun run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
+bun run check:migrations   # every public table has GRANTs + row level security
+# Database rules — ONLY against a disposable database (e.g. `supabase db start`):
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db
 ```
 
-This covers the report math (balance sheet balances, trial balance sums to zero, voids excluded), date/timezone handling, CSV/OFX parsing, strict amount parsing, and report paging past 1,000 rows.
+The database checks (`supabase/tests/*.sql`) run inside a transaction that always rolls back. They verify tenant isolation (a stranger can't read or change any org table) and ledger invariants (unbalanced/single-entry transactions rejected, entries and posted transactions immutable, voids can't be undone, books lock enforced, no cross-org entries, last admin kept).
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every push, pull request, and weekly. It **only reports** — it never formats, fixes, commits, or pushes. Blocking jobs: unit tests, type check, production build, database rules (on a fresh local database with every migration applied), and high/critical dependency vulnerabilities. Lint is reported but not blocking yet. Each failure explains which rule broke in the run summary and as inline annotations.
 
 ---
 
