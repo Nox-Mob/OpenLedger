@@ -138,13 +138,21 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    ```
 
 6. **Check the sign-in URLs.** If your app's URL differs from what you entered during setup, edit `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` (include `<app-url>/reset-password`) in `supabase-project/.env`, then `docker compose restart auth`.
-7. *(Optional, dev/test only)* load sample data:
+7. *(Optional, home/lab use)* **skip email verification.** By default, new users must click a link in a confirmation email before they can sign in. On a home server without email set up, that leaves everyone stuck. To let people use the app right after signing up, edit `supabase-project/.env` and set:
+
+   ```sh
+   MAILER_AUTOCONFIRM=true
+   ```
+
+   Then restart the auth service: `docker compose restart auth`. New sign-ups are marked as confirmed automatically. **Only do this on a private network you trust** — with it on, anyone who can reach your server can create an account with any email address, real or not. Leave it `false` anywhere the app is reachable from the internet.
+
+8. *(Optional, dev/test only)* load sample data:
 
    ```sh
    docker exec -i supabase-db psql -U postgres -d postgres < supabase/seed/demo.sql
    ```
 
-8. **Backups.** Dump nightly and copy off the machine:
+9. **Backups.** Dump nightly and copy off the machine:
 
    ```sh
    docker exec supabase-db pg_dump -U postgres postgres | gzip > backup-$(date +%F).sql.gz
