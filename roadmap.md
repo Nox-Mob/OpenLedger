@@ -56,7 +56,7 @@
 - [x] 12. Archive/reactivate accounts instead of deleting them; account type lock is done
 ### Phase D — parallel
 - [x] 9. U.S.-first legal release: separate hosted/self-hosted Terms and Privacy placeholders, versioned acceptance at signup/updates, and once-per-version "not advice" notice; GDPR deferred
-- [ ] 13. Auth hygiene (verification, reset, rate limits, Google/email same address)
+- [ ] 13. Auth hygiene (verification, reset, rate limits, Google/email same address, 8+ char password w/ upper/lower/number/symbol + HIBP)
 - [ ] 6. Lock-books-through date + year-end close
 ### Tier 2 (pull forward: 14, 15, 17)
 - [ ] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
