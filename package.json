@@ -98,5 +98,8 @@
     "typescript-eslint": "^8.56.1",
     "vite": "8.1.5",
     "vitest": "^5.0.2"
+  },
+  "allowScripts": {
+    "core-js@3.50.0": true
   }
 }
