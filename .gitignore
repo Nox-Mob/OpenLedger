@@ -32,6 +32,5 @@ dist-ssr
 *.sw?
 
 # Environment files (never commit real values)
-.env
 .env.*
 !.env.example
