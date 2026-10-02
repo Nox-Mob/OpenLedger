@@ -64,7 +64,7 @@ async function orgToday(supabase: any, orgId: string): Promise<string> {
 
 export const incomeStatement = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({ orgId: z.string().uuid(), from: isoDate.optional(), to: isoDate.optional() })
       .parse(input),
@@ -76,7 +76,7 @@ export const incomeStatement = createServerFn({ method: "GET" })
 
 export const balanceSheet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -90,7 +90,7 @@ export const balanceSheet = createServerFn({ method: "GET" })
 
 export const trialBalance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -101,7 +101,7 @@ export const trialBalance = createServerFn({ method: "GET" })
 
 export const projectSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: projects, error } = await context.supabase
       .from("projects")
@@ -121,7 +121,7 @@ export const projectSummary = createServerFn({ method: "GET" })
 
 export const cashHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z.object({ orgId: z.string().uuid(), days: z.number().int().min(7).max(1100) }).parse(input),
   )
   .handler(async ({ data, context }) => {

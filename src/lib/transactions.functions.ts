@@ -35,7 +35,7 @@ const createSchema = z.object({
 
 export const listTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -85,7 +85,7 @@ export const listTransactions = createServerFn({ method: "GET" })
 
 export const createTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => createSchema.parse(input))
+  .validator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
@@ -183,7 +183,7 @@ export const createTransaction = createServerFn({ method: "POST" })
 
 export const voidTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z.object({ orgId: z.string().uuid(), transactionId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {

@@ -54,7 +54,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 export const setMyTermOverrides = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ termOverrides: overridesSchema }).parse(input))
+  .validator((input) => z.object({ termOverrides: overridesSchema }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("profiles")
@@ -69,7 +69,7 @@ async function requireOrgAdmin(supabase: any, userId: string, orgId: string) {
 
 export const updateOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -135,7 +135,7 @@ export const updateOrganization = createServerFn({ method: "POST" })
 
 export const listOrgMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // Any member can see the member list; RLS scopes user_roles to org members.
@@ -163,7 +163,7 @@ export const listOrgMembers = createServerFn({ method: "GET" })
 
 export const updateMemberRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -208,7 +208,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
 
 export const createOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         name: z.string().min(1).max(120),
@@ -269,7 +269,7 @@ export const createOrganization = createServerFn({ method: "POST" })
 
 export const getAccountSetup = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { data: accounts, error } = await supabase
@@ -299,7 +299,7 @@ export const getAccountSetup = createServerFn({ method: "GET" })
 
 export const setAccountEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),

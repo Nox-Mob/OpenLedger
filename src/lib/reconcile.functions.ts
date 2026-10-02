@@ -166,7 +166,7 @@ function recDto(r: any) {
 
 export const listReconciliations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ orgId: uuid }).parse(i))
+  .validator((i) => z.object({ orgId: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("reconciliations")
@@ -183,7 +183,7 @@ export const listReconciliations = createServerFn({ method: "GET" })
 /** Suggest defaults for a new reconciliation on an account. */
 export const suggestReconciliation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ orgId: uuid, accountId: uuid }).parse(i))
+  .validator((i) => z.object({ orgId: uuid, accountId: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: account, error: accountError } = await context.supabase
       .from("accounts")
@@ -228,7 +228,7 @@ export const suggestReconciliation = createServerFn({ method: "GET" })
 
 export const startReconciliation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) =>
+  .validator((i) =>
     z
       .object({
         orgId: uuid,
@@ -285,7 +285,7 @@ export const startReconciliation = createServerFn({ method: "POST" })
 
 export const getReconciliation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid }).parse(i))
+  .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const rec = await loadRec(context.supabase, data.id);
     let ws: Awaited<ReturnType<typeof loadWorkspace>>;
@@ -333,7 +333,7 @@ export const getReconciliation = createServerFn({ method: "GET" })
 
 export const setCleared = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) =>
+  .validator((i) =>
     z.object({ id: uuid, entryIds: z.array(uuid).min(1).max(1000), cleared: z.boolean() }).parse(i),
   )
   .handler(async ({ data, context }) => {
@@ -365,7 +365,7 @@ export const setCleared = createServerFn({ method: "POST" })
 /** Simple mode: clear every entry that matches a bank row in the period. */
 export const acceptMatches = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid }).parse(i))
+  .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
@@ -391,7 +391,7 @@ export const acceptMatches = createServerFn({ method: "POST" })
 
 export const completeReconciliation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid }).parse(i))
+  .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
@@ -424,7 +424,7 @@ export const completeReconciliation = createServerFn({ method: "POST" })
 /** Admin-only. Only the most recent completed reconciliation for an account can be reopened. */
 export const reopenReconciliation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid }).parse(i))
+  .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);
@@ -465,7 +465,7 @@ export const reopenReconciliation = createServerFn({ method: "POST" })
 
 export const discardReconciliation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: uuid }).parse(i))
+  .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rec = await loadRec(supabase, data.id);

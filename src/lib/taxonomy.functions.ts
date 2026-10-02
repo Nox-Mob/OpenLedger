@@ -7,7 +7,7 @@ const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean
 
 export const listAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => orgInput.parse(input))
+  .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("accounts")
@@ -43,7 +43,7 @@ export const listAccounts = createServerFn({ method: "GET" })
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -67,7 +67,7 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const setOpeningBalance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -138,7 +138,7 @@ function makeCrud(
 ) {
   const list = createServerFn({ method: "GET" })
     .middleware([requireSupabaseAuth])
-    .inputValidator((input) => orgInput.parse(input))
+    .validator((input) => orgInput.parse(input))
     .handler(async ({ data, context }) => {
       const { data: rows, error } = await context.supabase
         .from(table)
@@ -151,7 +151,7 @@ function makeCrud(
 
   const create = createServerFn({ method: "POST" })
     .middleware([requireSupabaseAuth])
-    .inputValidator((input) =>
+    .validator((input) =>
       z
         .object({ orgId: z.string().uuid(), name: z.string().min(1).max(120), ...extraSchema })
         .parse(input),

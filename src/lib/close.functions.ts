@@ -10,7 +10,7 @@ import { netIncomeFromEntries } from "./report-math";
 
 export const getBooksStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const role = await assertCan(supabase, userId, data.orgId, "read");
@@ -36,7 +36,7 @@ export const getBooksStatus = createServerFn({ method: "GET" })
 
 export const setBooksLock = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -79,7 +79,7 @@ export const setBooksLock = createServerFn({ method: "POST" })
 /** Preview what a year-end close would do: net income for the fiscal year. */
 export const previewYearEndClose = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({ orgId: z.string().uuid(), fiscalYearEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
       .parse(input),
@@ -137,7 +137,7 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
 /** Record the year-end close: one closing transaction + lock the books. */
 export const closeFiscalYear = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),

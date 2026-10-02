@@ -35,7 +35,7 @@ async function fingerprint(orgId: string, accountId: string, row: Row, rowSeq?: 
 /** Returns indexes of rows that already exist (or repeat within the file). */
 export const checkDuplicates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -70,7 +70,7 @@ export const checkDuplicates = createServerFn({ method: "POST" })
 
 export const importBankRows = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -178,7 +178,7 @@ export const importBankRows = createServerFn({ method: "POST" })
 
 export const listImportBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("import_batches")
@@ -208,7 +208,7 @@ export const listImportBatches = createServerFn({ method: "GET" })
 
 export const undoImportBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -255,7 +255,7 @@ const mappingSchema = z.record(z.string(), z.unknown());
 
 export const listImportProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("import_profiles")
@@ -273,7 +273,7 @@ export const listImportProfiles = createServerFn({ method: "GET" })
 
 export const saveImportProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -324,13 +324,13 @@ async function pdfUsage(supabase: any, orgId: string, userId: string) {
 
 export const getPdfUsage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => pdfUsage(context.supabase, data.orgId, context.userId));
 
 /** AI-assisted extraction of a statement's text. Opt-in per org, acknowledged per upload, rate-limited per person. Result is always reviewed before import. */
 export const extractPdfStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -459,7 +459,7 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
 
 export const listBankTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),
@@ -498,7 +498,7 @@ export const listBankTransactions = createServerFn({ method: "GET" })
  */
 export const postBankTransaction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         orgId: z.string().uuid(),

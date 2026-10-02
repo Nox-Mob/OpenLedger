@@ -27,3 +27,5 @@
 - Legal acceptance append-only/versioned; U.S.-first; no GDPR claim.
 - Demo: demo@demo.org / demo1234, manual dev seed only.
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
+- Server functions: use createServerFn().validator(), never deprecated .inputValidator().
+
