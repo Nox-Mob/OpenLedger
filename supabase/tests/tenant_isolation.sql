@@ -26,7 +26,7 @@ BEGIN
   END LOOP;
   UPDATE public.transactions SET status='void'; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'void=' || n || '; ';
   DELETE FROM public.entries; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'del_entries=' || n || '; ';
-  DELETE FROM public.bank_transactions; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'del_bank=' || n || '; 'BEGIN DELETE FROM public.bank_transactions; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'del_bank=' || n || '; ';
+  BEGIN DELETE FROM public.bank_transactions; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'del_bank=' || n || '; ';
     EXCEPTION WHEN others THEN r := r || 'del_bank=blocked; '; END;
   UPDATE public.reconciliations SET status='in_progress'; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'upd_rec=' || n || '; ';
   UPDATE public.user_roles SET role='admin'; GET DIAGNOSTICS n = ROW_COUNT; r := r || 'upd_roles=' || n || '; ';
