@@ -309,7 +309,7 @@ export async function getReconciliation(repos: Repositories, r: Reconciliation) 
 }
 
 function requireInProgress(r: Reconciliation, msg: string) {
-  if (r.status !== "in_progress") throw new LedgerRuleError(msg);
+  if (r.status !== "in_progress") throw new LedgerRuleError("reconciliation", msg);
 }
 
 export async function setCleared(

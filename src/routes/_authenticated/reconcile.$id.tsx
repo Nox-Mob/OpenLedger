@@ -344,7 +344,7 @@ function ReconcileWorkspace() {
             <li key={i} className="flex justify-between px-4 py-2">
               <span>
                 {ACTION_LABEL[h.action] ?? h.action}
-                {h.after?.entryIds ? ` (${h.after.entryIds.length})` : ""}
+                {entryCount(h.after) !== null ? ` (${entryCount(h.after)})` : ""}
               </span>
               <span className="tnum text-xs text-muted-foreground">
                 {new Date(h.at).toLocaleString()}
@@ -395,4 +395,9 @@ function Section({
       {children}
     </div>
   );
+}
+
+function entryCount(after: unknown): number | null {
+  const ids = (after as { entryIds?: unknown } | null)?.entryIds;
+  return Array.isArray(ids) ? ids.length : null;
 }
