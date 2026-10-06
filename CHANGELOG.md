@@ -12,6 +12,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed
+- Groundwork for the future desktop edition: a local SQLite storage option with the same bookkeeping protections, tested against the same rules as the cloud app (not yet packaged as an app).
 - Bookkeeping rules and save/void workflows now run in shared, storage-independent code, so future desktop and self-hosted editions behave the same as the cloud app.
 - App name standardized to OpenLedgerApp across screens, legal notices, reports, and documentation.
 - Page titles use OpenLedgerApp for home and Page Name - OpenLedgerApp elsewhere.

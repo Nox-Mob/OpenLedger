@@ -1,0 +1,43 @@
+# Desktop edition (Phase 4) — SQLite bridge
+
+Status: storage layer done and tested; the Tauri shell itself is not built yet.
+
+## What exists
+
+- `src/lib/adapters/sqlite/` — SQLite implementation of every repository port.
+  - `schema.ts`: append-only migrations, applied on each start by `migrateSqlite()`.
+  - Guards that mirror the Postgres triggers: entries and transactions can't be edited
+    or deleted, void can't be undone, books lock, audit log is append-only, finished
+    statement checks lock their entries, bank rows dedupe by FITID or hash+row,
+    and a bank row can only link to a transaction with a matching amount and account.
+  - Balance check at commit time (SQLite has no deferred constraints).
+- `sqljs-driver.ts` — WebAssembly SQLite driver used by tests.
+- `src/lib/adapters/contract.test.ts` — the same workflow tests run against the
+  memory adapter and the SQLite adapter. Any new adapter must be added here.
+
+## Wiring the Tauri shell (next step, needs Rust toolchain on a dev machine)
+
+1. `bun add @tauri-apps/api @tauri-apps/plugin-sql` and `cargo tauri init`;
+   enable `tauri-plugin-sql` with the `sqlite` feature.
+2. Driver (plugin-sql already matches `SqlDriver`):
+   ```ts
+   import Database from "@tauri-apps/plugin-sql";
+   const raw = await Database.load("sqlite:openledgerapp.db");
+   const driver = {
+     execute: (sql, p) => raw.execute(sql, p),
+     select: (sql, p) => raw.select(sql, p),
+   };
+   await migrateSqlite(driver);
+   const repos = createSqliteRepositories(driver);
+   ```
+3. A desktop build calls `src/lib/services/*` directly from the UI with these repos
+   (no server functions, no sign-in; one local user is the admin).
+4. Build as a static SPA (no SSR) for the Tauri webview.
+
+## Known limits
+
+- plugin-sql uses a connection pool; `BEGIN/COMMIT` must run on one connection.
+  Set the pool to a single connection or move `post()` into one Rust command.
+- Statement checks, settings and reports still use direct cloud queries in their
+  server functions; they need to move behind the ports before the desktop UI can use them.
+- Sync between desktop and cloud is not designed yet; app-generated UUIDs keep that possible.
