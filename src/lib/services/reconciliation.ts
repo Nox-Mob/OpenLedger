@@ -372,9 +372,16 @@ export async function reopenReconciliation(repos: Repositories, r: Reconciliatio
   if (siblings.some((x) => x.status === "in_progress"))
     throw new LedgerRuleError("Discard the in-progress reconciliation for this account first.");
   await repos.reconciliations.reopen(r.orgId, r.id);
-  await audit(repos, r, userId, "reconcile_reopen", { status: "completed" }, {
-    status: "in_progress",
-  });
+  await audit(
+    repos,
+    r,
+    userId,
+    "reconcile_reopen",
+    { status: "completed" },
+    {
+      status: "in_progress",
+    },
+  );
   return { ok: true };
 }
 

@@ -117,7 +117,9 @@ function makeCrud(
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as any;
       await assertCan(context.supabase, context.userId, orgId, "write");
-      const { error } = await context.supabase.from(table).insert({ id: newId(), org_id: orgId, name, ...rest });
+      const { error } = await context.supabase
+        .from(table)
+        .insert({ id: newId(), org_id: orgId, name, ...rest });
       if (error) throw new Error(error.message);
       return { ok: true };
     });

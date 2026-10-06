@@ -29,7 +29,12 @@ function makeRows(n: number) {
     account_id: i % 2 === 0 ? "a1" : "a2",
     project_id: null,
     accounts: { name: i % 2 === 0 ? "Checking" : "Sales", type: i % 2 === 0 ? "asset" : "revenue" },
-    transactions: { org_id: "o1", status: "posted", source: "manual", transaction_date: "2026-01-01" },
+    transactions: {
+      org_id: "o1",
+      status: "posted",
+      source: "manual",
+      transaction_date: "2026-01-01",
+    },
   }));
 }
 
@@ -47,7 +52,7 @@ describe("ledger paging (cloud adapter)", () => {
 
   it("feeds report math correctly across pages", async () => {
     const l = await ledger(mockSupabase(makeRows(2001)), "o1");
-    expect(computeIncome(l).revenue.length).toBeGreaterThan(0);
+    expect(computeIncome(l).totalRevenueCents).toBe(100000);
     expect(computeBalance(l, "2026-12-31", "2026-01-01")).toBeTruthy();
   });
 });

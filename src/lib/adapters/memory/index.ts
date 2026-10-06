@@ -271,7 +271,10 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         return [...s.bank.values()]
           .filter(
             (b) =>
-              b.orgId === orgId && b.accountId === accountId && b.bankDate >= from && b.bankDate <= to,
+              b.orgId === orgId &&
+              b.accountId === accountId &&
+              b.bankDate >= from &&
+              b.bankDate <= to,
           )
           .sort((a, b) => a.bankDate.localeCompare(b.bankDate))
           .map((b) => ({ ...b }));

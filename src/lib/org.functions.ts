@@ -216,7 +216,13 @@ export const createOrganization = createServerFn({ method: "POST" })
     const keys = data.accountKeys ? new Set(data.accountKeys) : null;
     const accounts = catalogFor(data.orgType)
       .filter((c) => c.required || (keys ? keys.has(c.key) : c.defaultOn))
-      .map((c) => ({ id: newId(), name: c.name, type: c.type, subtype: c.subtype ?? null, org_id: org.id }));
+      .map((c) => ({
+        id: newId(),
+        name: c.name,
+        type: c.type,
+        subtype: c.subtype ?? null,
+        org_id: org.id,
+      }));
     const { error: accError } = await supabase.from("accounts").insert(accounts);
     if (accError) throw new Error(accError.message);
 

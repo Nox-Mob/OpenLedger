@@ -150,7 +150,11 @@ export interface ReconciliationRepository {
   /** Ticked-line count per reconciliation in the org. */
   itemCounts(orgId: Id): Promise<Record<Id, number>>;
   /** Posted entries on the account dated <= throughDate, unticked or ticked by this check. */
-  workspaceEntries(accountId: Id, throughDate: IsoDate, reconciliationId: Id): Promise<ReconEntry[]>;
+  workspaceEntries(
+    accountId: Id,
+    throughDate: IsoDate,
+    reconciliationId: Id,
+  ): Promise<ReconEntry[]>;
   /** Entries ticked by this check. */
   entriesOf(reconciliationId: Id): Promise<ReconEntry[]>;
   /** Ticks only unticked lines on the check's account; unticks only this check's lines. */

@@ -632,7 +632,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           [orgId, id],
         );
         if (r?.status !== "in_progress") return;
-        await db.execute("UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?", [id]);
+        await db.execute(
+          "UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?",
+          [id],
+        );
         await db.execute("DELETE FROM reconciliations WHERE id = ?", [id]);
       },
     },

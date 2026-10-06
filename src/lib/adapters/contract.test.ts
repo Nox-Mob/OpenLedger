@@ -225,10 +225,16 @@ describe.each(adapters)("%s adapter", (name, make) => {
 
   it("statement check: start, match, finish at zero, reopen, discard, history", async () => {
     const t1 = await postTransaction(repos, sale({ transactionDate: "2026-02-02" }));
-    await postTransaction(repos, sale({ transactionDate: "2026-02-20", entries: [
-      { accountId: CASH, amountCents: 300 },
-      { accountId: SALES, amountCents: -300 },
-    ] }));
+    await postTransaction(
+      repos,
+      sale({
+        transactionDate: "2026-02-20",
+        entries: [
+          { accountId: CASH, amountCents: 300 },
+          { accountId: SALES, amountCents: -300 },
+        ],
+      }),
+    );
     await repos.bank.insertMany([
       {
         id: "50000000-0000-4000-8000-000000000001",
@@ -309,7 +315,7 @@ describe.each(adapters)("%s adapter", (name, make) => {
     const { id } = await postTransaction(repos, sale({ transactionDate: "2026-02-05" }));
     await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id });
     const inc = await reports.incomeStatement(repos, ORG, { from: "2026-01-01", to: "2026-12-31" });
-    expect(inc).toMatchObject({ totalRevenue: 1000 });
+    expect(inc).toMatchObject({ totalRevenueCents: 1000 });
     const bs = await reports.balanceSheet(repos, ORG, "2026-12-31");
     expect(bs.asOf).toBe("2026-12-31");
     const tb = await reports.trialBalance(repos, ORG, "2026-12-31");
@@ -339,7 +345,12 @@ describe.each(adapters)("%s adapter", (name, make) => {
         retainedEarningsAccountId: SALES,
       }),
     ).rejects.toThrow(/equity/);
-    const close = { orgId: ORG, userId: USER, fiscalYearEnd: "2026-12-31", retainedEarningsAccountId: EQUITY };
+    const close = {
+      orgId: ORG,
+      userId: USER,
+      fiscalYearEnd: "2026-12-31",
+      retainedEarningsAccountId: EQUITY,
+    };
     expect(await settings.closeFiscalYear(repos, close)).toMatchObject({ ok: true });
     expect(await settings.closeFiscalYear(repos, close)).toEqual({ ok: true, duplicate: true });
     const status = await settings.getBooksStatus(repos, ORG);

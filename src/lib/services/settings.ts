@@ -102,11 +102,7 @@ export async function fiscalYearNetIncome(repos: Repositories, orgId: Id, fiscal
   return { fiscalYearStart: start, fiscalYearEnd, netIncomeCents: net, startMonth };
 }
 
-export async function previewYearEndClose(
-  repos: Repositories,
-  orgId: Id,
-  fiscalYearEnd: IsoDate,
-) {
+export async function previewYearEndClose(repos: Repositories, orgId: Id, fiscalYearEnd: IsoDate) {
   if (await repos.periodCloses.find(orgId, fiscalYearEnd))
     throw new LedgerRuleError("That fiscal year is already closed.");
   return fiscalYearNetIncome(repos, orgId, fiscalYearEnd);

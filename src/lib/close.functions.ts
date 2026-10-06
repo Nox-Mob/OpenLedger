@@ -40,9 +40,7 @@ export const setBooksLock = createServerFn({ method: "POST" })
 /** Preview what a year-end close would do: net income for the fiscal year. */
 export const previewYearEndClose = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((input) =>
-    z.object({ orgId: z.string().uuid(), fiscalYearEnd: isoDate }).parse(input),
-  )
+  .validator((input) => z.object({ orgId: z.string().uuid(), fiscalYearEnd: isoDate }).parse(input))
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "close_books");
     return settings.previewYearEndClose(
