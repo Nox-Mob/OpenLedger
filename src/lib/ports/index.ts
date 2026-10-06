@@ -75,12 +75,12 @@ export interface NewTransaction {
     id: Id;
     accountId: Id;
     amountCents: number;
-    categoryId?: Id | null;
-    projectId?: Id | null;
-    fundId?: Id | null;
-    memo?: string | null;
+    categoryId?: Id | null | undefined;
+    projectId?: Id | null | undefined;
+    fundId?: Id | null | undefined;
+    memo?: string | null | undefined;
   }[];
-  tagIds?: Id[];
+  tagIds?: Id[] | undefined;
 }
 
 export interface TransactionRepository {

@@ -147,7 +147,7 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
       },
       async updateSettings(orgId, p) {
-        const row: Record<string, unknown> = {};
+        const row: any = {};
         if (p.name !== undefined) row.name = p.name;
         if (p.currency !== undefined) row.currency = p.currency;
         if (p.fiscalYearStartMonth !== undefined) row.fiscal_year_start_month = p.fiscalYearStartMonth;

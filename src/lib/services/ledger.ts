@@ -28,12 +28,12 @@ export interface PostTransactionInput {
   orgId: Id;
   userId: Id;
   transactionDate: IsoDate;
-  postedDate?: IsoDate | null;
+  postedDate?: IsoDate | null | undefined;
   description: string;
   source: NewTransaction["source"];
   entries: Omit<NewTransaction["entries"][number], "id">[];
-  tagIds?: Id[];
-  idempotencyKey?: string | null;
+  tagIds?: Id[] | undefined;
+  idempotencyKey?: string | null | undefined;
 }
 
 export async function postTransaction(
@@ -170,9 +170,9 @@ export async function postBankRow(
     userId: Id;
     bankTransactionId: Id;
     offsetAccountId: Id;
-    categoryId?: Id | null;
-    projectId?: Id | null;
-    fundId?: Id | null;
+    categoryId?: Id | null | undefined;
+    projectId?: Id | null | undefined;
+    fundId?: Id | null | undefined;
   },
 ): Promise<{ id: Id }> {
   const bank = await repos.bank.get(input.orgId, input.bankTransactionId);
