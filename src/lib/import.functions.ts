@@ -533,7 +533,11 @@ export const postBankTransaction = createServerFn({ method: "POST" })
       throw new Error("Posting can only use active accounts in this organization.");
     }
 
-    const txId = crypto.randomUUID();
+    assertBalancedEntries([
+      { accountId: bank.account_id, amountCents: bank.amount_cents },
+      { accountId: data.offsetAccountId, amountCents: -bank.amount_cents },
+    ]);
+    const txId = newId();
     const { error: txError } = await supabase.from("transactions").insert({
       id: txId,
       org_id: data.orgId,
@@ -551,8 +555,14 @@ export const postBankTransaction = createServerFn({ method: "POST" })
     }
 
     const { error: eError } = await supabase.from("entries").insert([
-      { transaction_id: txId, account_id: bank.account_id, amount_cents: bank.amount_cents },
       {
+        id: newId(),
+        transaction_id: txId,
+        account_id: bank.account_id,
+        amount_cents: bank.amount_cents,
+      },
+      {
+        id: newId(),
         transaction_id: txId,
         account_id: data.offsetAccountId,
         amount_cents: -bank.amount_cents,
