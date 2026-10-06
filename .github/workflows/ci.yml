@@ -1,4 +1,4 @@
-# Open Ledger CI — validates only. It never auto-fixes, formats, commits or pushes,
+# OpenLedgerApp CI — validates only. It never auto-fixes, formats, commits or pushes,
 # so forks and copies of this repo get an honest report, not silent changes.
 # Every failing job writes the reason to the run summary and as inline annotations.
 name: CI

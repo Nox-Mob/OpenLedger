@@ -18,9 +18,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/reconcile/$id")({
   head: () => ({
     meta: [
-      { title: "Statement check — Open Ledger" },
+      { title: "Statement Check - OpenLedgerApp" },
       { name: "description", content: "Match your books to a bank statement, item by item." },
-      { property: "og:title", content: "Statement check — Open Ledger" },
+      { property: "og:title", content: "Statement Check - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Match your books to a bank statement, item by item.",

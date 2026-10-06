@@ -1,4 +1,4 @@
-# Open Ledger
+# OpenLedgerApp
 
 Open-source, self-hostable double-entry accounting for very small businesses and nonprofits.
 
@@ -218,7 +218,7 @@ Run it under a process manager so it restarts on crash and boot, e.g. systemd (`
 
 ```ini
 [Unit]
-Description=Open Ledger
+Description=OpenLedgerApp
 After=network.target
 
 [Service]

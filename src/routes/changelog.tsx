@@ -4,8 +4,8 @@ import changelog from "../../CHANGELOG.md?raw";
 
 export const Route = createFileRoute("/changelog")({
   head: () => ({ meta: [
-    { title: "Changelog — Open Ledger" }, { name: "description", content: "Release notes and development changes for Open Ledger open-source accounting." },
-    { property: "og:title", content: "Changelog — Open Ledger" }, { property: "og:description", content: "What's changed in Open Ledger, from the first usable web release to the public website." },
+    { title: "Changelog - OpenLedgerApp" }, { name: "description", content: "Release notes and development changes for OpenLedgerApp open-source accounting." },
+    { property: "og:title", content: "Changelog - OpenLedgerApp" }, { property: "og:description", content: "What's changed in OpenLedgerApp, from the first usable web release to the public website." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }), component: ChangelogPage,
 });

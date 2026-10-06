@@ -19,10 +19,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/transactions/new")({
   head: () => ({
     meta: [
-      { title: "New Transaction — Open Ledger" },
+      { title: "New Transaction - OpenLedgerApp" },
       { name: "description", content: "Record money in, money out, or a transfer." },
-      { property: "og:title", content: "New Transaction — Open Ledger" },
+      { property: "og:title", content: "New Transaction - OpenLedgerApp" },
       { property: "og:description", content: "Record money in, money out, or a transfer." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: NewTransactionPage,

@@ -7,14 +7,14 @@ import { lovable } from "@/integrations/lovable";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Open Ledger" },
+      { title: "Sign In - OpenLedgerApp" },
       {
         name: "description",
         content:
-          "Sign in to Open Ledger, free open-source accounting for small businesses and nonprofits.",
+          "Sign in to OpenLedgerApp, free open-source accounting for small businesses and nonprofits.",
       },
-      { property: "og:title", content: "Sign in — Open Ledger" },
-      { property: "og:description", content: "Sign in to Open Ledger." },
+      { property: "og:title", content: "Sign In - OpenLedgerApp" },
+      { property: "og:description", content: "Sign in to OpenLedgerApp." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -135,7 +135,7 @@ function AuthPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <BookOpen className="mx-auto h-8 w-8 text-primary" />
-          <h1 className="font-display mt-3 text-2xl font-bold">Open Ledger</h1>
+          <h1 className="font-display mt-3 text-2xl font-bold">OpenLedgerApp</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Simple, honest accounting for small businesses and nonprofits.
           </p>

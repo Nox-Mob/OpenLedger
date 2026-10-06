@@ -4,10 +4,12 @@ import { AppShell } from "@/components/AppShell";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Open Ledger" },
+      { title: "Settings - OpenLedgerApp" },
       { name: "description", content: "Organization and personal settings." },
-      { property: "og:title", content: "Settings — Open Ledger" },
+      { property: "og:title", content: "Settings - OpenLedgerApp" },
       { property: "og:description", content: "Organization and personal settings." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SettingsLayout,

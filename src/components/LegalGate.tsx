@@ -58,11 +58,11 @@ export function LegalGate({ children }: { children: React.ReactNode }) {
         <ShieldCheck className="h-8 w-8 text-primary" />
         <h1 className="mt-4 font-display text-2xl font-bold">Before you continue</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Please review the current legal terms and remember that Open Ledger is a recordkeeping
+          Please review the current legal terms and remember that OpenLedgerApp is a recordkeeping
           tool, not a professional adviser.
         </p>
         <div className="mt-5 rounded-md border bg-muted/40 p-4 text-sm leading-6">
-          Open Ledger does not provide financial, accounting, tax, or legal advice. Reports and
+          OpenLedgerApp does not provide financial, accounting, tax, or legal advice. Reports and
           automated results can be incomplete or wrong. You are responsible for reviewing your
           records and obtaining qualified professional advice when needed.
           <Link
@@ -99,7 +99,7 @@ export function LegalGate({ children }: { children: React.ReactNode }) {
             className="mt-1 h-4 w-4 accent-primary"
           />
           <span>
-            I understand that Open Ledger does not give financial, accounting, tax, or legal advice.
+            I understand that OpenLedgerApp does not give financial, accounting, tax, or legal advice.
           </span>
         </label>
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}

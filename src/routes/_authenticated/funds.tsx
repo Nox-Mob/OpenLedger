@@ -16,10 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/funds")({
   head: () => ({
     meta: [
-      { title: "Funds, Categories & Tags — Open Ledger" },
+      { title: "Funds - OpenLedgerApp" },
       { name: "description", content: "Manage funds, categories, and tags." },
-      { property: "og:title", content: "Funds, Categories & Tags — Open Ledger" },
+      { property: "og:title", content: "Funds - OpenLedgerApp" },
       { property: "og:description", content: "Manage funds, categories, and tags." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FundsPage,

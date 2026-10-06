@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Open Ledger — Simple accounting for small teams" },
+      { title: "OpenLedgerApp" },
       {
         name: "description",
         content:
-          "Open Ledger is free, open-source double-entry accounting for very small businesses and nonprofits.",
+          "OpenLedgerApp is free, open-source double-entry accounting for very small businesses and nonprofits.",
       },
-      { property: "og:title", content: "Open Ledger — Simple accounting for small teams" },
+      { property: "og:title", content: "OpenLedgerApp" },
       {
         property: "og:description",
         content:

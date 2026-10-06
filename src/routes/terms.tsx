@@ -5,15 +5,15 @@ import { LEGAL_CONFIG } from "@/lib/legal";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service — Open Ledger" },
+      { title: "Terms of Service - OpenLedgerApp" },
       {
         name: "description",
-        content: "Terms for the hosted Open Ledger service and self-hosted Open Ledger software.",
+        content: "Terms for the hosted OpenLedgerApp service and self-hosted OpenLedgerApp software.",
       },
-      { property: "og:title", content: "Terms of Service — Open Ledger" },
+      { property: "og:title", content: "Terms of Service - OpenLedgerApp" },
       {
         property: "og:description",
-        content: "Terms for hosted and self-hosted use of Open Ledger.",
+        content: "Terms for hosted and self-hosted use of OpenLedgerApp.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -26,17 +26,17 @@ function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      summary="These terms distinguish the hosted Open Ledger service from installations you operate yourself."
+      summary="These terms distinguish the hosted OpenLedgerApp service from installations you operate yourself."
     >
       <section>
         <h2>Who operates the hosted service</h2>
         <p>
-          The hosted Open Ledger service is operated by {LEGAL_CONFIG.operatorName}. These terms
+          The hosted OpenLedgerApp service is operated by {LEGAL_CONFIG.operatorName}. These terms
           govern your use of that hosted service.
         </p>
       </section>
       <section>
-        <h2>1. Hosted Open Ledger service</h2>
+        <h2>1. Hosted OpenLedgerApp service</h2>
         <p>
           When you use a service operated by {LEGAL_CONFIG.operatorName}, you receive a limited,
           revocable right to access the service for lawful bookkeeping and recordkeeping. You remain
@@ -49,9 +49,9 @@ function TermsPage() {
         </p>
       </section>
       <section>
-        <h2>2. Self-hosted Open Ledger software</h2>
+        <h2>2. Self-hosted OpenLedgerApp software</h2>
         <p>
-          If you install or operate Open Ledger yourself, you—not the hosted-service
+          If you install or operate OpenLedgerApp yourself, you—not the hosted-service
           operator—control that deployment, its security, backups, availability, user access,
           updates, and legal compliance. Open-source software rights are governed by the license
           included with the source code. These hosted-service terms do not replace that license.
@@ -68,7 +68,7 @@ function TermsPage() {
       <section>
         <h2>4. No professional advice</h2>
         <p>
-          Open Ledger provides tools and calculations, not financial, accounting, tax, or legal
+          OpenLedgerApp provides tools and calculations, not financial, accounting, tax, or legal
           advice. Automated imports, classifications, balances, and reports may be wrong. Review all
           outputs and consult a qualified professional when appropriate.
         </p>
@@ -101,7 +101,7 @@ function TermsPage() {
       <section>
         <h2>8. Governing law and contact</h2>
         <p>
-          These Terms and any dispute arising from or relating to Open Ledger or the hosted Service
+          These Terms and any dispute arising from or relating to OpenLedgerApp or the hosted Service
           are governed by the laws of the {LEGAL_CONFIG.jurisdiction}, without regard to its
           conflict-of-law rules. Any legal action or proceeding must be brought exclusively in a
           state or federal court located in the State of Oklahoma, and each party consents to the

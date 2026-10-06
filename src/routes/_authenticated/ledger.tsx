@@ -14,9 +14,9 @@ import { PlusCircle, ArrowUpRight, ArrowDownRight } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/ledger")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Open Ledger" },
+      { title: "Dashboard - OpenLedgerApp" },
       { name: "description", content: "Your organization's money at a glance." },
-      { property: "og:title", content: "Dashboard — Open Ledger" },
+      { property: "og:title", content: "Dashboard - OpenLedgerApp" },
       { property: "og:description", content: "Your organization's money at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

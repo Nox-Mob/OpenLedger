@@ -12,16 +12,18 @@ import type { TermOverrides } from "@/lib/terminology";
 export const Route = createFileRoute("/_authenticated/settings/preferences")({
   head: () => ({
     meta: [
-      { title: "Your Preferences — Open Ledger" },
+      { title: "Your Preferences - OpenLedgerApp" },
       {
         name: "description",
         content: "Personal display preferences that only affect what you see.",
       },
-      { property: "og:title", content: "Your Preferences — Open Ledger" },
+      { property: "og:title", content: "Your Preferences - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Personal display preferences that only affect what you see.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PreferencesSettings,

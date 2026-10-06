@@ -1,6 +1,7 @@
-# Open Ledger — Roadmap
+# OpenLedgerApp — Roadmap
 
 ## v0.0.2 — Public website
+- [x] Rename the app to OpenLedgerApp throughout website, app screens, legal copy, reports, and documentation; standardize all webpage titles.
 - [ ] Public landing page: purpose, boundaries, development status, future distribution model, and source download/setup.
 - [ ] Markdown changelog and public release-notes page.
 - No preview links, demo calls to action, or sample credentials on the public website. Keep the development sample account intact.

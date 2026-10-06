@@ -1,17 +1,19 @@
 # Changelog
 
-Notable changes to Open Ledger are recorded here. This project follows the structure of Keep a Changelog. Pre-1.0 software remains under active development.
+Notable changes to OpenLedgerApp are recorded here. This project follows the structure of Keep a Changelog. Pre-1.0 software remains under active development.
 
 ## [Unreleased] — v0.0.2
 
 ### Added
-- Public website explaining Open Ledger's purpose, limitations, and development status.
+- Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
 - Getting-started page and downloadable development source.
 - Public release notes generated from this Markdown changelog.
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed
+- App name standardized to OpenLedgerApp across screens, legal notices, reports, and documentation.
+- Page titles use OpenLedgerApp for home and Page Name - OpenLedgerApp elsewhere.
 - Public home is now `/`; the existing authenticated dashboard is at `/ledger`.
 - Public website does not advertise or link the development preview or shared demo.
 
