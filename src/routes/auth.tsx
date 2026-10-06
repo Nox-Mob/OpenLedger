@@ -33,7 +33,10 @@ function AuthPage() {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) void navigate({ to: "/ledger" });
     });
-    return () => { active = false; data.subscription.unsubscribe(); };
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
   }, [navigate]);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");

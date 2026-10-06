@@ -99,7 +99,8 @@ export function LegalGate({ children }: { children: React.ReactNode }) {
             className="mt-1 h-4 w-4 accent-primary"
           />
           <span>
-            I understand that OpenLedgerApp does not give financial, accounting, tax, or legal advice.
+            I understand that OpenLedgerApp does not give financial, accounting, tax, or legal
+            advice.
           </span>
         </label>
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}

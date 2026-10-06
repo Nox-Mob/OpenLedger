@@ -8,7 +8,8 @@ export const Route = createFileRoute("/not-advice")({
       { title: "Not Advice - OpenLedgerApp" },
       {
         name: "description",
-        content: "OpenLedgerApp is recordkeeping software and does not provide professional advice.",
+        content:
+          "OpenLedgerApp is recordkeeping software and does not provide professional advice.",
       },
       { property: "og:title", content: "Not Advice - OpenLedgerApp" },
       {

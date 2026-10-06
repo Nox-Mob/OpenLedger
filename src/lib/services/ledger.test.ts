@@ -28,8 +28,19 @@ beforeEach(async () => {
   };
   await repos.orgs.create({ ...base, id: ORG, name: "Org" });
   await repos.orgs.create({ ...base, id: OTHER, name: "Other" });
-  const acct = (id: string, name: string, type: "asset" | "revenue" | "equity", orgId = ORG, isActive = true) => ({
-    id, orgId, name, type, subtype: null, isActive,
+  const acct = (
+    id: string,
+    name: string,
+    type: "asset" | "revenue" | "equity",
+    orgId = ORG,
+    isActive = true,
+  ) => ({
+    id,
+    orgId,
+    name,
+    type,
+    subtype: null,
+    isActive,
   });
   await repos.accounts.create([
     acct(CASH, "Cash", "asset"),
@@ -64,13 +75,37 @@ describe("postTransaction", () => {
 
   it("rejects unbalanced, archived, foreign accounts and locked dates before writing", async () => {
     await expect(
-      postTransaction(repos, sale({ entries: [{ accountId: CASH, amountCents: 1000 }, { accountId: SALES, amountCents: -900 }] })),
+      postTransaction(
+        repos,
+        sale({
+          entries: [
+            { accountId: CASH, amountCents: 1000 },
+            { accountId: SALES, amountCents: -900 },
+          ],
+        }),
+      ),
     ).rejects.toThrow(/not balanced/);
     await expect(
-      postTransaction(repos, sale({ entries: [{ accountId: OLD, amountCents: 1 }, { accountId: SALES, amountCents: -1 }] })),
+      postTransaction(
+        repos,
+        sale({
+          entries: [
+            { accountId: OLD, amountCents: 1 },
+            { accountId: SALES, amountCents: -1 },
+          ],
+        }),
+      ),
     ).rejects.toThrow(/active/);
     await expect(
-      postTransaction(repos, sale({ entries: [{ accountId: FOREIGN, amountCents: 1 }, { accountId: SALES, amountCents: -1 }] })),
+      postTransaction(
+        repos,
+        sale({
+          entries: [
+            { accountId: FOREIGN, amountCents: 1 },
+            { accountId: SALES, amountCents: -1 },
+          ],
+        }),
+      ),
     ).rejects.toThrow(/organization/);
     await repos.orgs.setBooksLockedThrough(ORG, "2026-03-31");
     await expect(postTransaction(repos, sale())).rejects.toThrow(/closed through/);
@@ -90,41 +125,79 @@ describe("voidTransaction", () => {
   it("voids once, unticks in-progress check, unlinks bank rows", async () => {
     const { id } = await postTransaction(repos, sale());
     await repos.reconciliations.start({
-      id: "r1", orgId: ORG, accountId: CASH, periodStart: "2026-02-01", periodEnd: "2026-02-28",
-      beginningBalanceCents: 0, endingBalanceCents: 1000, mode: "simple", batchId: null, createdBy: USER,
+      id: "r1",
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 1000,
+      mode: "simple",
+      batchId: null,
+      createdBy: USER,
     });
     const cashEntry = repos.store.transactions.get(id)!.entries[0]!;
     await repos.reconciliations.setTicked("r1", [cashEntry.id], true);
 
-    expect(await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id })).toEqual({ ok: true });
+    expect(await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id })).toEqual({
+      ok: true,
+    });
     expect(repos.store.transactions.get(id)!.status).toBe("void");
     expect(cashEntry.reconciliationId).toBeNull();
-    expect(await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id })).toEqual({ ok: true, alreadyVoid: true });
+    expect(await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id })).toEqual({
+      ok: true,
+      alreadyVoid: true,
+    });
     expect(repos.store.audit.filter((a) => a.action === "void")).toHaveLength(1);
   });
 
   it("is blocked by a completed statement check", async () => {
     const { id } = await postTransaction(repos, sale());
     await repos.reconciliations.start({
-      id: "r2", orgId: ORG, accountId: CASH, periodStart: "2026-02-01", periodEnd: "2026-02-28",
-      beginningBalanceCents: 0, endingBalanceCents: 1000, mode: "simple", batchId: null, createdBy: USER,
+      id: "r2",
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 1000,
+      mode: "simple",
+      batchId: null,
+      createdBy: USER,
     });
-    await repos.reconciliations.setTicked("r2", [repos.store.transactions.get(id)!.entries[0]!.id], true);
+    await repos.reconciliations.setTicked(
+      "r2",
+      [repos.store.transactions.get(id)!.entries[0]!.id],
+      true,
+    );
     await repos.reconciliations.finish(ORG, "r2", USER);
-    await expect(voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id })).rejects.toThrow(/statement check/);
+    await expect(
+      voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id }),
+    ).rejects.toThrow(/statement check/);
   });
 
   it("does not see other orgs' transactions", async () => {
     const { id } = await postTransaction(repos, sale());
-    await expect(voidTransaction(repos, { orgId: OTHER, userId: USER, transactionId: id })).rejects.toThrow(/not found/);
+    await expect(
+      voidTransaction(repos, { orgId: OTHER, userId: USER, transactionId: id }),
+    ).rejects.toThrow(/not found/);
   });
 });
 
 describe("postOpeningBalance", () => {
-  const ob = { orgId: ORG, userId: USER, accountId: CASH, equityAccountId: EQUITY, amountCents: 5000, date: "2026-01-01" };
+  const ob = {
+    orgId: ORG,
+    userId: USER,
+    accountId: CASH,
+    equityAccountId: EQUITY,
+    amountCents: 5000,
+    date: "2026-01-01",
+  };
   it("posts once; a retry is a duplicate; a different amount is refused", async () => {
     expect(await postOpeningBalance(repos, ob)).toEqual({ ok: true });
-    await expect(postOpeningBalance(repos, { ...ob, amountCents: 7000 })).rejects.toThrow(/already has an opening balance/);
+    await expect(postOpeningBalance(repos, { ...ob, amountCents: 7000 })).rejects.toThrow(
+      /already has an opening balance/,
+    );
     const rows = await repos.transactions.ledgerRows(ORG);
     expect(rows.reduce((s, r) => s + r.amountCents, 0)).toBe(0);
   });
@@ -133,27 +206,62 @@ describe("postOpeningBalance", () => {
 describe("postBankRow", () => {
   beforeEach(async () => {
     await repos.bank.insertMany([
-      { id: "b1", orgId: ORG, accountId: CASH, bankDate: "2026-02-03", description: "Deposit", amountCents: 2500,
-        externalId: "FIT1", fingerprint: "f1", rowSeq: 1, batchId: null },
+      {
+        id: "b1",
+        orgId: ORG,
+        accountId: CASH,
+        bankDate: "2026-02-03",
+        description: "Deposit",
+        amountCents: 2500,
+        externalId: "FIT1",
+        fingerprint: "f1",
+        rowSeq: 1,
+        batchId: null,
+      },
     ]);
   });
   it("posts a bank row once and links it", async () => {
-    const { id } = await postBankRow(repos, { orgId: ORG, userId: USER, bankTransactionId: "b1", offsetAccountId: SALES });
+    const { id } = await postBankRow(repos, {
+      orgId: ORG,
+      userId: USER,
+      bankTransactionId: "b1",
+      offsetAccountId: SALES,
+    });
     expect(repos.store.bank.get("b1")!.transactionId).toBe(id);
     await expect(
-      postBankRow(repos, { orgId: ORG, userId: USER, bankTransactionId: "b1", offsetAccountId: SALES }),
+      postBankRow(repos, {
+        orgId: ORG,
+        userId: USER,
+        bankTransactionId: "b1",
+        offsetAccountId: SALES,
+      }),
     ).rejects.toThrow(/Already posted/);
     expect(repos.store.transactions.size).toBe(1);
   });
   it("voiding the posted transaction returns the bank row to unmatched", async () => {
-    const { id } = await postBankRow(repos, { orgId: ORG, userId: USER, bankTransactionId: "b1", offsetAccountId: SALES });
+    const { id } = await postBankRow(repos, {
+      orgId: ORG,
+      userId: USER,
+      bankTransactionId: "b1",
+      offsetAccountId: SALES,
+    });
     await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id });
     expect((await repos.bank.listUnmatched(ORG)).map((b) => b.id)).toEqual(["b1"]);
   });
   it("dedupes re-imported rows by FITID", async () => {
     const r = await repos.bank.insertMany([
-      { id: "b2", orgId: ORG, accountId: CASH, bankDate: "2026-02-03", description: "Deposit", amountCents: 2500,
-        externalId: "FIT1", fingerprint: "f1", rowSeq: 1, batchId: null },
+      {
+        id: "b2",
+        orgId: ORG,
+        accountId: CASH,
+        bankDate: "2026-02-03",
+        description: "Deposit",
+        amountCents: 2500,
+        externalId: "FIT1",
+        fingerprint: "f1",
+        rowSeq: 1,
+        batchId: null,
+      },
     ]);
     expect(r).toEqual({ inserted: 0, duplicates: 1 });
   });

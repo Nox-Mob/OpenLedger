@@ -11,7 +11,9 @@ export function WebsiteShell({ children }: { children: ReactNode }) {
           <Link to="/" className="flex items-center gap-2.5 text-lg font-semibold">
             <BookOpen className="h-6 w-6 text-primary" strokeWidth={1.6} />
             OpenLedgerApp
-            <span className="hidden text-xs font-normal text-muted-foreground sm:inline">/ open-source accounting</span>
+            <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
+              / open-source accounting
+            </span>
           </Link>
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-5">
             <Button variant="ghost" asChild>

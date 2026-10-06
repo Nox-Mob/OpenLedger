@@ -8,7 +8,8 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms of Service - OpenLedgerApp" },
       {
         name: "description",
-        content: "Terms for the hosted OpenLedgerApp service and self-hosted OpenLedgerApp software.",
+        content:
+          "Terms for the hosted OpenLedgerApp service and self-hosted OpenLedgerApp software.",
       },
       { property: "og:title", content: "Terms of Service - OpenLedgerApp" },
       {
@@ -101,8 +102,8 @@ function TermsPage() {
       <section>
         <h2>8. Governing law and contact</h2>
         <p>
-          These Terms and any dispute arising from or relating to OpenLedgerApp or the hosted Service
-          are governed by the laws of the {LEGAL_CONFIG.jurisdiction}, without regard to its
+          These Terms and any dispute arising from or relating to OpenLedgerApp or the hosted
+          Service are governed by the laws of the {LEGAL_CONFIG.jurisdiction}, without regard to its
           conflict-of-law rules. Any legal action or proceeding must be brought exclusively in a
           state or federal court located in the State of Oklahoma, and each party consents to the
           personal jurisdiction and venue of those courts.
