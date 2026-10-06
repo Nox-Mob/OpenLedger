@@ -101,6 +101,7 @@ export interface Reconciliation {
   batchId: Id | null;
   completedBy: Id | null;
   completedAt: IsoTimestamp | null;
+  createdAt: IsoTimestamp | null;
 }
 
 export interface AuditEvent {
@@ -111,4 +112,46 @@ export interface AuditEvent {
   entityId?: Id | null;
   before?: unknown;
   after?: unknown;
+}
+
+export interface PeriodClose {
+  id: Id;
+  orgId: Id;
+  fiscalYearEnd: IsoDate;
+  netIncomeCents: number;
+  closedBy: Id;
+  createdAt: IsoTimestamp;
+}
+
+export interface Project {
+  id: Id;
+  orgId: Id;
+  name: string;
+  budgetCents: number;
+  status: string;
+}
+
+/** Latest imported statement for an account (used to prefill a statement check). */
+export interface StatementInfo {
+  batchId: Id;
+  statementStart: IsoDate | null;
+  statementEnd: IsoDate;
+  beginningBalanceCents: number | null;
+  endingBalanceCents: number | null;
+}
+
+/** An entry line as a statement check sees it. */
+export interface ReconEntry {
+  id: Id;
+  transactionId: Id;
+  date: IsoDate;
+  description: string;
+  amountCents: number;
+  reconciliationId: Id | null;
+}
+
+export interface AuditRecord {
+  action: string;
+  at: IsoTimestamp;
+  after: unknown;
 }

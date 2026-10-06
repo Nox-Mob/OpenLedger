@@ -10,15 +10,20 @@ import type {
   Account,
   AccountType,
   AuditEvent,
+  AuditRecord,
   BankTransaction,
   Id,
   IsoDate,
   Member,
   Organization,
+  PeriodClose,
+  Project,
   Reconciliation,
+  ReconEntry,
   ReconcileMode,
   Role,
   Transaction,
+  StatementInfo,
   TransactionSource,
 } from "../domain/models";
 
@@ -39,6 +44,7 @@ export interface OrgRepository {
       Pick<
         Organization,
         | "name"
+        | "orgType"
         | "currency"
         | "fiscalYearStartMonth"
         | "timezone"
@@ -120,6 +126,8 @@ export interface BankTransactionRepository {
   /** Links only if still unlinked; false means someone else claimed it. */
   claim(orgId: Id, id: Id, transactionId: Id): Promise<boolean>;
   unlinkTransaction(orgId: Id, transactionId: Id): Promise<number>;
+  listInPeriod(orgId: Id, accountId: Id, from: IsoDate, to: IsoDate): Promise<BankTransaction[]>;
+  latestStatement(orgId: Id, accountId: Id): Promise<StatementInfo | null>;
 }
 
 export interface ReconciliationRepository {
@@ -136,16 +144,39 @@ export interface ReconciliationRepository {
     createdBy: Id;
   }): Promise<void>;
   get(orgId: Id, id: Id): Promise<Reconciliation | null>;
+  /** Lookup by id alone; the adapter's own scoping (RLS / single-tenant file) applies. */
+  locate(id: Id): Promise<Reconciliation | null>;
   list(orgId: Id, accountId?: Id): Promise<Reconciliation[]>;
+  /** Ticked-line count per reconciliation in the org. */
+  itemCounts(orgId: Id): Promise<Record<Id, number>>;
+  /** Posted entries on the account dated <= throughDate, unticked or ticked by this check. */
+  workspaceEntries(accountId: Id, throughDate: IsoDate, reconciliationId: Id): Promise<ReconEntry[]>;
+  /** Entries ticked by this check. */
+  entriesOf(reconciliationId: Id): Promise<ReconEntry[]>;
+  /** Ticks only unticked lines on the check's account; unticks only this check's lines. */
   setTicked(reconciliationId: Id, entryIds: Id[], ticked: boolean): Promise<void>;
   clearedTotalCents(reconciliationId: Id): Promise<number>;
   finish(orgId: Id, id: Id, userId: Id): Promise<void>;
   reopen(orgId: Id, id: Id): Promise<void>;
+  /** In-progress only: unticks its lines and removes it. */
+  discard(orgId: Id, id: Id): Promise<void>;
+}
+
+export interface PeriodCloseRepository {
+  list(orgId: Id): Promise<PeriodClose[]>;
+  find(orgId: Id, fiscalYearEnd: IsoDate): Promise<PeriodClose | null>;
+  /** Throws DuplicateKeyError if that fiscal year is already closed. */
+  create(c: Omit<PeriodClose, "createdAt">): Promise<void>;
+}
+
+export interface ProjectRepository {
+  list(orgId: Id): Promise<Project[]>;
 }
 
 export interface AuditRepository {
   /** Append-only. Cloud adapter writes with the service role. */
   append(event: AuditEvent): Promise<void>;
+  listFor(orgId: Id, entity: string, entityId: Id, limit?: number): Promise<AuditRecord[]>;
 }
 
 /** Everything a request needs, built per request by the active adapter. */
@@ -155,5 +186,7 @@ export interface Repositories {
   transactions: TransactionRepository;
   bank: BankTransactionRepository;
   reconciliations: ReconciliationRepository;
+  periodCloses: PeriodCloseRepository;
+  projects: ProjectRepository;
   audit: AuditRepository;
 }
