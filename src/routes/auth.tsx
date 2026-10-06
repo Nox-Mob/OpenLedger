@@ -94,7 +94,7 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        navigate({ to: "/ledger" });
       } else {
         if (!legalAgreement)
           throw new Error("Agree to the Terms and Privacy Policy to create an account.");

@@ -11,13 +11,15 @@ import { formatCents, todayISO } from "@/lib/money";
 import { displayBalance } from "@/lib/terminology";
 import { PlusCircle, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/ledger")({
   head: () => ({
     meta: [
       { title: "Dashboard — Open Ledger" },
       { name: "description", content: "Your organization's money at a glance." },
       { property: "og:title", content: "Dashboard — Open Ledger" },
       { property: "og:description", content: "Your organization's money at a glance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DashboardPage,
@@ -36,17 +38,17 @@ function DashboardPage() {
 
   const accountsQuery = useQuery({
     queryKey: ["accounts", org?.id],
-    queryFn: () => listAccounts({ data: { orgId: org!.id } }),
+    queryFn: () => listAccounts({ data: { orgId: org?.id ?? "" } }),
     enabled: !!org,
   });
   const txQuery = useQuery({
     queryKey: ["transactions", org?.id],
-    queryFn: () => listTransactions({ data: { orgId: org!.id, limit: 8 } }),
+    queryFn: () => listTransactions({ data: { orgId: org?.id ?? "", limit: 8 } }),
     enabled: !!org,
   });
   const monthQuery = useQuery({
     queryKey: ["income", org?.id, monthStart],
-    queryFn: () => incomeStatement({ data: { orgId: org!.id, from: monthStart } }),
+    queryFn: () => incomeStatement({ data: { orgId: org?.id ?? "", from: monthStart } }),
     enabled: !!org,
   });
 

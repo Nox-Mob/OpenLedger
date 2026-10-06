@@ -61,7 +61,7 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
     if (error) return setError(error.message);
-    navigate({ to: "/" });
+    navigate({ to: "/ledger" });
   }
 
   return (

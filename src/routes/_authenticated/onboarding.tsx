@@ -94,7 +94,7 @@ function OnboardingPage() {
       });
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
-      navigate({ to: "/" });
+      navigate({ to: "/ledger" });
     } catch (err: any) {
       setError(err.message ?? "Could not create organization");
       setBusy(false);
