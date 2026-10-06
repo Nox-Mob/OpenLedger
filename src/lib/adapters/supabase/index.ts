@@ -9,7 +9,9 @@ import type {
   BankTransaction,
   Entry,
   Organization,
+  PeriodClose,
   Reconciliation,
+  ReconEntry,
   Role,
   Transaction,
 } from "@/lib/domain/models";
@@ -111,6 +113,25 @@ const TX_SELECT =
   "*, entries(id, transaction_id, account_id, amount_cents, category_id, project_id, fund_id, memo, reconciliation_id), transaction_tags(tag_id)";
 const PAGE = 1000;
 
+const RECON_ENTRY_SELECT =
+  "id, transaction_id, amount_cents, memo, reconciliation_id, transactions!inner(transaction_date, description, status)";
+const toReconEntry = (r: any): ReconEntry => ({
+  id: r.id,
+  transactionId: r.transaction_id,
+  date: r.transactions?.transaction_date ?? "",
+  description: r.memo || r.transactions?.description || "",
+  amountCents: Number(r.amount_cents),
+  reconciliationId: r.reconciliation_id ?? null,
+});
+const toClose = (r: any): PeriodClose => ({
+  id: r.id,
+  orgId: r.org_id,
+  fiscalYearEnd: r.fiscal_year_end,
+  netIncomeCents: Number(r.net_income_cents),
+  closedBy: r.closed_by,
+  createdAt: r.created_at,
+});
+
 export function createSupabaseRepositories(db: Db): Repositories {
   const sb = db as any; // keep the adapter readable; mapping functions are the typed boundary
 
@@ -150,6 +171,7 @@ export function createSupabaseRepositories(db: Db): Repositories {
       async updateSettings(orgId, p) {
         const row: any = {};
         if (p.name !== undefined) row.name = p.name;
+        if (p.orgType !== undefined) row.org_type = p.orgType;
         if (p.currency !== undefined) row.currency = p.currency;
         if (p.fiscalYearStartMonth !== undefined) row.fiscal_year_start_month = p.fiscalYearStartMonth;
         if (p.timezone !== undefined) row.timezone = p.timezone;
@@ -432,6 +454,41 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return (data ?? []).length;
       },
+      async listInPeriod(orgId, accountId, from, to) {
+        const { data, error } = await sb
+          .from("bank_transactions")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("account_id", accountId)
+          .gte("bank_date", from)
+          .lte("bank_date", to)
+          .order("bank_date");
+        fail(error);
+        return ((data ?? []) as any[]).map(toBank);
+      },
+      async latestStatement(orgId, accountId) {
+        const { data, error } = await sb
+          .from("import_batches")
+          .select("id, statement_start, statement_end, beginning_balance_cents, ending_balance_cents")
+          .eq("org_id", orgId)
+          .eq("account_id", accountId)
+          .eq("status", "active")
+          .not("statement_end", "is", null)
+          .order("statement_end", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        fail(error);
+        const r = data as any;
+        return r
+          ? {
+              batchId: r.id,
+              statementStart: r.statement_start ?? null,
+              statementEnd: r.statement_end,
+              beginningBalanceCents: r.beginning_balance_cents ?? null,
+              endingBalanceCents: r.ending_balance_cents ?? null,
+            }
+          : null;
+      },
     },
 
     reconciliations: {
@@ -460,6 +517,40 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return data ? toRecon(data) : null;
       },
+      async locate(id) {
+        const { data, error } = await sb.from("reconciliations").select("*").eq("id", id).maybeSingle();
+        fail(error);
+        return data ? toRecon(data) : null;
+      },
+      async itemCounts(orgId) {
+        const { data, error } = await sb
+          .from("reconciliations")
+          .select("id, entries(id)")
+          .eq("org_id", orgId);
+        fail(error);
+        return Object.fromEntries(
+          ((data ?? []) as any[]).map((r) => [r.id, (r.entries ?? []).length]),
+        );
+      },
+      async workspaceEntries(accountId, through, rid) {
+        const { data, error } = await sb
+          .from("entries")
+          .select(RECON_ENTRY_SELECT)
+          .eq("account_id", accountId)
+          .eq("transactions.status", "posted")
+          .lte("transactions.transaction_date", through)
+          .or(`reconciliation_id.is.null,reconciliation_id.eq.${rid}`);
+        fail(error);
+        return ((data ?? []) as any[]).map(toReconEntry);
+      },
+      async entriesOf(rid) {
+        const { data, error } = await sb
+          .from("entries")
+          .select(RECON_ENTRY_SELECT)
+          .eq("reconciliation_id", rid);
+        fail(error);
+        return ((data ?? []) as any[]).map(toReconEntry);
+      },
       async list(orgId, accountId) {
         let q = sb
           .from("reconciliations")
@@ -473,10 +564,21 @@ export function createSupabaseRepositories(db: Db): Repositories {
       },
       async setTicked(reconciliationId, entryIds, ticked) {
         if (!entryIds.length) return;
-        const { error } = await sb
+        const { data: rec, error: rErr } = await sb
+          .from("reconciliations")
+          .select("account_id")
+          .eq("id", reconciliationId)
+          .maybeSingle();
+        fail(rErr);
+        if (!rec) return;
+        const q = sb
           .from("entries")
           .update({ reconciliation_id: ticked ? reconciliationId : null })
-          .in("id", entryIds);
+          .in("id", entryIds)
+          .eq("account_id", rec.account_id);
+        const { error } = await (ticked
+          ? q.is("reconciliation_id", null)
+          : q.eq("reconciliation_id", reconciliationId));
         fail(error);
       },
       async clearedTotalCents(reconciliationId) {
@@ -503,6 +605,71 @@ export function createSupabaseRepositories(db: Db): Repositories {
           .eq("id", id);
         fail(error);
       },
+      async discard(orgId, id) {
+        const { error: uErr } = await sb
+          .from("entries")
+          .update({ reconciliation_id: null })
+          .eq("reconciliation_id", id);
+        fail(uErr);
+        const { error } = await sb
+          .from("reconciliations")
+          .delete()
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .eq("status", "in_progress");
+        fail(error);
+      },
+    },
+
+    periodCloses: {
+      async list(orgId) {
+        const { data, error } = await sb
+          .from("period_closes")
+          .select("*")
+          .eq("org_id", orgId)
+          .order("fiscal_year_end", { ascending: false });
+        fail(error);
+        return ((data ?? []) as any[]).map(toClose);
+      },
+      async find(orgId, fye) {
+        const { data, error } = await sb
+          .from("period_closes")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("fiscal_year_end", fye)
+          .maybeSingle();
+        fail(error);
+        return data ? toClose(data) : null;
+      },
+      async create(c) {
+        const { error } = await sb.from("period_closes").insert({
+          id: c.id,
+          org_id: c.orgId,
+          fiscal_year_end: c.fiscalYearEnd,
+          transaction_id: null,
+          net_income_cents: c.netIncomeCents,
+          closed_by: c.closedBy,
+        });
+        fail(error);
+      },
+    },
+
+    projects: {
+      async list(orgId) {
+        const { data, error } = await sb
+          .from("projects")
+          .select("id, org_id, name, budget_cents, status")
+          .eq("org_id", orgId)
+          .order("name");
+        fail(error);
+        return ((data ?? []) as any[]).map((r) => ({
+          id: r.id,
+          orgId: r.org_id,
+          name: r.name,
+          budgetCents: Number(r.budget_cents),
+          status: r.status,
+        }));
+      },
     },
 
     audit: {
@@ -516,6 +683,22 @@ export function createSupabaseRepositories(db: Db): Repositories {
           before: e.before,
           after: e.after,
         });
+      },
+      async listFor(orgId, entity, entityId, limit = 50) {
+        const { data, error } = await sb
+          .from("audit_log")
+          .select("action, created_at, after")
+          .eq("org_id", orgId)
+          .eq("entity", entity)
+          .eq("entity_id", entityId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        fail(error);
+        return ((data ?? []) as any[]).map((h) => ({
+          action: h.action,
+          at: h.created_at,
+          after: h.after ?? null,
+        }));
       },
     },
   };
