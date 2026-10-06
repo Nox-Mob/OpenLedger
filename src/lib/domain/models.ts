@@ -150,8 +150,11 @@ export interface ReconEntry {
   reconciliationId: Id | null;
 }
 
+export type JsonValue =
+  string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 export interface AuditRecord {
   action: string;
   at: IsoTimestamp;
-  after: unknown;
+  after: JsonValue;
 }

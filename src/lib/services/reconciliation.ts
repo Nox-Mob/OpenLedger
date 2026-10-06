@@ -161,7 +161,7 @@ function toView(r: Reconciliation, name: string, type: AccountType): Reconciliat
 /** Finds a check by id; callers then check permission on `orgId`. */
 export async function locateReconciliation(repos: Repositories, id: Id) {
   const r = await repos.reconciliations.locate(id);
-  if (!r) throw new LedgerRuleError("Reconciliation not found");
+  if (!r) throw new LedgerRuleError("reconciliation", "Reconciliation not found");
   return r;
 }
 
@@ -209,7 +209,8 @@ export async function listReconciliations(repos: Repositories, orgId: Id) {
 
 async function requireActiveAccount(repos: Repositories, orgId: Id, accountId: Id) {
   const a = await accountOf(repos, orgId, accountId);
-  if (!a?.isActive) throw new LedgerRuleError("Choose an active account in this organization.");
+  if (!a?.isActive)
+    throw new LedgerRuleError("reconciliation", "Choose an active account in this organization.");
   return a;
 }
 
@@ -248,13 +249,14 @@ export async function startReconciliation(
   },
 ) {
   if (input.periodEnd < input.periodStart)
-    throw new LedgerRuleError("End date must be on or after start date");
+    throw new LedgerRuleError("reconciliation", "End date must be on or after start date");
   await requireActiveAccount(repos, input.orgId, input.accountId);
   const open = (await repos.reconciliations.list(input.orgId, input.accountId)).some(
     (r) => r.status === "in_progress",
   );
   if (open)
     throw new LedgerRuleError(
+      "reconciliation",
       "This account already has a reconciliation in progress. Finish or discard it first.",
     );
   const row = {
@@ -363,14 +365,18 @@ export async function completeReconciliation(repos: Repositories, r: Reconciliat
 
 /** Only the most recent completed check for an account can be reopened. */
 export async function reopenReconciliation(repos: Repositories, r: Reconciliation, userId: Id) {
-  if (r.status !== "completed") throw new LedgerRuleError("Not completed");
+  if (r.status !== "completed") throw new LedgerRuleError("reconciliation", "Not completed");
   const siblings = await repos.reconciliations.list(r.orgId, r.accountId);
   if (siblings.some((x) => x.periodEnd > r.periodEnd))
     throw new LedgerRuleError(
+      "reconciliation",
       "Only the most recent reconciliation for this account can be reopened.",
     );
   if (siblings.some((x) => x.status === "in_progress"))
-    throw new LedgerRuleError("Discard the in-progress reconciliation for this account first.");
+    throw new LedgerRuleError(
+      "reconciliation",
+      "Discard the in-progress reconciliation for this account first.",
+    );
   await repos.reconciliations.reopen(r.orgId, r.id);
   await audit(
     repos,

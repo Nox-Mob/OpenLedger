@@ -35,7 +35,7 @@ export async function updateOrganization(
   s: OrgSettings,
 ) {
   const before = await repos.orgs.get(orgId);
-  if (!before) throw new LedgerRuleError("Organization not found");
+  if (!before) throw new LedgerRuleError("settings", "Organization not found");
   const { aiPdfEnabled, ...rest } = s;
   await repos.orgs.updateSettings(orgId, {
     ...rest,
@@ -55,7 +55,7 @@ export async function updateOrganization(
 
 export async function getBooksStatus(repos: Repositories, orgId: Id) {
   const [org, closes] = await Promise.all([repos.orgs.get(orgId), repos.periodCloses.list(orgId)]);
-  if (!org) throw new LedgerRuleError("Organization not found");
+  if (!org) throw new LedgerRuleError("settings", "Organization not found");
   return {
     booksLockedThrough: org.booksLockedThrough,
     fiscalYearStartMonth: org.fiscalYearStartMonth || 1,
@@ -104,7 +104,7 @@ export async function fiscalYearNetIncome(repos: Repositories, orgId: Id, fiscal
 
 export async function previewYearEndClose(repos: Repositories, orgId: Id, fiscalYearEnd: IsoDate) {
   if (await repos.periodCloses.find(orgId, fiscalYearEnd))
-    throw new LedgerRuleError("That fiscal year is already closed.");
+    throw new LedgerRuleError("settings", "That fiscal year is already closed.");
   return fiscalYearNetIncome(repos, orgId, fiscalYearEnd);
 }
 
@@ -120,7 +120,10 @@ export async function closeFiscalYear(
   if (await repos.periodCloses.find(orgId, fiscalYearEnd)) return { ok: true, duplicate: true };
   const [equity] = await repos.accounts.getMany(orgId, [input.retainedEarningsAccountId]);
   if (!equity || equity.type !== "equity" || !equity.isActive)
-    throw new LedgerRuleError("Choose an active equity account (retained earnings / net assets).");
+    throw new LedgerRuleError(
+      "settings",
+      "Choose an active equity account (retained earnings / net assets).",
+    );
   const { netIncomeCents } = await fiscalYearNetIncome(repos, orgId, fiscalYearEnd);
   try {
     await repos.periodCloses.create({

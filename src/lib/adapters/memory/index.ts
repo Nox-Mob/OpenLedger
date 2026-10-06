@@ -4,6 +4,7 @@ import type {
   Account,
   AuditEvent,
   BankTransaction,
+  JsonValue,
   Organization,
   PeriodClose,
   Project,
@@ -408,7 +409,7 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           .filter((a) => a.orgId === orgId && a.entity === entity && a.entityId === entityId)
           .reverse()
           .slice(0, limit)
-          .map((a) => ({ action: a.action, at: a.at, after: a.after ?? null }));
+          .map((a) => ({ action: a.action, at: a.at, after: (a.after ?? null) as JsonValue }));
       },
     },
   };
