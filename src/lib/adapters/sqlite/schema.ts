@@ -63,7 +63,7 @@ BEGIN SELECT RAISE(ABORT, 'entries are immutable'); END;
 CREATE TRIGGER entries_no_delete BEFORE DELETE ON entries BEGIN SELECT RAISE(ABORT, 'entries cannot be deleted'); END;
 CREATE TRIGGER transactions_immutable BEFORE UPDATE ON transactions
 WHEN NEW.transaction_date IS NOT OLD.transaction_date OR NEW.description IS NOT OLD.description
-  OR NEW.org_id IS NOT OLD.org_id OR NEW.source IS NOT OLD.source OR NEW.amount IS NOT NULL
+  OR NEW.org_id IS NOT OLD.org_id OR NEW.source IS NOT OLD.source
 BEGIN SELECT RAISE(ABORT, 'transactions are immutable'); END;
 CREATE TRIGGER transactions_no_unvoid BEFORE UPDATE OF status ON transactions
 WHEN OLD.status = 'void' AND NEW.status <> 'void'
