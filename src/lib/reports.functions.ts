@@ -1,132 +1,49 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  computeBalance,
-  computeCashSeries,
-  computeIncome,
-  computeProjectSpend,
-  computeTrialBalance,
-  inRange,
-  type LedgerRow,
-} from "./report-math";
-import { addDays, fiscalYearStart, todayISO } from "./dates";
+import { createSupabaseRepositories } from "./adapters/supabase";
+import * as reports from "./services/reports";
 
+// Reports run through src/lib/services/reports.ts so the desktop edition shares them.
+// Only posted transactions are included; voided ones are excluded from every report.
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-
-const LEDGER_PAGE = 1000;
-
-// Only posted transactions — voided ones are excluded from every report.
-// Paged: the database caps one response at 1,000 rows, so without this loop
-// reports would silently under-count past ~1,000 entry lines.
-export async function fetchLedger(supabase: any, orgId: string, to?: string): Promise<LedgerRow[]> {
-  const all: any[] = [];
-  for (let from = 0; ; from += LEDGER_PAGE) {
-    let query = supabase
-      .from("entries")
-      .select(
-        "amount_cents, project_id, accounts(name, type), transactions!inner(org_id, status, transaction_date)",
-      )
-      .eq("transactions.org_id", orgId)
-      .eq("transactions.status", "posted")
-      // Legacy physical closing entries would double-count derived retained earnings.
-      .neq("transactions.source", "closing")
-      .order("id");
-    if (to) query = query.lte("transactions.transaction_date", to);
-    const { data, error } = await query.range(from, from + LEDGER_PAGE - 1);
-    if (error) throw new Error(error.message);
-    all.push(...(data ?? []));
-    if (!data || data.length < LEDGER_PAGE) break;
-  }
-  return all.map((e) => ({
-    amountCents: e.amount_cents,
-    accountName: e.accounts?.name ?? "",
-    accountType: e.accounts?.type,
-    projectId: e.project_id,
-    transactionDate: e.transactions.transaction_date,
-  }));
-}
-
-async function fiscalStartMonth(supabase: any, orgId: string): Promise<number> {
-  const { data } = await supabase
-    .from("organizations")
-    .select("fiscal_year_start_month")
-    .eq("id", orgId)
-    .single();
-  return data?.fiscal_year_start_month ?? 1;
-}
-
-/** "Today" in the organization's timezone — reports never use the server's clock day. */
-async function orgToday(supabase: any, orgId: string): Promise<string> {
-  const { data } = await supabase.from("organizations").select("timezone").eq("id", orgId).single();
-  return todayISO(new Date(), data?.timezone ?? "America/Chicago");
-}
+const orgId = z.string().uuid();
 
 export const incomeStatement = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
-    z
-      .object({ orgId: z.string().uuid(), from: isoDate.optional(), to: isoDate.optional() })
-      .parse(input),
+    z.object({ orgId, from: isoDate.optional(), to: isoDate.optional() }).parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const rows = await fetchLedger(context.supabase, data.orgId, data.to);
-    return computeIncome(inRange(rows, data.from, data.to));
-  });
+  .handler(async ({ data, context }) =>
+    reports.incomeStatement(createSupabaseRepositories(context.supabase), data.orgId, data),
+  );
 
 export const balanceSheet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((input) =>
-    z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
-    const [rows, month] = await Promise.all([
-      fetchLedger(context.supabase, data.orgId, asOf),
-      fiscalStartMonth(context.supabase, data.orgId),
-    ]);
-    return { asOf, ...computeBalance(rows, asOf, fiscalYearStart(asOf, month)) };
-  });
+  .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.balanceSheet(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
+  );
 
 export const trialBalance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((input) =>
-    z.object({ orgId: z.string().uuid(), asOf: isoDate.optional() }).parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const asOf = data.asOf ?? (await orgToday(context.supabase, data.orgId));
-    const rows = await fetchLedger(context.supabase, data.orgId, asOf);
-    return { asOf, ...computeTrialBalance(rows, asOf) };
-  });
+  .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.trialBalance(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
+  );
 
 export const projectSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { data: projects, error } = await context.supabase
-      .from("projects")
-      .select("id, name, budget_cents, status")
-      .eq("org_id", data.orgId)
-      .order("name");
-    if (error) throw new Error(error.message);
-    const spent = computeProjectSpend(await fetchLedger(context.supabase, data.orgId));
-    return ((projects ?? []) as any[]).map((p) => ({
-      id: p.id as string,
-      name: p.name as string,
-      status: p.status as string,
-      budgetCents: p.budget_cents as number,
-      spentCents: spent.get(p.id) ?? 0,
-    }));
-  });
+  .validator((input) => z.object({ orgId }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.projectSummary(createSupabaseRepositories(context.supabase), data.orgId),
+  );
 
 export const cashHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
-    z.object({ orgId: z.string().uuid(), days: z.number().int().min(7).max(1100) }).parse(input),
+    z.object({ orgId, days: z.number().int().min(7).max(1100) }).parse(input),
   )
-  .handler(async ({ data, context }) => {
-    const to = await orgToday(context.supabase, data.orgId);
-    const from = addDays(to, -data.days);
-    const rows = await fetchLedger(context.supabase, data.orgId, to);
-    return computeCashSeries(rows, from, to);
-  });
+  .handler(async ({ data, context }) =>
+    reports.cashHistory(createSupabaseRepositories(context.supabase), data.orgId, data.days),
+  );
