@@ -3,6 +3,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
+import {
+  assertAccountsUsable,
+  assertBalancedEntries,
+  assertDateOpen,
+  newId,
+  voidDecision,
+} from "./domain/ledger";
 
 const entrySchema = z.object({
   accountId: z.string().uuid(),
@@ -90,26 +97,27 @@ export const createTransaction = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
 
-    const sum = data.entries.reduce((acc, e) => acc + e.amountCents, 0);
-    if (sum !== 0) {
-      throw new Error(
-        `Transaction is not balanced: entries sum to ${sum} cents. Money in must equal money out.`,
-      );
-    }
+    assertBalancedEntries(data.entries);
 
     const accountIds = [...new Set(data.entries.map((entry) => entry.accountId))];
     const { data: accounts, error: accountError } = await supabase
       .from("accounts")
-      .select("id, is_active")
+      .select("id, org_id, is_active")
       .eq("org_id", data.orgId)
       .in("id", accountIds);
     if (accountError) throw new Error(accountError.message);
-    if (
-      (accounts ?? []).length !== accountIds.length ||
-      accounts?.some((account) => !account.is_active)
-    ) {
-      throw new Error("New transactions can only use active accounts in this organization.");
-    }
+    assertAccountsUsable(
+      data.orgId,
+      accountIds,
+      (accounts ?? []).map((a) => ({ id: a.id, orgId: a.org_id, isActive: a.is_active })),
+    );
+
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("books_locked_through")
+      .eq("id", data.orgId)
+      .maybeSingle();
+    assertDateOpen(data.transactionDate, org?.books_locked_through ?? null);
 
     if (data.idempotencyKey) {
       const { data: prior } = await supabase
@@ -124,6 +132,7 @@ export const createTransaction = createServerFn({ method: "POST" })
     const { data: tx, error: txError } = await supabase
       .from("transactions")
       .insert({
+        id: newId(),
         org_id: data.orgId,
         transaction_date: data.transactionDate,
         posted_date: data.postedDate ?? null,
@@ -149,6 +158,7 @@ export const createTransaction = createServerFn({ method: "POST" })
     }
 
     const entries = data.entries.map((e) => ({
+      id: newId(),
       transaction_id: tx.id,
       account_id: e.accountId,
       amount_cents: e.amountCents,
@@ -200,11 +210,10 @@ export const voidTransaction = createServerFn({ method: "POST" })
     if (before.status === "void") return { ok: true, alreadyVoid: true };
 
     const entries = ((before as any).entries ?? []) as any[];
-    if (entries.some((e) => e.reconciliations?.status === "completed")) {
-      throw new Error(
-        "This transaction is part of a finished statement check. Reopen that statement check before voiding it.",
-      );
-    }
+    voidDecision(
+      before.status === "void" ? "void" : "posted",
+      entries.some((e) => e.reconciliations?.status === "completed"),
+    );
 
     // Only flip posted -> void, so a concurrent void can't run the side effects twice.
     const { data: updated, error } = await supabase
