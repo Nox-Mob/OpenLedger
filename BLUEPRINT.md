@@ -1,8 +1,8 @@
-# Open Ledger — Product blueprint
+# OpenLedgerApp — Product blueprint
 
 ## v0.0.2: a public home for the project
 
-Open Ledger is open-source double-entry recordkeeping for small businesses, freelancers, and nonprofits. The website explains the need for transparent, approachable accounting without claiming to replace a professional accountant or mature full-service accounting suite.
+OpenLedgerApp is open-source double-entry recordkeeping for small businesses, freelancers, and nonprofits. The website explains the need for transparent, approachable accounting without claiming to replace a professional accountant or mature full-service accounting suite.
 
 The public website must explain:
 - **Why:** small teams need understandable books and control over their records without enterprise complexity.

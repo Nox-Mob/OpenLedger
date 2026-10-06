@@ -5,16 +5,16 @@ import { LEGAL_CONFIG } from "@/lib/legal";
 export const Route = createFileRoute("/not-advice")({
   head: () => ({
     meta: [
-      { title: "Not Financial, Tax, or Legal Advice — Open Ledger" },
+      { title: "Not Advice - OpenLedgerApp" },
       {
         name: "description",
-        content: "Open Ledger is recordkeeping software and does not provide professional advice.",
+        content: "OpenLedgerApp is recordkeeping software and does not provide professional advice.",
       },
-      { property: "og:title", content: "Not Financial, Tax, or Legal Advice — Open Ledger" },
+      { property: "og:title", content: "Not Advice - OpenLedgerApp" },
       {
         property: "og:description",
         content:
-          "Understand the limits of Open Ledger calculations, reports, and automated features.",
+          "Understand the limits of OpenLedgerApp calculations, reports, and automated features.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -27,12 +27,12 @@ function NotAdvicePage() {
   return (
     <LegalPage
       title="Not Financial, Tax, or Legal Advice"
-      summary="Open Ledger helps organize records. It does not replace your judgment or a qualified professional."
+      summary="OpenLedgerApp helps organize records. It does not replace your judgment or a qualified professional."
     >
       <section>
         <h2>Recordkeeping software, not an adviser</h2>
         <p>
-          Open Ledger and its operator do not act as your accountant, bookkeeper, tax preparer,
+          OpenLedgerApp and its operator do not act as your accountant, bookkeeper, tax preparer,
           attorney, financial adviser, fiduciary, auditor, or compliance professional. Using the
           software does not create a professional-client relationship.
         </p>
@@ -49,7 +49,7 @@ function NotAdvicePage() {
       <section>
         <h2>Filings and decisions remain yours</h2>
         <p>
-          Do not rely on Open Ledger alone for tax returns, regulatory filings, grant reporting,
+          Do not rely on OpenLedgerApp alone for tax returns, regulatory filings, grant reporting,
           audits, payroll, investment decisions, legal compliance, or other decisions with
           significant consequences. Laws and accounting requirements vary and change.
         </p>

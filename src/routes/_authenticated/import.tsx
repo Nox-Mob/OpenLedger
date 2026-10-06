@@ -33,12 +33,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
     meta: [
-      { title: "Import Bank File — Open Ledger" },
+      { title: "Import Bank File - OpenLedgerApp" },
       {
         name: "description",
         content: "Import CSV, OFX/QFX or PDF bank statements and post rows to your ledger.",
       },
-      { property: "og:title", content: "Import Bank File — Open Ledger" },
+      { property: "og:title", content: "Import Bank File - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Import CSV, OFX/QFX or PDF bank statements and post rows to your ledger.",

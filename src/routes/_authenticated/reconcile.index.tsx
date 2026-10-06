@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/reconcile/")({
   validateSearch: z.object({ account: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Reconcile — Open Ledger" },
+      { title: "Reconcile - OpenLedgerApp" },
       {
         name: "description",
         content: "Check your books against bank statements and keep a reconciliation history.",
       },
-      { property: "og:title", content: "Reconcile — Open Ledger" },
+      { property: "og:title", content: "Reconcile - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Check your books against bank statements and keep a reconciliation history.",

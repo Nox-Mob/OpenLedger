@@ -10,13 +10,15 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
     meta: [
-      { title: "Organization Profile — Open Ledger" },
+      { title: "Organization Profile - OpenLedgerApp" },
       { name: "description", content: "Organization name, type, currency, and fiscal year." },
-      { property: "og:title", content: "Organization Profile — Open Ledger" },
+      { property: "og:title", content: "Organization Profile - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Organization name, type, currency, and fiscal year.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OrgProfileSettings,
@@ -327,7 +329,7 @@ function OrgProfileSettings() {
       </div>
 
       <div className="rounded-lg border bg-card p-5">
-        <h2 className="font-display text-lg font-semibold">About Open Ledger</h2>
+        <h2 className="font-display text-lg font-semibold">About OpenLedgerApp</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Free, open-source accounting. Your ledger is the source of truth — bank imports are just
           evidence. Every change is recorded in an audit history.

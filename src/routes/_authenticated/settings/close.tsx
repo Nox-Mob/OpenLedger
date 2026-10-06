@@ -16,10 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/close")({
   head: () => ({
     meta: [
-      { title: "Close the Books — Open Ledger" },
+      { title: "Close the Books - OpenLedgerApp" },
       { name: "description", content: "Lock a period and close the fiscal year." },
-      { property: "og:title", content: "Close the Books — Open Ledger" },
+      { property: "og:title", content: "Close the Books - OpenLedgerApp" },
       { property: "og:description", content: "Lock a period and close the fiscal year." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CloseBooksSettings,

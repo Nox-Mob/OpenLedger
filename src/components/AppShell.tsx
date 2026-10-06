@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-2 px-5 py-5">
           <BookOpen className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-display text-lg font-bold">Open Ledger</span>
+          <span className="font-display text-lg font-bold">OpenLedgerApp</span>
         </div>
 
         {orgs.length > 1 && (

@@ -11,18 +11,20 @@ import { AccountChecklist } from "@/components/AccountChecklist";
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Set up your organization — Open Ledger" },
+      { title: "Organization Setup - OpenLedgerApp" },
       {
         name: "description",
         content:
           "Create your organization, choose your accounts, and pick how the app talks to you.",
       },
-      { property: "og:title", content: "Set up your organization — Open Ledger" },
+      { property: "og:title", content: "Organization Setup - OpenLedgerApp" },
       {
         property: "og:description",
         content:
           "Create your organization, choose your accounts, and pick how the app talks to you.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OnboardingPage,
