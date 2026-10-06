@@ -67,9 +67,7 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         return s.roles.find((r) => r.userId === userId && r.orgId === orgId)?.role ?? null;
       },
       async listMembers(orgId) {
-        return s.roles
-          .filter((r) => r.orgId === orgId)
-          .map((r) => ({ ...r, displayName: null }));
+        return s.roles.filter((r) => r.orgId === orgId).map((r) => ({ ...r, displayName: null }));
       },
     },
     accounts: {
@@ -79,7 +77,9 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         );
       },
       async getMany(orgId, ids) {
-        return ids.map((id) => s.accounts.get(id)).filter((a): a is Account => !!a && a.orgId === orgId);
+        return ids
+          .map((id) => s.accounts.get(id))
+          .filter((a): a is Account => !!a && a.orgId === orgId);
       },
       async create(list) {
         for (const a of list) {
@@ -268,7 +268,8 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         );
       },
       async setTicked(rid, ids, ticked) {
-        for (const e of allEntries()) if (ids.includes(e.id)) e.reconciliationId = ticked ? rid : null;
+        for (const e of allEntries())
+          if (ids.includes(e.id)) e.reconciliationId = ticked ? rid : null;
       },
       async clearedTotalCents(rid) {
         return allEntries()
@@ -277,11 +278,13 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
       },
       async finish(orgId, id, userId) {
         const r = s.reconciliations.get(id);
-        if (r?.orgId === orgId) Object.assign(r, { status: "completed", completedBy: userId, completedAt: NOW });
+        if (r?.orgId === orgId)
+          Object.assign(r, { status: "completed", completedBy: userId, completedAt: NOW });
       },
       async reopen(orgId, id) {
         const r = s.reconciliations.get(id);
-        if (r?.orgId === orgId) Object.assign(r, { status: "in_progress", completedBy: null, completedAt: null });
+        if (r?.orgId === orgId)
+          Object.assign(r, { status: "in_progress", completedBy: null, completedAt: null });
       },
     },
     audit: {

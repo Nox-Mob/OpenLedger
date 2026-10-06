@@ -105,7 +105,8 @@ export async function voidTransaction(
   voidDecision("posted", lockedByCompleted);
 
   // Only flips posted -> void, so a concurrent void can't run the side effects twice.
-  if (!(await repos.transactions.markVoid(input.orgId, tx.id))) return { ok: true, alreadyVoid: true };
+  if (!(await repos.transactions.markVoid(input.orgId, tx.id)))
+    return { ok: true, alreadyVoid: true };
 
   const stamped = tx.entries.filter((e) => e.reconciliationId).map((e) => e.id);
   await repos.transactions.clearReconciliation(stamped);

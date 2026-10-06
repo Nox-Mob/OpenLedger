@@ -1,4 +1,5 @@
-import { assertBalancedEntries, newId } from "./domain/ledger";
+import { createSupabaseRepositories } from "./adapters/supabase";
+import { postBankRow } from "./services/ledger";
 import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -514,89 +515,5 @@ export const postBankTransaction = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
-
-    const { data: bank, error: bError } = await supabase
-      .from("bank_transactions")
-      .select("id, account_id, bank_date, description, amount_cents, transaction_id")
-      .eq("id", data.bankTransactionId)
-      .eq("org_id", data.orgId)
-      .single();
-    if (bError || !bank) throw new Error("Bank transaction not found");
-    if (bank.transaction_id) throw new Error("Already posted to the ledger");
-
-    const { data: accounts, error: accountError } = await supabase
-      .from("accounts")
-      .select("id, is_active")
-      .eq("org_id", data.orgId)
-      .in("id", [bank.account_id, data.offsetAccountId]);
-    if (accountError) throw new Error(accountError.message);
-    if ((accounts ?? []).length !== 2 || accounts?.some((account) => !account.is_active)) {
-      throw new Error("Posting can only use active accounts in this organization.");
-    }
-
-    assertBalancedEntries([
-      { accountId: bank.account_id, amountCents: bank.amount_cents },
-      { accountId: data.offsetAccountId, amountCents: -bank.amount_cents },
-    ]);
-    const txId = newId();
-    const { error: txError } = await supabase.from("transactions").insert({
-      id: txId,
-      org_id: data.orgId,
-      transaction_date: bank.bank_date,
-      posted_date: bank.bank_date,
-      description: bank.description,
-      source: "import",
-      created_by: userId,
-      // One ledger transaction per bank row, enforced by a unique index.
-      idempotency_key: `bank:${bank.id}`,
-    });
-    if (txError) {
-      if (txError.code === "23505") throw new Error("Already posted to the ledger");
-      throw new Error(txError.message);
-    }
-
-    const { error: eError } = await supabase.from("entries").insert([
-      {
-        id: newId(),
-        transaction_id: txId,
-        account_id: bank.account_id,
-        amount_cents: bank.amount_cents,
-      },
-      {
-        id: newId(),
-        transaction_id: txId,
-        account_id: data.offsetAccountId,
-        amount_cents: -bank.amount_cents,
-        category_id: data.categoryId ?? null,
-        project_id: data.projectId ?? null,
-        fund_id: data.fundId ?? null,
-      },
-    ]);
-    if (eError) {
-      await supabase.from("transactions").delete().eq("id", txId);
-      throw new Error(eError.message);
-    }
-
-    const { data: claimed, error: cErr } = await supabase
-      .from("bank_transactions")
-      .update({ transaction_id: txId, needs_review: false })
-      .eq("id", data.bankTransactionId)
-      .is("transaction_id", null)
-      .select("id");
-    if (cErr || !claimed?.length) {
-      // Someone else linked it first: undo our copy so the row is posted once.
-      await supabase.from("transactions").update({ status: "void" }).eq("id", txId);
-      throw new Error("Already posted to the ledger");
-    }
-
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "post_from_bank",
-      entity: "transaction",
-      entity_id: txId,
-      after: { bank_transaction_id: data.bankTransactionId },
-    });
-
-    return { id: txId };
+    return postBankRow(createSupabaseRepositories(supabase), { ...data, userId });
   });

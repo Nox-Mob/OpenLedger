@@ -1,15 +1,9 @@
-import { writeAudit } from "./audit";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
-import {
-  assertAccountsUsable,
-  assertBalancedEntries,
-  assertDateOpen,
-  newId,
-  voidDecision,
-} from "./domain/ledger";
+import { createSupabaseRepositories } from "./adapters/supabase";
+import { postTransaction, voidTransaction as voidTransactionService } from "./services/ledger";
 
 const entrySchema = z.object({
   accountId: z.string().uuid(),
@@ -96,99 +90,17 @@ export const createTransaction = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
-
-    assertBalancedEntries(data.entries);
-
-    const accountIds = [...new Set(data.entries.map((entry) => entry.accountId))];
-    const { data: accounts, error: accountError } = await supabase
-      .from("accounts")
-      .select("id, org_id, is_active")
-      .eq("org_id", data.orgId)
-      .in("id", accountIds);
-    if (accountError) throw new Error(accountError.message);
-    assertAccountsUsable(
-      data.orgId,
-      accountIds,
-      (accounts ?? []).map((a) => ({ id: a.id, orgId: a.org_id, isActive: a.is_active })),
-    );
-
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("books_locked_through")
-      .eq("id", data.orgId)
-      .maybeSingle();
-    assertDateOpen(data.transactionDate, org?.books_locked_through ?? null);
-
-    if (data.idempotencyKey) {
-      const { data: prior } = await supabase
-        .from("transactions")
-        .select("id")
-        .eq("org_id", data.orgId)
-        .eq("idempotency_key", data.idempotencyKey)
-        .maybeSingle();
-      if (prior) return { id: prior.id as string, duplicate: true };
-    }
-
-    const { data: tx, error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        id: newId(),
-        org_id: data.orgId,
-        transaction_date: data.transactionDate,
-        posted_date: data.postedDate ?? null,
-        description: data.description,
-        source: data.source,
-        created_by: userId,
-        idempotency_key: data.idempotencyKey ?? null,
-      })
-      .select("id")
-      .single();
-    if (txError) {
-      // Lost a race with an identical concurrent submit: return the winner.
-      if (txError.code === "23505" && data.idempotencyKey) {
-        const { data: prior } = await supabase
-          .from("transactions")
-          .select("id")
-          .eq("org_id", data.orgId)
-          .eq("idempotency_key", data.idempotencyKey)
-          .maybeSingle();
-        if (prior) return { id: prior.id as string, duplicate: true };
-      }
-      throw new Error(txError.message);
-    }
-
-    const entries = data.entries.map((e) => ({
-      id: newId(),
-      transaction_id: tx.id,
-      account_id: e.accountId,
-      amount_cents: e.amountCents,
-      category_id: e.categoryId ?? null,
-      project_id: e.projectId ?? null,
-      fund_id: e.fundId ?? null,
-      memo: e.memo ?? null,
-    }));
-    const { error: entriesError } = await supabase.from("entries").insert(entries);
-    if (entriesError) {
-      await supabase.from("transactions").delete().eq("id", tx.id);
-      throw new Error(entriesError.message);
-    }
-
-    if (data.tagIds?.length) {
-      await supabase
-        .from("transaction_tags")
-        .insert(data.tagIds.map((tagId) => ({ transaction_id: tx.id, tag_id: tagId })));
-    }
-
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "create",
-      entity: "transaction",
-      entity_id: tx.id,
-      after: { description: data.description, entries },
+    return postTransaction(createSupabaseRepositories(supabase), {
+      orgId: data.orgId,
+      userId,
+      transactionDate: data.transactionDate,
+      postedDate: data.postedDate ?? null,
+      description: data.description,
+      source: data.source,
+      entries: data.entries,
+      tagIds: data.tagIds,
+      idempotencyKey: data.idempotencyKey ?? null,
     });
-
-    return { id: tx.id as string };
   });
 
 export const voidTransaction = createServerFn({ method: "POST" })
@@ -199,56 +111,9 @@ export const voidTransaction = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "write");
-    const { data: before } = await supabase
-      .from("transactions")
-      .select("id, description, status, entries(id, reconciliation_id, reconciliations(status))")
-      .eq("id", data.transactionId)
-      .eq("org_id", data.orgId)
-      .single();
-    if (!before) throw new Error("Transaction not found");
-    // Voiding twice (double-click, two tabs) is a harmless no-op.
-    if (before.status === "void") return { ok: true, alreadyVoid: true };
-
-    const entries = ((before as any).entries ?? []) as any[];
-    // Status is already known to be "posted" here; this applies the shared reconciliation rule.
-    voidDecision(
-      "posted",
-      entries.some((e) => e.reconciliations?.status === "completed"),
-    );
-
-    // Only flip posted -> void, so a concurrent void can't run the side effects twice.
-    const { data: updated, error } = await supabase
-      .from("transactions")
-      .update({ status: "void" })
-      .eq("id", data.transactionId)
-      .eq("status", "posted")
-      .select("id");
-    if (error) throw new Error(error.message);
-    if (!updated?.length) return { ok: true, alreadyVoid: true };
-
-    // Un-tick from any in-progress statement check, and return linked bank rows to "unmatched".
-    const stamped = entries.filter((e) => e.reconciliation_id).map((e) => e.id as string);
-    if (stamped.length) {
-      await supabase.from("entries").update({ reconciliation_id: null }).in("id", stamped);
-    }
-    const { data: unlinked } = await supabase
-      .from("bank_transactions")
-      .update({ transaction_id: null })
-      .eq("transaction_id", data.transactionId)
-      .select("id");
-
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "void",
-      entity: "transaction",
-      entity_id: data.transactionId,
-      before: { id: before.id, description: before.description, status: before.status },
-      after: {
-        status: "void",
-        unmatchedBankRows: (unlinked ?? []).length,
-        unticked: stamped.length,
-      },
+    return voidTransactionService(createSupabaseRepositories(supabase), {
+      orgId: data.orgId,
+      userId,
+      transactionId: data.transactionId,
     });
-    return { ok: true };
   });
