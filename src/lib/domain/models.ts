@@ -9,12 +9,7 @@ export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expens
 export type OrgType = "nonprofit" | "business";
 export type Role = "admin" | "member" | "viewer";
 export type TransactionSource =
-  | "manual"
-  | "import"
-  | "opening_balance"
-  | "adjustment"
-  | "transfer"
-  | "closing";
+  "manual" | "import" | "opening_balance" | "adjustment" | "transfer" | "closing";
 export type TransactionStatus = "posted" | "void";
 export type ReconcileMode = "simple" | "full";
 export type ReconcileStatus = "in_progress" | "completed";

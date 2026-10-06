@@ -38,7 +38,13 @@ export interface OrgRepository {
     patch: Partial<
       Pick<
         Organization,
-        "name" | "currency" | "fiscalYearStartMonth" | "timezone" | "terminology" | "termOverrides" | "aiPdfEnabled"
+        | "name"
+        | "currency"
+        | "fiscalYearStartMonth"
+        | "timezone"
+        | "terminology"
+        | "termOverrides"
+        | "aiPdfEnabled"
       >
     >,
   ): Promise<void>;
@@ -93,11 +99,22 @@ export interface TransactionRepository {
   ledgerRows(
     orgId: Id,
     opts?: { to?: IsoDate },
-  ): Promise<{ amountCents: number; accountId: Id; accountName: string; accountType: AccountType; projectId: Id | null; transactionDate: IsoDate }[]>;
+  ): Promise<
+    {
+      amountCents: number;
+      accountId: Id;
+      accountName: string;
+      accountType: AccountType;
+      projectId: Id | null;
+      transactionDate: IsoDate;
+    }[]
+  >;
 }
 
 export interface BankTransactionRepository {
-  insertMany(rows: Omit<BankTransaction, "transactionId" | "needsReview">[]): Promise<{ inserted: number; duplicates: number }>;
+  insertMany(
+    rows: Omit<BankTransaction, "transactionId" | "needsReview">[],
+  ): Promise<{ inserted: number; duplicates: number }>;
   get(orgId: Id, id: Id): Promise<BankTransaction | null>;
   listUnmatched(orgId: Id, accountId?: Id): Promise<BankTransaction[]>;
   /** Links only if still unlinked; false means someone else claimed it. */
