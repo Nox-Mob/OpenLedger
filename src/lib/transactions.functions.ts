@@ -210,8 +210,9 @@ export const voidTransaction = createServerFn({ method: "POST" })
     if (before.status === "void") return { ok: true, alreadyVoid: true };
 
     const entries = ((before as any).entries ?? []) as any[];
+    // Status is already known to be "posted" here; this applies the shared reconciliation rule.
     voidDecision(
-      before.status === "void" ? "void" : "posted",
+      "posted",
       entries.some((e) => e.reconciliations?.status === "completed"),
     );
 
