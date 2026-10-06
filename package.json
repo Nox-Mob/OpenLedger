@@ -18,7 +18,9 @@
   "overrides": {
     "rolldown": "1.2.1",
     "js-yaml": "4.3.2",
-    "nanoid": "3.3.19"
+    "nanoid": "3.3.19",
+    "shell-quote": "1.11.0",
+    "source-map-js": "1.2.2"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

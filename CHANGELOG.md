@@ -7,8 +7,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ### Added
 - Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
-- Getting-started page and downloadable development source.
-- Public release notes generated from this Markdown changelog.
+- Getting-started page and downloadable development source (the app only, without the public website).
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed
@@ -22,9 +21,9 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Public home is now `/`; the existing authenticated dashboard is at `/ledger`.
 - Public website does not advertise or link the development preview or shared demo.
 
-## [0.0.1]
+## [0.0.1] — 2026-10-01
 
-Initial usable web foundation. The exact release date was not recorded here.
+Initial usable web foundation.
 
 ### Added
 - Organization-scoped double-entry accounting, chart of accounts, opening balances, and transaction register.
