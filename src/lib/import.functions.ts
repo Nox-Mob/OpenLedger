@@ -1,3 +1,4 @@
+import { newId } from "./domain/ledger";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { postBankRow } from "./services/ledger";
 import { writeAudit } from "./audit";
@@ -107,7 +108,7 @@ export const importBankRows = createServerFn({ method: "POST" })
         mismatch = check.gapCents;
       }
     }
-    const batchId = crypto.randomUUID();
+    const batchId = newId();
     const { error: bErr } = await supabase.from("import_batches").insert({
       id: batchId,
       org_id: data.orgId,
@@ -375,7 +376,7 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
           ? `You've read ${PDF_LIMITS.perDay} PDFs today. Try again tomorrow.`
           : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`,
       );
-    const usageId = crypto.randomUUID();
+    const usageId = newId();
     const { error: uErr } = await supabase.from("ai_usage").insert({
       id: usageId,
       org_id: data.orgId,
