@@ -375,11 +375,18 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         const where = ["org_id = ?"];
         const vals: SqlValue[] = [orgId];
         if (!opts?.includeVoid) where.push("status = 'posted'");
-        if (opts?.from) (where.push("transaction_date >= ?"), vals.push(opts.from));
-        if (opts?.to) (where.push("transaction_date <= ?"), vals.push(opts.to));
-        if (opts?.accountId)
-          (where.push("id IN (SELECT transaction_id FROM entries WHERE account_id = ?)"),
-            vals.push(opts.accountId));
+        if (opts?.from) {
+          where.push("transaction_date >= ?");
+          vals.push(opts.from);
+        }
+        if (opts?.to) {
+          where.push("transaction_date <= ?");
+          vals.push(opts.to);
+        }
+        if (opts?.accountId) {
+          where.push("id IN (SELECT transaction_id FROM entries WHERE account_id = ?)");
+          vals.push(opts.accountId);
+        }
         const rows = await db.select(
           `SELECT * FROM transactions WHERE ${where.join(" AND ")}
            ORDER BY transaction_date DESC, created_at DESC LIMIT ?`,
