@@ -104,6 +104,7 @@ const toRecon = (r: any): Reconciliation => ({
   batchId: r.batch_id ?? null,
   completedBy: r.completed_by ?? null,
   completedAt: r.completed_at ?? null,
+  createdAt: r.created_at ?? null,
 });
 
 const TX_SELECT =
