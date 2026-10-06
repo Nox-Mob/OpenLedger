@@ -81,4 +81,28 @@ WHEN (SELECT status FROM reconciliations WHERE id = OLD.reconciliation_id) = 'co
 BEGIN SELECT RAISE(ABORT, 'entry belongs to a finished statement check'); END;
 `,
   },
+  {
+    version: 2,
+    sql: `
+ALTER TABLE reconciliations ADD COLUMN created_at TEXT;
+CREATE TABLE period_closes (
+  id TEXT PRIMARY KEY, org_id TEXT NOT NULL REFERENCES organizations(id), fiscal_year_end TEXT NOT NULL,
+  net_income_cents INTEGER NOT NULL, closed_by TEXT NOT NULL, created_at TEXT NOT NULL,
+  UNIQUE (org_id, fiscal_year_end)
+);
+CREATE TABLE projects (
+  id TEXT PRIMARY KEY, org_id TEXT NOT NULL REFERENCES organizations(id), name TEXT NOT NULL,
+  budget_cents INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL
+);
+CREATE TABLE import_batches (
+  id TEXT PRIMARY KEY, org_id TEXT NOT NULL REFERENCES organizations(id), account_id TEXT NOT NULL REFERENCES accounts(id),
+  statement_start TEXT, statement_end TEXT, beginning_balance_cents INTEGER, ending_balance_cents INTEGER,
+  status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL
+);
+CREATE TRIGGER period_closes_immutable BEFORE UPDATE ON period_closes BEGIN SELECT RAISE(ABORT, 'year-end closes are immutable'); END;
+CREATE TRIGGER reconciliations_no_delete_completed BEFORE DELETE ON reconciliations
+WHEN OLD.status = 'completed'
+BEGIN SELECT RAISE(ABORT, 'finished statement checks cannot be deleted'); END;
+`,
+  },
 ];

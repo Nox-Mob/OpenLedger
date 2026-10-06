@@ -13,6 +13,9 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ### Changed
 - Groundwork for the future desktop edition: a local SQLite storage option with the same bookkeeping protections, tested against the same rules as the cloud app (not yet packaged as an app).
+- Statement checks, reports, organization settings, books lock and year-end close now run in the same shared, storage-independent code, ready for the future desktop edition.
+- Every new record (organizations, accounts, statement checks, year-end closes, import batches, history entries, categories) now gets its ID from the app instead of the database.
+- Discarding a statement check now requires permission to edit the books.
 - Bookkeeping rules and save/void workflows now run in shared, storage-independent code, so future desktop and self-hosted editions behave the same as the cloud app.
 - App name standardized to OpenLedgerApp across screens, legal notices, reports, and documentation.
 - Page titles use OpenLedgerApp for home and Page Name - OpenLedgerApp elsewhere.

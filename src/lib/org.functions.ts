@@ -10,6 +10,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 import { catalogFor, matchesCatalog, type OrgType } from "./account-catalog";
 import { assertCan } from "./permissions";
+import { createSupabaseRepositories } from "./adapters/supabase";
+import { newId } from "./domain/ledger";
+import { updateOrganization as updateOrgSettings } from "./services/settings";
 
 export const getMyOrgs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -87,50 +90,16 @@ export const updateOrganization = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await requireOrgAdmin(supabase, userId, data.orgId);
-
-    const { data: before } = await supabase
-      .from("organizations")
-      .select(
-        "name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled",
-      )
-      .eq("id", data.orgId)
-      .single();
-
-    const { error } = await supabase
-      .from("organizations")
-      .update({
-        name: data.name,
-        org_type: data.orgType,
-        currency: data.currency,
-        fiscal_year_start_month: data.fiscalYearStartMonth,
-        timezone: data.timezone,
-        terminology: data.terminology,
-        term_overrides: data.termOverrides as any,
-        ...(data.aiPdfEnabled !== undefined ? { ai_pdf_enabled: data.aiPdfEnabled } : {}),
-      })
-      .eq("id", data.orgId);
-    if (error) throw new Error(error.message);
-
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "update",
-      entity: "organization",
-      entity_id: data.orgId,
-      before: before ?? null,
-      after: {
-        name: data.name,
-        org_type: data.orgType,
-        currency: data.currency,
-        fiscal_year_start_month: data.fiscalYearStartMonth,
-        timezone: data.timezone,
-        terminology: data.terminology,
-        term_overrides: data.termOverrides,
-        ai_pdf_enabled: data.aiPdfEnabled ?? before?.ai_pdf_enabled ?? false,
-      },
+    return updateOrgSettings(createSupabaseRepositories(supabase), data.orgId, userId, {
+      name: data.name,
+      orgType: data.orgType,
+      currency: data.currency,
+      fiscalYearStartMonth: data.fiscalYearStartMonth,
+      timezone: data.timezone,
+      terminology: data.terminology,
+      termOverrides: data.termOverrides as Record<string, string>,
+      aiPdfEnabled: data.aiPdfEnabled,
     });
-
-    return { ok: true };
   });
 
 export const listOrgMembers = createServerFn({ method: "GET" })
@@ -229,7 +198,7 @@ export const createOrganization = createServerFn({ method: "POST" })
 
     // Generate the id here: reading the row back (insert().select()) would be
     // blocked by RLS because the user isn't a member until user_roles exists.
-    const org = { id: crypto.randomUUID() };
+    const org = { id: newId() };
     const { error: orgError } = await supabase.from("organizations").insert({
       id: org.id,
       name: data.name,
@@ -247,7 +216,13 @@ export const createOrganization = createServerFn({ method: "POST" })
     const keys = data.accountKeys ? new Set(data.accountKeys) : null;
     const accounts = catalogFor(data.orgType)
       .filter((c) => c.required || (keys ? keys.has(c.key) : c.defaultOn))
-      .map((c) => ({ name: c.name, type: c.type, subtype: c.subtype ?? null, org_id: org.id }));
+      .map((c) => ({
+        id: newId(),
+        name: c.name,
+        type: c.type,
+        subtype: c.subtype ?? null,
+        org_id: org.id,
+      }));
     const { error: accError } = await supabase.from("accounts").insert(accounts);
     if (accError) throw new Error(accError.message);
 
@@ -355,6 +330,7 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
       const { data: created, error } = await supabase
         .from("accounts")
         .insert({
+          id: newId(),
           org_id: data.orgId,
           name: item.name,
           type: item.type,

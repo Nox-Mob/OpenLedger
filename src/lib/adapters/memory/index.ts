@@ -4,8 +4,13 @@ import type {
   Account,
   AuditEvent,
   BankTransaction,
+  JsonValue,
   Organization,
+  PeriodClose,
+  Project,
   Reconciliation,
+  ReconEntry,
+  StatementInfo,
   Role,
   Transaction,
 } from "@/lib/domain/models";
@@ -18,7 +23,10 @@ export interface MemoryStore {
   transactions: Map<string, Transaction>;
   bank: Map<string, BankTransaction>;
   reconciliations: Map<string, Reconciliation>;
-  audit: AuditEvent[];
+  audit: (AuditEvent & { at: string })[];
+  periodCloses: Map<string, PeriodClose>;
+  projects: Map<string, Project>;
+  statements: (StatementInfo & { orgId: string; accountId: string })[];
 }
 
 export function createMemoryStore(): MemoryStore {
@@ -30,6 +38,9 @@ export function createMemoryStore(): MemoryStore {
     bank: new Map(),
     reconciliations: new Map(),
     audit: [],
+    periodCloses: new Map(),
+    projects: new Map(),
+    statements: [],
   };
 }
 
@@ -39,6 +50,23 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
   store: MemoryStore;
 } {
   const allEntries = () => [...s.transactions.values()].flatMap((t) => t.entries);
+  const reconEntries = (pred: (e: ReconEntry) => boolean): ReconEntry[] =>
+    [...s.transactions.values()]
+      .filter((t) => t.status === "posted")
+      .flatMap((t) =>
+        t.entries.map((e) => ({
+          id: e.id,
+          transactionId: t.id,
+          accountId: e.accountId,
+          date: t.transactionDate,
+          description: e.memo || t.description,
+          amountCents: e.amountCents,
+          reconciliationId: e.reconciliationId,
+        })),
+      )
+      .filter((e) => pred(e))
+      .map(({ accountId: _a, ...e }) => e);
+  let tick = 0;
   return {
     store: s,
     orgs: {
@@ -240,6 +268,26 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           }
         return n;
       },
+      async listInPeriod(orgId, accountId, from, to) {
+        return [...s.bank.values()]
+          .filter(
+            (b) =>
+              b.orgId === orgId &&
+              b.accountId === accountId &&
+              b.bankDate >= from &&
+              b.bankDate <= to,
+          )
+          .sort((a, b) => a.bankDate.localeCompare(b.bankDate))
+          .map((b) => ({ ...b }));
+      },
+      async latestStatement(orgId, accountId) {
+        const hit = s.statements
+          .filter((x) => x.orgId === orgId && x.accountId === accountId)
+          .sort((a, b) => b.statementEnd.localeCompare(a.statementEnd))[0];
+        if (!hit) return null;
+        const { orgId: _o, accountId: _a, ...info } = hit;
+        return info;
+      },
     },
     reconciliations: {
       async start(r) {
@@ -256,7 +304,30 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           batchId: r.batchId,
           completedBy: null,
           completedAt: null,
+          createdAt: NOW,
         });
+      },
+      async locate(id) {
+        const r = s.reconciliations.get(id);
+        return r ? { ...r } : null;
+      },
+      async itemCounts(orgId) {
+        const out: Record<string, number> = {};
+        for (const r of s.reconciliations.values()) if (r.orgId === orgId) out[r.id] = 0;
+        for (const e of allEntries())
+          if (e.reconciliationId && e.reconciliationId in out) out[e.reconciliationId]!++;
+        return out;
+      },
+      async workspaceEntries(accountId, through, rid) {
+        return reconEntries(
+          (e) =>
+            (e as ReconEntry & { accountId: string }).accountId === accountId &&
+            e.date <= through &&
+            (e.reconciliationId === null || e.reconciliationId === rid),
+        );
+      },
+      async entriesOf(rid) {
+        return reconEntries((e) => e.reconciliationId === rid);
       },
       async get(orgId, id) {
         const r = s.reconciliations.get(id);
@@ -268,8 +339,13 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         );
       },
       async setTicked(rid, ids, ticked) {
-        for (const e of allEntries())
-          if (ids.includes(e.id)) e.reconciliationId = ticked ? rid : null;
+        const r = s.reconciliations.get(rid);
+        if (!r) return;
+        for (const e of allEntries()) {
+          if (!ids.includes(e.id) || e.accountId !== r.accountId) continue;
+          if (ticked && e.reconciliationId === null) e.reconciliationId = rid;
+          else if (!ticked && e.reconciliationId === rid) e.reconciliationId = null;
+        }
       },
       async clearedTotalCents(rid) {
         return allEntries()
@@ -286,10 +362,54 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         if (r?.orgId === orgId)
           Object.assign(r, { status: "in_progress", completedBy: null, completedAt: null });
       },
+      async discard(orgId, id) {
+        const r = s.reconciliations.get(id);
+        if (r?.orgId !== orgId || r.status !== "in_progress") return;
+        for (const e of allEntries()) if (e.reconciliationId === id) e.reconciliationId = null;
+        s.reconciliations.delete(id);
+      },
+    },
+    periodCloses: {
+      async list(orgId) {
+        return [...s.periodCloses.values()]
+          .filter((c) => c.orgId === orgId)
+          .sort((a, b) => b.fiscalYearEnd.localeCompare(a.fiscalYearEnd));
+      },
+      async find(orgId, fye) {
+        return (
+          [...s.periodCloses.values()].find((c) => c.orgId === orgId && c.fiscalYearEnd === fye) ??
+          null
+        );
+      },
+      async create(c) {
+        if (
+          s.periodCloses.has(c.id) ||
+          [...s.periodCloses.values()].some(
+            (x) => x.orgId === c.orgId && x.fiscalYearEnd === c.fiscalYearEnd,
+          )
+        )
+          throw new DuplicateKeyError();
+        s.periodCloses.set(c.id, { ...c, createdAt: NOW });
+      },
+    },
+    projects: {
+      async list(orgId) {
+        return [...s.projects.values()]
+          .filter((p) => p.orgId === orgId)
+          .sort((a, b) => a.name.localeCompare(b.name));
+      },
     },
     audit: {
       async append(e) {
-        s.audit.push(e);
+        // Monotonic fake clock so "newest first" ordering is deterministic in tests.
+        s.audit.push({ ...e, at: new Date(Date.parse(NOW) + tick++).toISOString() });
+      },
+      async listFor(orgId, entity, entityId, limit = 50) {
+        return s.audit
+          .filter((a) => a.orgId === orgId && a.entity === entity && a.entityId === entityId)
+          .reverse()
+          .slice(0, limit)
+          .map((a) => ({ action: a.action, at: a.at, after: (a.after ?? null) as JsonValue }));
       },
     },
   };

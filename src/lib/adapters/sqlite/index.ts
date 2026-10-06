@@ -3,6 +3,8 @@
 // sql.js in tests. Uses `?` placeholders, which both support.
 import type {
   Account,
+  PeriodClose,
+  ReconEntry,
   BankTransaction,
   Entry,
   Organization,
@@ -127,6 +129,26 @@ const toRecon = (r: any): Reconciliation => ({
   batchId: r.batch_id ?? null,
   completedBy: r.completed_by ?? null,
   completedAt: r.completed_at ?? null,
+  createdAt: r.created_at ?? null,
+});
+
+const RECON_ENTRY_SELECT = `SELECT e.id, e.transaction_id, e.amount_cents, e.memo, e.reconciliation_id,
+  t.transaction_date, t.description FROM entries e JOIN transactions t ON t.id = e.transaction_id`;
+const toReconEntry = (r: any): ReconEntry => ({
+  id: r.id,
+  transactionId: r.transaction_id,
+  date: r.transaction_date,
+  description: r.memo || r.description,
+  amountCents: Number(r.amount_cents),
+  reconciliationId: r.reconciliation_id ?? null,
+});
+const toClose = (r: any): PeriodClose => ({
+  id: r.id,
+  orgId: r.org_id,
+  fiscalYearEnd: r.fiscal_year_end,
+  netIncomeCents: Number(r.net_income_cents),
+  closedBy: r.closed_by,
+  createdAt: r.created_at,
 });
 
 const qs = (n: number) => Array.from({ length: n }, () => "?").join(",");
@@ -205,6 +227,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       async updateSettings(id, p) {
         const map: [keyof typeof p, string, (v: any) => SqlValue][] = [
           ["name", "name", (v) => v],
+          ["orgType", "org_type", (v) => v],
           ["currency", "currency", (v) => v],
           ["fiscalYearStartMonth", "fiscal_year_start_month", (v) => v],
           ["timezone", "timezone", (v) => v],
@@ -491,13 +514,37 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
         return r.rowsAffected;
       },
+      async listInPeriod(orgId, accountId, from, to) {
+        const rows = await db.select(
+          `SELECT * FROM bank_transactions WHERE org_id = ? AND account_id = ? AND bank_date >= ? AND bank_date <= ?
+           ORDER BY bank_date`,
+          [orgId, accountId, from, to],
+        );
+        return rows.map(toBank);
+      },
+      async latestStatement(orgId, accountId) {
+        const [r] = await db.select<any>(
+          `SELECT * FROM import_batches WHERE org_id = ? AND account_id = ? AND status = 'active'
+             AND statement_end IS NOT NULL ORDER BY statement_end DESC LIMIT 1`,
+          [orgId, accountId],
+        );
+        return r
+          ? {
+              batchId: r.id,
+              statementStart: r.statement_start ?? null,
+              statementEnd: r.statement_end,
+              beginningBalanceCents: r.beginning_balance_cents ?? null,
+              endingBalanceCents: r.ending_balance_cents ?? null,
+            }
+          : null;
+      },
     },
 
     reconciliations: {
       async start(r) {
         await db.execute(
           `INSERT INTO reconciliations (id, org_id, account_id, period_start, period_end, beginning_balance_cents,
-           ending_balance_cents, mode, status, batch_id, created_by) VALUES (?,?,?,?,?,?,?,?,'in_progress',?,?)`,
+           ending_balance_cents, mode, status, batch_id, created_by, created_at) VALUES (?,?,?,?,?,?,?,?,'in_progress',?,?,?)`,
           [
             r.id,
             r.orgId,
@@ -509,8 +556,33 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
             r.mode,
             r.batchId,
             r.createdBy,
+            now(),
           ],
         );
+      },
+      async locate(id) {
+        const [r] = await db.select("SELECT * FROM reconciliations WHERE id = ?", [id]);
+        return r ? toRecon(r) : null;
+      },
+      async itemCounts(orgId) {
+        const rows = await db.select<{ id: string; n: number }>(
+          `SELECT r.id, COUNT(e.id) AS n FROM reconciliations r
+           LEFT JOIN entries e ON e.reconciliation_id = r.id WHERE r.org_id = ? GROUP BY r.id`,
+          [orgId],
+        );
+        return Object.fromEntries(rows.map((r) => [r.id, Number(r.n)]));
+      },
+      async workspaceEntries(accountId, through, rid) {
+        const rows = await db.select(
+          `${RECON_ENTRY_SELECT} WHERE e.account_id = ? AND t.status = 'posted' AND t.transaction_date <= ?
+             AND (e.reconciliation_id IS NULL OR e.reconciliation_id = ?)`,
+          [accountId, through, rid],
+        );
+        return rows.map(toReconEntry);
+      },
+      async entriesOf(rid) {
+        const rows = await db.select(`${RECON_ENTRY_SELECT} WHERE e.reconciliation_id = ?`, [rid]);
+        return rows.map(toReconEntry);
       },
       async get(orgId, id) {
         const [r] = await db.select("SELECT * FROM reconciliations WHERE org_id = ? AND id = ?", [
@@ -528,9 +600,11 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async setTicked(rid, ids, ticked) {
         if (!ids.length) return;
+        const guard = ticked ? "reconciliation_id IS NULL" : "reconciliation_id = ?";
         await db.execute(
-          `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)})`,
-          [ticked ? rid : null, ...ids],
+          `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)}) AND ${guard}
+             AND account_id = (SELECT account_id FROM reconciliations WHERE id = ?)`,
+          ticked ? [rid, ...ids, rid] : [null, ...ids, rid, rid],
         );
       },
       async clearedTotalCents(rid) {
@@ -552,6 +626,61 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           [orgId, id],
         );
       },
+      async discard(orgId, id) {
+        const [r] = await db.select<{ status: string }>(
+          "SELECT status FROM reconciliations WHERE org_id = ? AND id = ?",
+          [orgId, id],
+        );
+        if (r?.status !== "in_progress") return;
+        await db.execute(
+          "UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?",
+          [id],
+        );
+        await db.execute("DELETE FROM reconciliations WHERE id = ?", [id]);
+      },
+    },
+
+    periodCloses: {
+      async list(orgId) {
+        const rows = await db.select(
+          "SELECT * FROM period_closes WHERE org_id = ? ORDER BY fiscal_year_end DESC",
+          [orgId],
+        );
+        return rows.map(toClose);
+      },
+      async find(orgId, fye) {
+        const [r] = await db.select(
+          "SELECT * FROM period_closes WHERE org_id = ? AND fiscal_year_end = ?",
+          [orgId, fye],
+        );
+        return r ? toClose(r) : null;
+      },
+      async create(c) {
+        try {
+          await db.execute(
+            "INSERT INTO period_closes (id, org_id, fiscal_year_end, net_income_cents, closed_by, created_at) VALUES (?,?,?,?,?,?)",
+            [c.id, c.orgId, c.fiscalYearEnd, c.netIncomeCents, c.closedBy, now()],
+          );
+        } catch (e) {
+          if (isUnique(e)) throw new DuplicateKeyError();
+          throw e;
+        }
+      },
+    },
+
+    projects: {
+      async list(orgId) {
+        const rows = await db.select<any>("SELECT * FROM projects WHERE org_id = ? ORDER BY name", [
+          orgId,
+        ]);
+        return rows.map((r) => ({
+          id: r.id,
+          orgId: r.org_id,
+          name: r.name,
+          budgetCents: Number(r.budget_cents),
+          status: r.status,
+        }));
+      },
     },
 
     audit: {
@@ -569,6 +698,18 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
             now(),
           ],
         );
+      },
+      async listFor(orgId, entity, entityId, limit = 50) {
+        const rows = await db.select<any>(
+          `SELECT action, after, created_at FROM audit_log WHERE org_id = ? AND entity = ? AND entity_id = ?
+           ORDER BY id DESC LIMIT ?`,
+          [orgId, entity, entityId, limit],
+        );
+        return rows.map((r) => ({
+          action: r.action,
+          at: r.created_at,
+          after: r.after ? JSON.parse(r.after) : null,
+        }));
       },
     },
   };

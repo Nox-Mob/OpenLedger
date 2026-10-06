@@ -38,6 +38,9 @@ Status: storage layer done and tested; the Tauri shell itself is not built yet.
 
 - plugin-sql uses a connection pool; `BEGIN/COMMIT` must run on one connection.
   Set the pool to a single connection or move `post()` into one Rust command.
-- Statement checks, settings and reports still use direct cloud queries in their
-  server functions; they need to move behind the ports before the desktop UI can use them.
+- Ready for the desktop UI through `src/lib/services/`: transactions, opening balances,
+  bank rows (`ledger.ts`), statement checks (`reconciliation.ts`), reports (`reports.ts`),
+  and organization settings, books lock and year-end close (`settings.ts`).
+- Still cloud-only: member management, sign-in/legal acceptance, file import parsing and
+  AI PDF reading, categories/tags/funds setup. These need ports before the desktop UI can use them.
 - Sync between desktop and cloud is not designed yet; app-generated UUIDs keep that possible.
