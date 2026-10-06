@@ -1,0 +1,521 @@
+// Postgres/Supabase adapter for the repository ports (cloud + self-hosted editions).
+// Built per request from the caller's RLS-scoped client; never from the admin client,
+// except AuditRepository.append, which goes through writeAudit() (service role).
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { writeAudit } from "@/lib/audit";
+import type {
+  Account,
+  BankTransaction,
+  Entry,
+  Organization,
+  Reconciliation,
+  Role,
+  Transaction,
+} from "@/lib/domain/models";
+import { DuplicateKeyError, type Repositories } from "@/lib/ports";
+
+type Db = SupabaseClient<Database>;
+
+function fail(error: { message: string; code?: string } | null): void {
+  if (!error) return;
+  if (error.code === "23505") throw new DuplicateKeyError(error.message);
+  throw new Error(error.message);
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const toOrg = (r: any): Organization => ({
+  id: r.id,
+  name: r.name,
+  orgType: r.org_type,
+  currency: r.currency,
+  fiscalYearStartMonth: r.fiscal_year_start_month,
+  timezone: r.timezone,
+  terminology: r.terminology,
+  termOverrides: (r.term_overrides ?? {}) as Record<string, string>,
+  aiPdfEnabled: !!r.ai_pdf_enabled,
+  booksLockedThrough: r.books_locked_through ?? null,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+const toAccount = (r: any): Account => ({
+  id: r.id,
+  orgId: r.org_id,
+  name: r.name,
+  type: r.type,
+  subtype: r.subtype ?? null,
+  isActive: !!r.is_active,
+  createdAt: r.created_at,
+});
+
+const toEntry = (r: any): Entry => ({
+  id: r.id,
+  transactionId: r.transaction_id,
+  accountId: r.account_id,
+  amountCents: Number(r.amount_cents),
+  categoryId: r.category_id ?? null,
+  projectId: r.project_id ?? null,
+  fundId: r.fund_id ?? null,
+  memo: r.memo ?? null,
+  reconciliationId: r.reconciliation_id ?? null,
+});
+
+const toTx = (r: any): Transaction => ({
+  id: r.id,
+  orgId: r.org_id,
+  transactionDate: r.transaction_date,
+  postedDate: r.posted_date ?? null,
+  description: r.description,
+  source: r.source,
+  status: r.status,
+  createdBy: r.created_by ?? null,
+  idempotencyKey: r.idempotency_key ?? null,
+  createdAt: r.created_at,
+  entries: ((r.entries ?? []) as any[]).map(toEntry),
+  tagIds: ((r.transaction_tags ?? []) as any[]).map((t) => t.tag_id),
+});
+
+const toBank = (r: any): BankTransaction => ({
+  id: r.id,
+  orgId: r.org_id,
+  accountId: r.account_id,
+  bankDate: r.bank_date,
+  description: r.description,
+  amountCents: Number(r.amount_cents),
+  externalId: r.external_id ?? null,
+  fingerprint: r.fingerprint,
+  rowSeq: r.row_seq ?? null,
+  batchId: r.batch_id ?? null,
+  transactionId: r.transaction_id ?? null,
+  needsReview: !!r.needs_review,
+});
+
+const toRecon = (r: any): Reconciliation => ({
+  id: r.id,
+  orgId: r.org_id,
+  accountId: r.account_id,
+  periodStart: r.period_start,
+  periodEnd: r.period_end,
+  beginningBalanceCents: Number(r.beginning_balance_cents),
+  endingBalanceCents: Number(r.ending_balance_cents),
+  mode: r.mode,
+  status: r.status,
+  batchId: r.batch_id ?? null,
+  completedBy: r.completed_by ?? null,
+  completedAt: r.completed_at ?? null,
+});
+
+const TX_SELECT =
+  "*, entries(id, transaction_id, account_id, amount_cents, category_id, project_id, fund_id, memo, reconciliation_id), transaction_tags(tag_id)";
+const PAGE = 1000;
+
+export function createSupabaseRepositories(db: Db): Repositories {
+  const sb = db as any; // keep the adapter readable; mapping functions are the typed boundary
+
+  return {
+    orgs: {
+      async get(orgId) {
+        const { data, error } = await sb.from("organizations").select("*").eq("id", orgId).maybeSingle();
+        fail(error);
+        return data ? toOrg(data) : null;
+      },
+      async listForUser(userId) {
+        const { data, error } = await sb
+          .from("user_roles")
+          .select("role, organizations(*)")
+          .eq("user_id", userId);
+        fail(error);
+        return ((data ?? []) as any[])
+          .filter((r) => r.organizations)
+          .map((r) => ({ ...toOrg(r.organizations), role: r.role as Role }));
+      },
+      async create(org) {
+        const { error } = await sb.from("organizations").insert({
+          id: org.id,
+          name: org.name,
+          org_type: org.orgType,
+          currency: org.currency,
+          fiscal_year_start_month: org.fiscalYearStartMonth,
+          timezone: org.timezone,
+          terminology: org.terminology,
+          term_overrides: org.termOverrides,
+          ai_pdf_enabled: org.aiPdfEnabled,
+          books_locked_through: org.booksLockedThrough,
+          created_by: org.createdBy,
+        });
+        fail(error);
+      },
+      async updateSettings(orgId, p) {
+        const row: Record<string, unknown> = {};
+        if (p.name !== undefined) row.name = p.name;
+        if (p.currency !== undefined) row.currency = p.currency;
+        if (p.fiscalYearStartMonth !== undefined) row.fiscal_year_start_month = p.fiscalYearStartMonth;
+        if (p.timezone !== undefined) row.timezone = p.timezone;
+        if (p.terminology !== undefined) row.terminology = p.terminology;
+        if (p.termOverrides !== undefined) row.term_overrides = p.termOverrides;
+        if (p.aiPdfEnabled !== undefined) row.ai_pdf_enabled = p.aiPdfEnabled;
+        const { error } = await sb.from("organizations").update(row).eq("id", orgId);
+        fail(error);
+      },
+      async setBooksLockedThrough(orgId, date) {
+        const { error } = await sb
+          .from("organizations")
+          .update({ books_locked_through: date })
+          .eq("id", orgId);
+        fail(error);
+      },
+      async roleOf(userId, orgId) {
+        const { data, error } = await sb
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("org_id", orgId)
+          .maybeSingle();
+        fail(error);
+        return (data?.role as Role) ?? null;
+      },
+      async listMembers(orgId) {
+        const { data, error } = await sb.from("user_roles").select("user_id, role").eq("org_id", orgId);
+        fail(error);
+        return ((data ?? []) as any[]).map((r) => ({
+          userId: r.user_id,
+          orgId,
+          role: r.role,
+          displayName: null,
+        }));
+      },
+    },
+
+    accounts: {
+      async list(orgId, opts) {
+        let q = sb.from("accounts").select("*").eq("org_id", orgId).order("name");
+        if (!opts?.includeArchived) q = q.eq("is_active", true);
+        const { data, error } = await q;
+        fail(error);
+        return ((data ?? []) as any[]).map(toAccount);
+      },
+      async getMany(orgId, ids) {
+        if (!ids.length) return [];
+        const { data, error } = await sb.from("accounts").select("*").eq("org_id", orgId).in("id", ids);
+        fail(error);
+        return ((data ?? []) as any[]).map(toAccount);
+      },
+      async create(accounts) {
+        if (!accounts.length) return;
+        const { error } = await sb.from("accounts").insert(
+          accounts.map((a) => ({
+            id: a.id,
+            org_id: a.orgId,
+            name: a.name,
+            type: a.type,
+            subtype: a.subtype,
+            is_active: a.isActive,
+          })),
+        );
+        fail(error);
+      },
+      async rename(orgId, id, name) {
+        const { error } = await sb.from("accounts").update({ name }).eq("org_id", orgId).eq("id", id);
+        fail(error);
+      },
+      async setActive(orgId, id, isActive) {
+        const { error } = await sb
+          .from("accounts")
+          .update({ is_active: isActive })
+          .eq("org_id", orgId)
+          .eq("id", id);
+        fail(error);
+      },
+      async hasOpeningBalance(orgId, accountId) {
+        const { data, error } = await sb
+          .from("entries")
+          .select("id, transactions!inner(id, source, status, org_id)")
+          .eq("account_id", accountId)
+          .eq("transactions.org_id", orgId)
+          .eq("transactions.source", "opening_balance")
+          .eq("transactions.status", "posted")
+          .limit(1);
+        fail(error);
+        return (data ?? []).length > 0;
+      },
+    },
+
+    transactions: {
+      async post(tx) {
+        const { error: txError } = await sb.from("transactions").insert({
+          id: tx.id,
+          org_id: tx.orgId,
+          transaction_date: tx.transactionDate,
+          posted_date: tx.postedDate,
+          description: tx.description,
+          source: tx.source,
+          created_by: tx.createdBy,
+          idempotency_key: tx.idempotencyKey,
+        });
+        fail(txError);
+        const { error: eError } = await sb.from("entries").insert(
+          tx.entries.map((e) => ({
+            id: e.id,
+            transaction_id: tx.id,
+            account_id: e.accountId,
+            amount_cents: e.amountCents,
+            category_id: e.categoryId ?? null,
+            project_id: e.projectId ?? null,
+            fund_id: e.fundId ?? null,
+            memo: e.memo ?? null,
+          })),
+        );
+        if (eError) {
+          // Compensate: the header has no entries yet, so the delete guard allows it.
+          await sb.from("transactions").delete().eq("id", tx.id);
+          fail(eError);
+        }
+        if (tx.tagIds?.length) {
+          await sb
+            .from("transaction_tags")
+            .insert(tx.tagIds.map((tagId) => ({ transaction_id: tx.id, tag_id: tagId })));
+        }
+      },
+      async findByIdempotencyKey(orgId, key) {
+        const { data, error } = await sb
+          .from("transactions")
+          .select("id")
+          .eq("org_id", orgId)
+          .eq("idempotency_key", key)
+          .maybeSingle();
+        fail(error);
+        return (data?.id as string) ?? null;
+      },
+      async get(orgId, id) {
+        const { data, error } = await sb
+          .from("transactions")
+          .select(TX_SELECT)
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .maybeSingle();
+        fail(error);
+        return data ? toTx(data) : null;
+      },
+      async list(orgId, opts) {
+        let q = sb
+          .from("transactions")
+          .select(TX_SELECT)
+          .eq("org_id", orgId)
+          .order("transaction_date", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(opts?.limit ?? 100);
+        if (opts?.from) q = q.gte("transaction_date", opts.from);
+        if (opts?.to) q = q.lte("transaction_date", opts.to);
+        if (!opts?.includeVoid) q = q.eq("status", "posted");
+        const { data, error } = await q;
+        fail(error);
+        let rows = ((data ?? []) as any[]).map(toTx);
+        if (opts?.accountId)
+          rows = rows.filter((t) => t.entries.some((e) => e.accountId === opts.accountId));
+        return rows;
+      },
+      async markVoid(orgId, id) {
+        const { data, error } = await sb
+          .from("transactions")
+          .update({ status: "void" })
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .eq("status", "posted")
+          .select("id");
+        fail(error);
+        return (data ?? []).length > 0;
+      },
+      async clearReconciliation(entryIds) {
+        if (!entryIds.length) return;
+        const { error } = await sb.from("entries").update({ reconciliation_id: null }).in("id", entryIds);
+        fail(error);
+      },
+      async ledgerRows(orgId, opts) {
+        const out: Awaited<ReturnType<Repositories["transactions"]["ledgerRows"]>> = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = sb
+            .from("entries")
+            .select(
+              "id, amount_cents, account_id, project_id, accounts!inner(name, type), transactions!inner(org_id, status, source, transaction_date)",
+            )
+            .eq("transactions.org_id", orgId)
+            .eq("transactions.status", "posted")
+            .neq("transactions.source", "closing")
+            .order("id")
+            .range(from, from + PAGE - 1);
+          if (opts?.to) q = q.lte("transactions.transaction_date", opts.to);
+          const { data, error } = await q;
+          fail(error);
+          const rows = (data ?? []) as any[];
+          for (const r of rows)
+            out.push({
+              amountCents: Number(r.amount_cents),
+              accountId: r.account_id,
+              accountName: r.accounts.name,
+              accountType: r.accounts.type,
+              projectId: r.project_id ?? null,
+              transactionDate: r.transactions.transaction_date,
+            });
+          if (rows.length < PAGE) break;
+        }
+        return out;
+      },
+    },
+
+    bank: {
+      async insertMany(rows) {
+        let inserted = 0;
+        let duplicates = 0;
+        for (const r of rows) {
+          const { error } = await sb.from("bank_transactions").insert({
+            id: r.id,
+            org_id: r.orgId,
+            account_id: r.accountId,
+            bank_date: r.bankDate,
+            description: r.description,
+            amount_cents: r.amountCents,
+            external_id: r.externalId,
+            fingerprint: r.fingerprint,
+            row_seq: r.rowSeq,
+            batch_id: r.batchId,
+          });
+          if (error?.code === "23505") duplicates++;
+          else {
+            fail(error);
+            inserted++;
+          }
+        }
+        return { inserted, duplicates };
+      },
+      async get(orgId, id) {
+        const { data, error } = await sb
+          .from("bank_transactions")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .maybeSingle();
+        fail(error);
+        return data ? toBank(data) : null;
+      },
+      async listUnmatched(orgId, accountId) {
+        let q = sb
+          .from("bank_transactions")
+          .select("*")
+          .eq("org_id", orgId)
+          .is("transaction_id", null)
+          .order("bank_date");
+        if (accountId) q = q.eq("account_id", accountId);
+        const { data, error } = await q;
+        fail(error);
+        return ((data ?? []) as any[]).map(toBank);
+      },
+      async claim(orgId, id, transactionId) {
+        const { data, error } = await sb
+          .from("bank_transactions")
+          .update({ transaction_id: transactionId, needs_review: false })
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .is("transaction_id", null)
+          .select("id");
+        if (error) return false;
+        return (data ?? []).length > 0;
+      },
+      async unlinkTransaction(orgId, transactionId) {
+        const { data, error } = await sb
+          .from("bank_transactions")
+          .update({ transaction_id: null })
+          .eq("org_id", orgId)
+          .eq("transaction_id", transactionId)
+          .select("id");
+        fail(error);
+        return (data ?? []).length;
+      },
+    },
+
+    reconciliations: {
+      async start(r) {
+        const { error } = await sb.from("reconciliations").insert({
+          id: r.id,
+          org_id: r.orgId,
+          account_id: r.accountId,
+          period_start: r.periodStart,
+          period_end: r.periodEnd,
+          beginning_balance_cents: r.beginningBalanceCents,
+          ending_balance_cents: r.endingBalanceCents,
+          mode: r.mode,
+          batch_id: r.batchId,
+          created_by: r.createdBy,
+        });
+        fail(error);
+      },
+      async get(orgId, id) {
+        const { data, error } = await sb
+          .from("reconciliations")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("id", id)
+          .maybeSingle();
+        fail(error);
+        return data ? toRecon(data) : null;
+      },
+      async list(orgId, accountId) {
+        let q = sb
+          .from("reconciliations")
+          .select("*")
+          .eq("org_id", orgId)
+          .order("period_end", { ascending: false });
+        if (accountId) q = q.eq("account_id", accountId);
+        const { data, error } = await q;
+        fail(error);
+        return ((data ?? []) as any[]).map(toRecon);
+      },
+      async setTicked(reconciliationId, entryIds, ticked) {
+        if (!entryIds.length) return;
+        const { error } = await sb
+          .from("entries")
+          .update({ reconciliation_id: ticked ? reconciliationId : null })
+          .in("id", entryIds);
+        fail(error);
+      },
+      async clearedTotalCents(reconciliationId) {
+        const { data, error } = await sb
+          .from("entries")
+          .select("amount_cents")
+          .eq("reconciliation_id", reconciliationId);
+        fail(error);
+        return ((data ?? []) as any[]).reduce((s, r) => s + Number(r.amount_cents), 0);
+      },
+      async finish(orgId, id, userId) {
+        const { error } = await sb
+          .from("reconciliations")
+          .update({ status: "completed", completed_by: userId, completed_at: new Date().toISOString() })
+          .eq("org_id", orgId)
+          .eq("id", id);
+        fail(error);
+      },
+      async reopen(orgId, id) {
+        const { error } = await sb
+          .from("reconciliations")
+          .update({ status: "in_progress", completed_by: null, completed_at: null })
+          .eq("org_id", orgId)
+          .eq("id", id);
+        fail(error);
+      },
+    },
+
+    audit: {
+      async append(e) {
+        await writeAudit({
+          org_id: e.orgId,
+          user_id: e.userId,
+          action: e.action,
+          entity: e.entity,
+          entity_id: e.entityId ?? null,
+          before: e.before,
+          after: e.after,
+        });
+      },
+    },
+  };
+}
