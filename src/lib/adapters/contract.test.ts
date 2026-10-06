@@ -84,12 +84,16 @@ describe.each(adapters)("%s adapter", (name, make) => {
 
   it("creator becomes admin; orgs are listed per user", async () => {
     expect(await repos.orgs.roleOf(USER, ORG)).toBe("admin");
-    expect((await repos.orgs.listForUser(USER)).map((o) => o.id).sort()).toEqual([ORG, OTHER].sort());
+    expect((await repos.orgs.listForUser(USER)).map((o) => o.id).sort()).toEqual(
+      [ORG, OTHER].sort(),
+    );
   });
 
   it("archived accounts hide from list unless asked", async () => {
     expect((await repos.accounts.list(ORG)).map((x) => x.name)).not.toContain("Old");
-    expect((await repos.accounts.list(ORG, { includeArchived: true })).map((x) => x.name)).toContain("Old");
+    expect(
+      (await repos.accounts.list(ORG, { includeArchived: true })).map((x) => x.name),
+    ).toContain("Old");
   });
 
   it("posts, reads back and sums to zero", async () => {
@@ -98,7 +102,9 @@ describe.each(adapters)("%s adapter", (name, make) => {
     expect(tx?.status).toBe("posted");
     expect(tx?.entries.reduce((s, e) => s + e.amountCents, 0)).toBe(0);
     expect(await repos.transactions.get(OTHER, id)).toBeNull();
-    expect((await repos.transactions.list(ORG, { accountId: CASH })).map((t) => t.id)).toEqual([id]);
+    expect((await repos.transactions.list(ORG, { accountId: CASH })).map((t) => t.id)).toEqual([
+      id,
+    ]);
   });
 
   it("idempotency key returns the original", async () => {
@@ -126,7 +132,9 @@ describe.each(adapters)("%s adapter", (name, make) => {
 
   it("void is idempotent, unticks in-progress check, blocked by a completed one", async () => {
     const { id } = await postTransaction(repos, sale());
-    const entryId = (await repos.transactions.get(ORG, id))!.entries.find((e) => e.accountId === CASH)!.id;
+    const entryId = (await repos.transactions.get(ORG, id))!.entries.find(
+      (e) => e.accountId === CASH,
+    )!.id;
     await repos.reconciliations.start({
       id: "20000000-0000-4000-8000-000000000001",
       orgId: ORG,
@@ -140,7 +148,9 @@ describe.each(adapters)("%s adapter", (name, make) => {
       createdBy: USER,
     });
     await repos.reconciliations.setTicked("20000000-0000-4000-8000-000000000001", [entryId], true);
-    expect(await repos.reconciliations.clearedTotalCents("20000000-0000-4000-8000-000000000001")).toBe(1000);
+    expect(
+      await repos.reconciliations.clearedTotalCents("20000000-0000-4000-8000-000000000001"),
+    ).toBe(1000);
     await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id });
     const after = await repos.transactions.get(ORG, id);
     expect(after?.status).toBe("void");
@@ -199,7 +209,12 @@ describe.each(adapters)("%s adapter", (name, make) => {
     });
     expect((await repos.bank.get(ORG, row.id))?.transactionId).toBe(id);
     await expect(
-      postBankRow(repos, { orgId: ORG, userId: USER, bankTransactionId: row.id, offsetAccountId: SALES }),
+      postBankRow(repos, {
+        orgId: ORG,
+        userId: USER,
+        bankTransactionId: row.id,
+        offsetAccountId: SALES,
+      }),
     ).rejects.toThrow(/Already posted/);
     await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id });
     expect((await repos.bank.listUnmatched(ORG)).map((b) => b.id)).toEqual([row.id]);

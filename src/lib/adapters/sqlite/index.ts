@@ -25,7 +25,9 @@ export async function migrateSqlite(db: SqlDriver): Promise<number> {
   await db.execute(
     "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)",
   );
-  const rows = await db.select<{ v: number | null }>("SELECT MAX(version) AS v FROM schema_version");
+  const rows = await db.select<{ v: number | null }>(
+    "SELECT MAX(version) AS v FROM schema_version",
+  );
   const current = rows[0]?.v ?? 0;
   let applied = 0;
   for (const m of SQLITE_MIGRATIONS) {
@@ -58,7 +60,8 @@ function splitStatements(sql: string): string[] {
   return out;
 }
 
-const isUnique = (e: unknown) => /UNIQUE constraint failed|PRIMARY KEY/i.test(String((e as Error)?.message ?? e));
+const isUnique = (e: unknown) =>
+  /UNIQUE constraint failed|PRIMARY KEY/i.test(String((e as Error)?.message ?? e));
 const now = () => new Date().toISOString();
 const json = (v: unknown) => (v === undefined ? null : JSON.stringify(v));
 
@@ -132,7 +135,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
   async function hydrate(rows: any[]): Promise<Transaction[]> {
     if (!rows.length) return [];
     const ids = rows.map((r) => r.id as string);
-    const entries = await db.select(`SELECT * FROM entries WHERE transaction_id IN (${qs(ids.length)})`, ids);
+    const entries = await db.select(
+      `SELECT * FROM entries WHERE transaction_id IN (${qs(ids.length)})`,
+      ids,
+    );
     const tags = await db.select<{ transaction_id: string; tag_id: string }>(
       `SELECT * FROM transaction_tags WHERE transaction_id IN (${qs(ids.length)})`,
       ids,
@@ -217,7 +223,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         await db.execute(`UPDATE organizations SET ${sets.join(", ")} WHERE id = ?`, [...vals, id]);
       },
       async setBooksLockedThrough(id, date) {
-        await db.execute("UPDATE organizations SET books_locked_through = ? WHERE id = ?", [date, id]);
+        await db.execute("UPDATE organizations SET books_locked_through = ? WHERE id = ?", [
+          date,
+          id,
+        ]);
       },
       async roleOf(userId, orgId) {
         const [r] = await db.select<{ role: Role }>(
@@ -227,7 +236,9 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         return r?.role ?? null;
       },
       async listMembers(orgId) {
-        const rows = await db.select<any>("SELECT user_id, role FROM user_roles WHERE org_id = ?", [orgId]);
+        const rows = await db.select<any>("SELECT user_id, role FROM user_roles WHERE org_id = ?", [
+          orgId,
+        ]);
         return rows.map((r) => ({ userId: r.user_id, orgId, role: r.role, displayName: null }));
       },
     },
@@ -242,10 +253,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async getMany(orgId, ids) {
         if (!ids.length) return [];
-        const rows = await db.select(`SELECT * FROM accounts WHERE org_id = ? AND id IN (${qs(ids.length)})`, [
-          orgId,
-          ...ids,
-        ]);
+        const rows = await db.select(
+          `SELECT * FROM accounts WHERE org_id = ? AND id IN (${qs(ids.length)})`,
+          [orgId, ...ids],
+        );
         return rows.map(toAccount);
       },
       async create(list) {
@@ -262,7 +273,11 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         }
       },
       async rename(orgId, id, name) {
-        await db.execute("UPDATE accounts SET name = ? WHERE org_id = ? AND id = ?", [name, orgId, id]);
+        await db.execute("UPDATE accounts SET name = ? WHERE org_id = ? AND id = ?", [
+          name,
+          orgId,
+          id,
+        ]);
       },
       async setActive(orgId, id, isActive) {
         await db.execute("UPDATE accounts SET is_active = ? WHERE org_id = ? AND id = ?", [
@@ -331,7 +346,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           if (!b || b.n < 2 || Number(b.s) !== 0 || !b.pos || !b.neg)
             throw new Error("Transaction is not balanced");
           for (const tagId of tx.tagIds ?? [])
-            await db.execute("INSERT INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)", [tx.id, tagId]);
+            await db.execute(
+              "INSERT INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)",
+              [tx.id, tagId],
+            );
           await db.execute("COMMIT");
         } catch (e) {
           await db.execute("ROLLBACK");
@@ -347,7 +365,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         return r?.id ?? null;
       },
       async get(orgId, id) {
-        const rows = await db.select("SELECT * FROM transactions WHERE org_id = ? AND id = ?", [orgId, id]);
+        const rows = await db.select("SELECT * FROM transactions WHERE org_id = ? AND id = ?", [
+          orgId,
+          id,
+        ]);
         return (await hydrate(rows))[0] ?? null;
       },
       async list(orgId, opts) {
@@ -375,7 +396,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async clearReconciliation(ids) {
         if (!ids.length) return;
-        await db.execute(`UPDATE entries SET reconciliation_id = NULL WHERE id IN (${qs(ids.length)})`, ids);
+        await db.execute(
+          `UPDATE entries SET reconciliation_id = NULL WHERE id IN (${qs(ids.length)})`,
+          ids,
+        );
       },
       async ledgerRows(orgId, opts) {
         const rows = await db.select<any>(
@@ -427,7 +451,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         return { inserted, duplicates };
       },
       async get(orgId, id) {
-        const [r] = await db.select("SELECT * FROM bank_transactions WHERE org_id = ? AND id = ?", [orgId, id]);
+        const [r] = await db.select("SELECT * FROM bank_transactions WHERE org_id = ? AND id = ?", [
+          orgId,
+          id,
+        ]);
         return r ? toBank(r) : null;
       },
       async listUnmatched(orgId, accountId) {
@@ -479,7 +506,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
       },
       async get(orgId, id) {
-        const [r] = await db.select("SELECT * FROM reconciliations WHERE org_id = ? AND id = ?", [orgId, id]);
+        const [r] = await db.select("SELECT * FROM reconciliations WHERE org_id = ? AND id = ?", [
+          orgId,
+          id,
+        ]);
         return r ? toRecon(r) : null;
       },
       async list(orgId, accountId) {
@@ -491,10 +521,10 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async setTicked(rid, ids, ticked) {
         if (!ids.length) return;
-        await db.execute(`UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)})`, [
-          ticked ? rid : null,
-          ...ids,
-        ]);
+        await db.execute(
+          `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)})`,
+          [ticked ? rid : null, ...ids],
+        );
       },
       async clearedTotalCents(rid) {
         const [r] = await db.select<{ s: number }>(
@@ -521,7 +551,16 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       async append(e) {
         await db.execute(
           "INSERT INTO audit_log (org_id, user_id, action, entity, entity_id, before, after, created_at) VALUES (?,?,?,?,?,?,?,?)",
-          [e.orgId, e.userId, e.action, e.entity, e.entityId ?? null, json(e.before), json(e.after), now()],
+          [
+            e.orgId,
+            e.userId,
+            e.action,
+            e.entity,
+            e.entityId ?? null,
+            json(e.before),
+            json(e.after),
+            now(),
+          ],
         );
       },
     },
