@@ -37,7 +37,7 @@ function GetStartedPage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
           <Button size="lg" asChild>
-            <a href="/downloads/open-ledger-source.zip" download>
+            <a href="/downloads/openledgerapp-source.zip" download>
               <Download /> Download source ZIP
             </a>
           </Button>
