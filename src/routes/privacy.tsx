@@ -8,7 +8,8 @@ export const Route = createFileRoute("/privacy")({
       { title: "Privacy Policy - OpenLedgerApp" },
       {
         name: "description",
-        content: "How Alex Weeks Home Lab protects OpenLedgerApp data and preserves user ownership.",
+        content:
+          "How Alex Weeks Home Lab protects OpenLedgerApp data and preserves user ownership.",
       },
       { property: "og:title", content: "Privacy Policy - OpenLedgerApp" },
       {
@@ -33,9 +34,9 @@ function PrivacyPage() {
         <h2>1. Scope and who we are</h2>
         <p>
           This Privacy Policy describes how {LEGAL_CONFIG.operatorName} (“we,” “us,” or “our”)
-          handles information when it operates the hosted OpenLedgerApp service, website, and related
-          support (together, the “Service”). It applies to account holders, organization members,
-          and visitors who use the hosted Service.
+          handles information when it operates the hosted OpenLedgerApp service, website, and
+          related support (together, the “Service”). It applies to account holders, organization
+          members, and visitors who use the hosted Service.
         </p>
         <p>
           If you use a self-hosted copy of OpenLedgerApp, the person or organization operating that
@@ -134,8 +135,8 @@ function PrivacyPage() {
           Deleted information may remain temporarily in encrypted backups until those backups age
           out. We may retain limited security logs, acceptance records, or other information when
           reasonably necessary to prevent fraud, resolve disputes, enforce agreements, or comply
-          with law. Deleting bookkeeping records may be limited where OpenLedgerApp preserves an audit
-          trail; in that case, you may delete the organization or account instead.
+          with law. Deleting bookkeeping records may be limited where OpenLedgerApp preserves an
+          audit trail; in that case, you may delete the organization or account instead.
         </p>
       </section>
       <section>

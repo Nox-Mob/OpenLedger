@@ -70,12 +70,27 @@
   --hero-shade: oklch(0.22 0.035 165 / 92%);
 }
 
-.website-hero { min-height: 590px; }
-.website-hero-shade { display: none; }
-.website-eyebrow { color: var(--primary); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0; }
+.website-hero {
+  min-height: 590px;
+}
+.website-hero-shade {
+  display: none;
+}
+.website-eyebrow {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
 @media (max-width: 767px) {
-  .website-hero { min-height: 0; }
-  .website-hero-shade { display: block; background: var(--hero-shade); }
+  .website-hero {
+    min-height: 0;
+  }
+  .website-hero-shade {
+    display: block;
+    background: var(--hero-shade);
+  }
 }
 
 :root {
