@@ -29,8 +29,7 @@ export function assertBalancedEntries(entries: readonly DraftEntry[]): void {
   for (const e of entries) {
     if (!Number.isSafeInteger(e.amountCents))
       throw new LedgerRuleError("whole_cents", "Amounts must be whole cents.");
-    if (e.amountCents === 0)
-      throw new LedgerRuleError("non_zero", "Amount cannot be zero.");
+    if (e.amountCents === 0) throw new LedgerRuleError("non_zero", "Amount cannot be zero.");
   }
   const sum = entries.reduce((s, e) => s + e.amountCents, 0);
   if (sum !== 0)

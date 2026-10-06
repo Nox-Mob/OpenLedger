@@ -11,11 +11,16 @@ import {
 const e = (accountId: string, amountCents: number) => ({ accountId, amountCents });
 
 describe("assertBalancedEntries", () => {
-  it("accepts balanced", () => expect(() => assertBalancedEntries([e("a", 100), e("b", -100)])).not.toThrow());
-  it("rejects one line", () => expect(() => assertBalancedEntries([e("a", 100)])).toThrow(/two lines/));
-  it("rejects unbalanced", () => expect(() => assertBalancedEntries([e("a", 100), e("b", -90)])).toThrow(/not balanced/));
-  it("rejects zero", () => expect(() => assertBalancedEntries([e("a", 0), e("b", 0)])).toThrow(/zero/));
-  it("rejects fractions", () => expect(() => assertBalancedEntries([e("a", 1.5), e("b", -1.5)])).toThrow(/whole/));
+  it("accepts balanced", () =>
+    expect(() => assertBalancedEntries([e("a", 100), e("b", -100)])).not.toThrow());
+  it("rejects one line", () =>
+    expect(() => assertBalancedEntries([e("a", 100)])).toThrow(/two lines/));
+  it("rejects unbalanced", () =>
+    expect(() => assertBalancedEntries([e("a", 100), e("b", -90)])).toThrow(/not balanced/));
+  it("rejects zero", () =>
+    expect(() => assertBalancedEntries([e("a", 0), e("b", 0)])).toThrow(/zero/));
+  it("rejects fractions", () =>
+    expect(() => assertBalancedEntries([e("a", 1.5), e("b", -1.5)])).toThrow(/whole/));
 });
 
 describe("assertDateOpen", () => {
@@ -29,12 +34,14 @@ describe("assertDateOpen", () => {
 
 describe("assertAccountsUsable", () => {
   const acct = (id: string, orgId = "o", isActive = true) => ({ id, orgId, isActive });
-  it("accepts active same-org", () => expect(() => assertAccountsUsable("o", ["a", "b"], [acct("a"), acct("b")])).not.toThrow());
+  it("accepts active same-org", () =>
+    expect(() => assertAccountsUsable("o", ["a", "b"], [acct("a"), acct("b")])).not.toThrow());
   it("rejects missing/foreign", () => {
     expect(() => assertAccountsUsable("o", ["a", "b"], [acct("a")])).toThrow(/organization/);
     expect(() => assertAccountsUsable("o", ["a"], [acct("a", "x")])).toThrow(/organization/);
   });
-  it("rejects archived", () => expect(() => assertAccountsUsable("o", ["a"], [acct("a", "o", false)])).toThrow(/active/));
+  it("rejects archived", () =>
+    expect(() => assertAccountsUsable("o", ["a"], [acct("a", "o", false)])).toThrow(/active/));
 });
 
 describe("voidDecision / reconciliation", () => {
