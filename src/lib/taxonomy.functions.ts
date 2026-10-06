@@ -1,3 +1,4 @@
+import { assertBalancedEntries, newId } from "./domain/ledger";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -104,9 +105,15 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
         "This account already has an opening balance. Void it first if it needs to change.",
       );
     }
+    const openingEntries = [
+      { accountId: data.accountId, amountCents: data.amountCents },
+      { accountId: data.equityAccountId, amountCents: -data.amountCents },
+    ];
+    assertBalancedEntries(openingEntries);
     const { data: tx, error: txError } = await supabase
       .from("transactions")
       .insert({
+        id: newId(),
         org_id: data.orgId,
         transaction_date: data.date,
         description: "Opening balance",
@@ -121,10 +128,14 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
       throw new Error(txError.message);
     }
 
-    const { error } = await supabase.from("entries").insert([
-      { transaction_id: tx.id, account_id: data.accountId, amount_cents: data.amountCents },
-      { transaction_id: tx.id, account_id: data.equityAccountId, amount_cents: -data.amountCents },
-    ]);
+    const { error } = await supabase.from("entries").insert(
+      openingEntries.map((e) => ({
+        id: newId(),
+        transaction_id: tx.id,
+        account_id: e.accountId,
+        amount_cents: e.amountCents,
+      })),
+    );
     if (error) {
       await supabase.from("transactions").delete().eq("id", tx.id);
       throw new Error(error.message);

@@ -31,3 +31,5 @@
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
 - Release notes: `CHANGELOG.md` is the single source for the public changelog; describe planned work in the blueprint/roadmap, not as shipped releases.
 
+- Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.
+- IDs: new ledger records get app-generated UUIDs (newId()) so identity survives future offline sync.
