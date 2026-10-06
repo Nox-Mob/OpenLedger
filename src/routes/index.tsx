@@ -6,9 +6,9 @@ import deskImage from "@/assets/open-ledger-desk.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
-    { title: "Open Ledger — Open-source accounting. Your books, your control." },
+    { title: "OpenLedgerApp" },
     { name: "description", content: "Open-source double-entry accounting for small businesses, freelancers, and nonprofits. Explore the development source and our self-hosted and future desktop vision." },
-    { property: "og:title", content: "Open Ledger — Your books, your control." },
+    { property: "og:title", content: "OpenLedgerApp" },
     { property: "og:description", content: "Approachable, open-source accounting for small teams. Development source available; standalone desktop is planned." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
   ] }),
@@ -22,7 +22,7 @@ function LandingPage() {
       <div className="website-hero-shade absolute inset-0 -z-10" />
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-hero-muted"><span className="h-1.5 w-1.5 rounded-full bg-hero-accent" /> Independent by design. Open by nature.</p>
-        <h1 className="mt-8 font-display text-5xl leading-tight text-hero-foreground sm:text-6xl">Open Ledger</h1>
+        <h1 className="mt-8 font-display text-5xl leading-tight text-hero-foreground sm:text-6xl">OpenLedgerApp</h1>
         <p className="mt-5 max-w-lg text-2xl leading-snug text-hero-foreground sm:text-3xl">Your books.<br />Your understanding. Your control.</p>
         <p className="mt-6 max-w-md text-base leading-7 text-hero-muted">Open-source double-entry accounting for small businesses, freelancers, and nonprofits. Built for the people doing the work—not just the people who speak accounting.</p>
         <div className="mt-8 flex flex-wrap gap-3">
