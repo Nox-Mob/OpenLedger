@@ -28,4 +28,6 @@
 - Demo: demo@demo.org / demo1234, manual dev seed only.
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
+- Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
+- Release notes: `CHANGELOG.md` is the single source for the public changelog; describe planned work in the blueprint/roadmap, not as shipped releases.
 

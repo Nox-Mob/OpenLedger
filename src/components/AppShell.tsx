@@ -59,7 +59,7 @@ export function useOrgContext() {
 }
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/ledger", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/transactions/new", label: "New Transaction", icon: PlusCircle, write: true },
   { to: "/accounts", label: "Accounts", icon: Landmark },
@@ -127,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                activeOptions={{ exact: item.to === "/" }}
+                activeOptions={{ exact: item.to === "/ledger" }}
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 activeProps={{
                   className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",

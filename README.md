@@ -9,6 +9,14 @@ Open-source, self-hostable double-entry accounting for very small businesses and
 
 Built with React 19 + TanStack Start (Vite), Tailwind CSS v4, and Supabase (Postgres, Auth, Storage).
 
+## Public website and release notes
+
+The public website is at `/`; account holders use `/auth` to sign in and `/ledger` for the dashboard. `/get-started` describes the two backend setup paths and offers a development source archive. It is not a desktop installer. The website does not advertise the preview or development demo.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes and [BLUEPRINT.md](BLUEPRINT.md) for the v0.0.2 website and planned v0.0.3 desktop-ready architecture. The future free standalone desktop edition, managed cloud offering, optional donations, and synchronization are goals, not shipped features or pricing commitments.
+
+Source ZIP downloads are snapshots packaged with the website; refresh the archive when preparing a release. Exclude `.env`, local overrides, credentials, dependencies, Git metadata, and generated output.
+
 ---
 
 ## Running the sample-data setup file manually

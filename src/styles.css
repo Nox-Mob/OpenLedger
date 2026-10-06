@@ -41,9 +41,41 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-hero-accent: var(--hero-accent);
+  --color-hero-accent-foreground: var(--hero-accent-foreground);
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Libre Baskerville", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.website {
+  --background: oklch(0.995 0.001 160);
+  --foreground: oklch(0.24 0.02 165);
+  --primary: oklch(0.4 0.075 165);
+  --primary-foreground: oklch(0.99 0.002 160);
+  --muted: oklch(0.955 0.007 160);
+  --muted-foreground: oklch(0.47 0.018 165);
+  --secondary: oklch(0.97 0.008 160);
+  --secondary-foreground: oklch(0.25 0.03 165);
+  --border: oklch(0.89 0.009 160);
+  --input: var(--border);
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+  --hero-foreground: oklch(0.99 0.004 150);
+  --hero-muted: oklch(0.86 0.018 150);
+  --hero-accent: oklch(0.86 0.115 115);
+  --hero-accent-foreground: oklch(0.23 0.03 160);
+  --hero-shade: oklch(0.22 0.035 165 / 92%);
+}
+
+.website-hero { min-height: 590px; }
+.website-hero-shade { display: none; }
+.website-eyebrow { color: var(--primary); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0; }
+@media (max-width: 767px) {
+  .website-hero { min-height: 0; }
+  .website-hero-shade { display: block; background: var(--hero-shade); }
 }
 
 :root {
