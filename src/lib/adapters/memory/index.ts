@@ -217,6 +217,8 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
                 accountName: a.name,
                 accountType: a.type,
                 projectId: e.projectId,
+                fundId: e.fundId,
+                source: t.source,
                 transactionDate: t.transactionDate,
               };
             }),
