@@ -2,9 +2,10 @@
 
 Notable changes to OpenLedgerApp are recorded here. This project follows the structure of Keep a Changelog. Pre-1.0 software remains under active development.
 
-## [Unreleased] — v0.0.2
+## [Unreleased] - v0.0.2
 
 ### Added
+- High-contrast dark mode with a toggle in the website header and the app sidebar. It remembers your choice and follows the system preference on first visit.
 - Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
 - Getting-started page linking to the source archive on GitHub (the app source, without the public website).
@@ -20,6 +21,11 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Page titles use OpenLedgerApp for home and Page Name - OpenLedgerApp elsewhere.
 - Public home is now `/`; the existing authenticated dashboard is at `/ledger`.
 - Public website does not advertise or link the development preview or shared demo.
+- Consistent section spacing across the website and app.
+
+### Removed
+- Marketing strips and badge labels above headlines, including the checkmark strip and early-development line on the home page.
+- The mailing address from legal pages; legal notices now cite the support email only.
 
 ## [0.0.1] — 2026-10-01
 
