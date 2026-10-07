@@ -224,9 +224,7 @@ function RestoreSection() {
           This install's fingerprint: <span className="font-mono">{fp.data.fingerprint}</span>
         </p>
       )}
-      <p className="mt-4 text-sm font-medium">
-        Backup file
-      </p>
+      <p className="mt-4 text-sm font-medium">Backup file</p>
       <input
         ref={fileInput}
         id="backup-file"
