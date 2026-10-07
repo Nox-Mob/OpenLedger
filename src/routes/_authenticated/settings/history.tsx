@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useOrgContext } from "@/components/AppShell";
 import { listHistory } from "@/lib/backup.functions";
 
@@ -39,8 +39,7 @@ function HistoryPage() {
   const isAdmin = org?.role === "admin";
   const q = useQuery({
     queryKey: ["history", org?.id, page, entity],
-    queryFn: () =>
-      listHistory({ data: { orgId: org!.id, page, ...(entity ? { entity } : {}) } }),
+    queryFn: () => listHistory({ data: { orgId: org!.id, page, ...(entity ? { entity } : {}) } }),
     enabled: !!org && isAdmin,
   });
   if (!org) return null;
@@ -59,8 +58,7 @@ function HistoryPage() {
     <div>
       <h2 className="font-display text-lg font-semibold">History</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every change to this organization's books, newest first. History can't be edited or
-        deleted.
+        Every change to this organization's books, newest first. History can't be edited or deleted.
       </p>
       <div className="mt-4 flex items-center gap-2 text-sm">
         <label htmlFor="entity" className="text-muted-foreground">
@@ -99,8 +97,8 @@ function HistoryPage() {
             </thead>
             <tbody>
               {q.data!.rows.map((r) => (
-                <>
-                  <tr key={r.id} className="border-b">
+                <Fragment key={r.id}>
+                  <tr className="border-b">
                     <td className="whitespace-nowrap px-4 py-2.5">{fmt(r.created_at)}</td>
                     <td className="px-4 py-2.5">{r.who}</td>
                     <td className="px-4 py-2.5">
@@ -117,7 +115,7 @@ function HistoryPage() {
                     </td>
                   </tr>
                   {open === r.id && (
-                    <tr key={r.id + "-d"} className="border-b bg-muted/30">
+                    <tr className="border-b bg-muted/30">
                       <td colSpan={4} className="px-4 py-3">
                         <div className="grid gap-3 md:grid-cols-2">
                           <div>
@@ -136,7 +134,7 @@ function HistoryPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

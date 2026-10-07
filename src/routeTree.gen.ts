@@ -19,6 +19,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedFundsRouteImport } from './routes/_authenticated/funds'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
@@ -33,6 +34,8 @@ import { Route as AuthenticatedReconcileIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedSettingsAccountsRouteImport } from './routes/_authenticated/settings/accounts'
 import { Route as AuthenticatedSettingsCloseRouteImport } from './routes/_authenticated/settings/close'
+import { Route as AuthenticatedSettingsExportsRouteImport } from './routes/_authenticated/settings/exports'
+import { Route as AuthenticatedSettingsHistoryRouteImport } from './routes/_authenticated/settings/history'
 import { Route as AuthenticatedSettingsMembersRouteImport } from './routes/_authenticated/settings/members'
 import { Route as AuthenticatedSettingsPreferencesRouteImport } from './routes/_authenticated/settings/preferences'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
@@ -85,6 +88,11 @@ const TermsRoute = TermsRouteImport.update({
 const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
+  id: '/budgets',
+  path: '/budgets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFundsRoute = AuthenticatedFundsRouteImport.update({
@@ -162,6 +170,18 @@ const AuthenticatedSettingsCloseRoute =
     path: '/close',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsExportsRoute =
+  AuthenticatedSettingsExportsRouteImport.update({
+    id: '/exports',
+    path: '/exports',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsHistoryRoute =
+  AuthenticatedSettingsHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsMembersRoute =
   AuthenticatedSettingsMembersRouteImport.update({
     id: '/members',
@@ -197,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/budgets': typeof AuthenticatedBudgetsRoute
   '/funds': typeof AuthenticatedFundsRoute
   '/import': typeof AuthenticatedImportRoute
   '/ledger': typeof AuthenticatedLedgerRoute
@@ -209,6 +230,8 @@ export interface FileRoutesByFullPath {
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/settings/close': typeof AuthenticatedSettingsCloseRoute
+  '/settings/exports': typeof AuthenticatedSettingsExportsRoute
+  '/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -226,6 +249,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/budgets': typeof AuthenticatedBudgetsRoute
   '/funds': typeof AuthenticatedFundsRoute
   '/import': typeof AuthenticatedImportRoute
   '/ledger': typeof AuthenticatedLedgerRoute
@@ -237,6 +261,8 @@ export interface FileRoutesByTo {
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/settings/close': typeof AuthenticatedSettingsCloseRoute
+  '/settings/exports': typeof AuthenticatedSettingsExportsRoute
+  '/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -256,6 +282,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/funds': typeof AuthenticatedFundsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
@@ -268,6 +295,8 @@ export interface FileRoutesById {
   '/_authenticated/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/_authenticated/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/_authenticated/settings/close': typeof AuthenticatedSettingsCloseRoute
+  '/_authenticated/settings/exports': typeof AuthenticatedSettingsExportsRoute
+  '/_authenticated/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/_authenticated/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/_authenticated/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
@@ -287,6 +316,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/accounts'
+    | '/budgets'
     | '/funds'
     | '/import'
     | '/ledger'
@@ -299,6 +329,8 @@ export interface FileRouteTypes {
     | '/reconcile/$id'
     | '/settings/accounts'
     | '/settings/close'
+    | '/settings/exports'
+    | '/settings/history'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
@@ -316,6 +348,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/accounts'
+    | '/budgets'
     | '/funds'
     | '/import'
     | '/ledger'
@@ -327,6 +360,8 @@ export interface FileRouteTypes {
     | '/reconcile/$id'
     | '/settings/accounts'
     | '/settings/close'
+    | '/settings/exports'
+    | '/settings/history'
     | '/settings/members'
     | '/settings/preferences'
     | '/transactions/new'
@@ -345,6 +380,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/_authenticated/accounts'
+    | '/_authenticated/budgets'
     | '/_authenticated/funds'
     | '/_authenticated/import'
     | '/_authenticated/ledger'
@@ -357,6 +393,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reconcile/$id'
     | '/_authenticated/settings/accounts'
     | '/_authenticated/settings/close'
+    | '/_authenticated/settings/exports'
+    | '/_authenticated/settings/history'
     | '/_authenticated/settings/members'
     | '/_authenticated/settings/preferences'
     | '/_authenticated/transactions/new'
@@ -448,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/accounts'
       fullPath: '/accounts'
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/budgets': {
+      id: '/_authenticated/budgets'
+      path: '/budgets'
+      fullPath: '/budgets'
+      preLoaderRoute: typeof AuthenticatedBudgetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/funds': {
@@ -548,6 +593,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsCloseRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/exports': {
+      id: '/_authenticated/settings/exports'
+      path: '/exports'
+      fullPath: '/settings/exports'
+      preLoaderRoute: typeof AuthenticatedSettingsExportsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/history': {
+      id: '/_authenticated/settings/history'
+      path: '/history'
+      fullPath: '/settings/history'
+      preLoaderRoute: typeof AuthenticatedSettingsHistoryRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/members': {
       id: '/_authenticated/settings/members'
       path: '/members'
@@ -582,6 +641,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAccountsRoute: typeof AuthenticatedSettingsAccountsRoute
   AuthenticatedSettingsCloseRoute: typeof AuthenticatedSettingsCloseRoute
+  AuthenticatedSettingsExportsRoute: typeof AuthenticatedSettingsExportsRoute
+  AuthenticatedSettingsHistoryRoute: typeof AuthenticatedSettingsHistoryRoute
   AuthenticatedSettingsMembersRoute: typeof AuthenticatedSettingsMembersRoute
   AuthenticatedSettingsPreferencesRoute: typeof AuthenticatedSettingsPreferencesRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
@@ -590,6 +651,8 @@ interface AuthenticatedSettingsRouteChildren {
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsAccountsRoute: AuthenticatedSettingsAccountsRoute,
   AuthenticatedSettingsCloseRoute: AuthenticatedSettingsCloseRoute,
+  AuthenticatedSettingsExportsRoute: AuthenticatedSettingsExportsRoute,
+  AuthenticatedSettingsHistoryRoute: AuthenticatedSettingsHistoryRoute,
   AuthenticatedSettingsMembersRoute: AuthenticatedSettingsMembersRoute,
   AuthenticatedSettingsPreferencesRoute: AuthenticatedSettingsPreferencesRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
@@ -602,6 +665,7 @@ const AuthenticatedSettingsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedFundsRoute: typeof AuthenticatedFundsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
@@ -618,6 +682,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedFundsRoute: AuthenticatedFundsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,

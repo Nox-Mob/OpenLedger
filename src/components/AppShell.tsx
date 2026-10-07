@@ -9,6 +9,7 @@ import {
   Upload,
   ListChecks,
   FolderKanban,
+  Target,
   PiggyBank,
   HandCoins,
   FileBarChart,

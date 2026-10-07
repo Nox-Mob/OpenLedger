@@ -8,7 +8,11 @@ function pad(n: number) {
 }
 
 /** First day of the budget period containing `day`. Years follow the fiscal year start month. */
-export function periodStartFor(type: BudgetPeriod, day: IsoDate, fiscalStartMonth: number): IsoDate {
+export function periodStartFor(
+  type: BudgetPeriod,
+  day: IsoDate,
+  fiscalStartMonth: number,
+): IsoDate {
   const [y, m] = day.split("-").map(Number) as [number, number];
   if (type === "month") return `${y}-${pad(m)}-01`;
   const startYear = m >= fiscalStartMonth ? y : y - 1;

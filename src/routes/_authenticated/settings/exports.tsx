@@ -85,7 +85,10 @@ function ExportsPage() {
   async function backup() {
     const ex = await import("@/lib/export");
     const data = await exportBackup({ data: { orgId: org!.id } });
-    ex.downloadJson(data, `${ex.safeFileName(org!.name)}-backup-${data.exportedAt.slice(0, 10)}.json`);
+    ex.downloadJson(
+      data,
+      `${ex.safeFileName(org!.name)}-backup-${data.exportedAt.slice(0, 10)}.json`,
+    );
     toast.success("Backup downloaded");
   }
 

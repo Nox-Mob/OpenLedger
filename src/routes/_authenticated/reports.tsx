@@ -124,7 +124,8 @@ function ReportsPage() {
       toast.error(e?.message ?? "Could not export");
     }
   }
-  const sheetReady = tab === "income" ? !!income : tab === "balance" ? !!balance : !!trialQuery.data;
+  const sheetReady =
+    tab === "income" ? !!income : tab === "balance" ? !!balance : !!trialQuery.data;
   const btn =
     "inline-flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50";
 

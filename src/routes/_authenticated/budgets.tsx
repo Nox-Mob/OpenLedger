@@ -12,7 +12,10 @@ export const Route = createFileRoute("/_authenticated/budgets")({
   head: () => ({
     meta: [
       { title: "Budgets - OpenLedgerApp" },
-      { name: "description", content: "Set yearly or monthly budgets and compare them to actuals." },
+      {
+        name: "description",
+        content: "Set yearly or monthly budgets and compare them to actuals.",
+      },
       { property: "og:title", content: "Budgets - OpenLedgerApp" },
       {
         property: "og:description",
@@ -35,7 +38,7 @@ function label(type: BudgetPeriod, start: string, end: string) {
 }
 
 function BudgetsPage() {
-  const { org, terms } = useOrgContext();
+  const { org, reportTerms: terms } = useOrgContext();
   const qc = useQueryClient();
   const [type, setType] = useState<BudgetPeriod>("year");
   const today = todayISO(new Date(), org?.timezone);
@@ -49,7 +52,8 @@ function BudgetsPage() {
 
   const q = useQuery({
     queryKey: ["budgets", org?.id, type, start],
-    queryFn: () => budgetVsActual({ data: { orgId: org!.id, periodType: type, periodStart: start } }),
+    queryFn: () =>
+      budgetVsActual({ data: { orgId: org!.id, periodType: type, periodStart: start } }),
     enabled: !!org,
   });
   if (!org) return null;
@@ -65,7 +69,13 @@ function BudgetsPage() {
     }
     try {
       await saveBudget({
-        data: { orgId: org!.id, accountId, periodType: type, periodStart: start, amountCents: cents },
+        data: {
+          orgId: org!.id,
+          accountId,
+          periodType: type,
+          periodStart: start,
+          amountCents: cents,
+        },
       });
       setDrafts(({ [accountId]: _, ...rest }) => rest);
       qc.invalidateQueries({ queryKey: ["budgets", org!.id] });
@@ -146,8 +156,10 @@ function BudgetsPage() {
                   {rows.map((r) => {
                     const budget = r.budgetCents ?? 0;
                     // Positive difference = good (more income or less spending than planned).
-                    const diff = g.key === "revenue" ? r.actualCents - budget : budget - r.actualCents;
-                    const pct = budget > 0 ? Math.min(100, Math.round((r.actualCents / budget) * 100)) : 0;
+                    const diff =
+                      g.key === "revenue" ? r.actualCents - budget : budget - r.actualCents;
+                    const pct =
+                      budget > 0 ? Math.min(100, Math.round((r.actualCents / budget) * 100)) : 0;
                     const draft = drafts[r.accountId];
                     return (
                       <tr key={r.accountId} className="border-b last:border-0">
@@ -158,18 +170,31 @@ function BudgetsPage() {
                               aria-label={`Budget for ${r.name}`}
                               inputMode="decimal"
                               placeholder="0.00"
-                              value={draft ?? (r.budgetCents === null ? "" : (r.budgetCents / 100).toFixed(2))}
-                              onChange={(e) => setDrafts((d) => ({ ...d, [r.accountId]: e.target.value }))}
+                              value={
+                                draft ??
+                                (r.budgetCents === null ? "" : (r.budgetCents / 100).toFixed(2))
+                              }
+                              onChange={(e) =>
+                                setDrafts((d) => ({ ...d, [r.accountId]: e.target.value }))
+                              }
                               onBlur={() => save(r.accountId)}
-                              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+                              onKeyDown={(e) =>
+                                e.key === "Enter" && (e.target as HTMLInputElement).blur()
+                              }
                               className="tnum w-32 rounded-md border border-input bg-background px-2 py-1 text-right outline-none focus:ring-2 focus:ring-ring"
                             />
                           ) : (
-                            <span className="tnum">{r.budgetCents === null ? "" : formatCents(budget)}</span>
+                            <span className="tnum">
+                              {r.budgetCents === null ? "" : formatCents(budget)}
+                            </span>
                           )}
                         </td>
-                        <td className="tnum px-4 py-2.5 text-right">{formatCents(r.actualCents)}</td>
-                        <td className={`tnum px-4 py-2.5 text-right ${r.budgetCents !== null && diff < 0 ? "text-destructive" : ""}`}>
+                        <td className="tnum px-4 py-2.5 text-right">
+                          {formatCents(r.actualCents)}
+                        </td>
+                        <td
+                          className={`tnum px-4 py-2.5 text-right ${r.budgetCents !== null && diff < 0 ? "text-destructive" : ""}`}
+                        >
                           {r.budgetCents === null ? "" : formatCents(diff)}
                         </td>
                         <td className="px-4 py-2.5">
