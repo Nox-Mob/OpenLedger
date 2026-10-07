@@ -17,7 +17,7 @@ async function all(build: (from: number, to: number) => PromiseLike<{ data: any;
   }
 }
 
-const ORG_TABLES = [
+const ORG_TABLES = [ // order matches domain/backup TABLES minus entries/transaction_tags
   "accounts",
   "categories",
   "tags",
@@ -83,13 +83,9 @@ export const exportBackup = createServerFn({ method: "POST" })
       entity_id: data.orgId,
       after: counts,
     });
-    return {
-      format: "openledgerapp-backup",
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      organization: org,
-      tables,
-    };
+    const { getSigningKeys } = await import("./backup-key.server");
+    const { signBackup } = await import("./domain/backup");
+    return signBackup(await getSigningKeys(), org, tables, new Date().toISOString());
   });
 
 /** Every posted and voided transaction line, for spreadsheet export. */
@@ -170,4 +166,61 @@ export const listHistory = createServerFn({ method: "GET" })
         who: r.user_id ? (names.get(r.user_id) ?? `User ${r.user_id.slice(0, 8)}`) : "System",
       })),
     };
+  });
+
+const backupText = z.string().min(2).max(26 * 1024 * 1024);
+
+async function verifyText(text: string) {
+  const { MAX_BACKUP_BYTES, verifyBackup, BackupRejected } = await import("./domain/backup");
+  if (new TextEncoder().encode(text).length > MAX_BACKUP_BYTES)
+    throw new BackupRejected("The backup file is larger than 25 MB.");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new BackupRejected("This file isn't a valid backup (it couldn't be read).");
+  }
+  const { getSigningKeys } = await import("./backup-key.server");
+  return verifyBackup(parsed, (await getSigningKeys()).publicRaw);
+}
+
+/** Check a backup without writing anything. Any signed-in user may restore into a new org. */
+export const checkBackupFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ text: backupText }).parse(input))
+  .handler(async ({ data }) => {
+    const v = await verifyText(data.text);
+    const m = v.backup.manifest;
+    return {
+      orgName: m.orgName,
+      exportedAt: m.exportedAt,
+      sameInstall: v.sameInstall,
+      installFingerprint: v.installFingerprint,
+      counts: v.counts,
+    };
+  });
+
+export const restoreBackup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z.object({ text: backupText, confirmName: z.string().max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const v = await verifyText(data.text);
+    if (data.confirmName.trim() !== v.backup.manifest.orgName.trim())
+      throw new Error("Type the organization name exactly as shown to confirm.");
+    const { restoreIntoNewOrg } = await import("./restore.server");
+    return restoreIntoNewOrg(context.supabase, context.userId, v);
+  });
+
+/** This install's backup fingerprint, so admins can compare it with a file's source. */
+export const getInstallFingerprint = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { getSigningKeys } = await import("./backup-key.server");
+    try {
+      return { fingerprint: (await getSigningKeys()).fingerprint };
+    } catch {
+      return { fingerprint: null };
+    }
   });
