@@ -9,7 +9,7 @@ export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expens
 export type OrgType = "nonprofit" | "business";
 export type Role = "admin" | "member" | "viewer";
 export type TransactionSource =
-  "manual"
+  | "manual"
   | "import"
   | "opening_balance"
   | "adjustment"

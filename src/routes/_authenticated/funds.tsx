@@ -149,7 +149,10 @@ function FundsPage() {
   async function submitRelease(e: React.FormEvent) {
     e.preventDefault();
     const cents = parseToCents(releaseAmount);
-    if (!cents || cents <= 0) return toast.error("Enter an amount greater than zero.");
+    if (!cents || cents <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
     setBusy(true);
     try {
       await releaseFromRestriction({
@@ -192,7 +195,10 @@ function FundsPage() {
 
       {net && (
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Stat label="Net assets without donor restrictions" cents={net.withoutRestrictionsCents} />
+          <Stat
+            label="Net assets without donor restrictions"
+            cents={net.withoutRestrictionsCents}
+          />
           <Stat label="Net assets with donor restrictions" cents={net.withRestrictionsCents} />
           <Stat label="Total net assets" cents={net.totalCents} />
         </div>
@@ -279,13 +285,16 @@ function FundsPage() {
         </div>
         {funds.some((f) => f.isRestricted && f.spentCents > f.releasedCents) && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Some restricted funds have more spent than released. Release the spent amount to move
-            it out of restriction.
+            Some restricted funds have more spent than released. Release the spent amount to move it
+            out of restriction.
           </p>
         )}
 
         {releaseFor && (
-          <form onSubmit={submitRelease} className="mt-4 grid gap-3 rounded-md border p-4 sm:grid-cols-4">
+          <form
+            onSubmit={submitRelease}
+            className="mt-4 grid gap-3 rounded-md border p-4 sm:grid-cols-4"
+          >
             <div className="sm:col-span-4 text-sm font-medium">
               Release from {funds.find((f) => f.id === releaseFor)?.name}
             </div>
@@ -398,7 +407,9 @@ function Stat({ label, cents }: { label: string; cents: number }) {
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 font-display text-xl font-semibold tabular-nums">{formatCents(cents)}</div>
+      <div className="mt-1 font-display text-xl font-semibold tabular-nums">
+        {formatCents(cents)}
+      </div>
     </div>
   );
 }

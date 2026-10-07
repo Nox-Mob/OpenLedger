@@ -86,7 +86,10 @@ export const releaseFromRestriction = createServerFn({ method: "POST" })
 
 // ---------- Pledges ----------
 
-async function receivableAccount(repos: ReturnType<typeof createSupabaseRepositories>, orgId: string) {
+async function receivableAccount(
+  repos: ReturnType<typeof createSupabaseRepositories>,
+  orgId: string,
+) {
   const all = await repos.accounts.list(orgId, { includeArchived: true });
   const existing = all.find((a) => a.subtype === "pledges_receivable");
   if (existing) {

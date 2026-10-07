@@ -155,9 +155,7 @@ export const acceptInvite = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     assertInviteUsable(
-      inv
-        ? { expiresAt: inv.expires_at, usedAt: inv.used_at, revokedAt: inv.revoked_at }
-        : null,
+      inv ? { expiresAt: inv.expires_at, usedAt: inv.used_at, revokedAt: inv.revoked_at } : null,
     );
     const invite = inv!;
     const orgName = (invite as any).organizations?.name ?? "the organization";

@@ -54,7 +54,12 @@ export function assertCanRemove(members: MemberRef[], targetUserId: string, owne
   }
 }
 
-export function assertCanTransfer(members: MemberRef[], callerId: string, ownerId: string, to: string) {
+export function assertCanTransfer(
+  members: MemberRef[],
+  callerId: string,
+  ownerId: string,
+  to: string,
+) {
   if (callerId !== ownerId) {
     throw new MemberRuleError("not_owner", "Only the owner can transfer ownership.");
   }

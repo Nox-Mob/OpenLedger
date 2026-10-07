@@ -83,9 +83,15 @@ function PledgesPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const cents = parseToCents(amount);
-    if (!cents || cents <= 0) return toast.error("Enter an amount greater than zero.");
+    if (!cents || cents <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
     const rev = revenueId || revenue[0]?.id;
-    if (!rev) return toast.error("Turn on an income account first.");
+    if (!rev) {
+      toast.error("Turn on an income account first.");
+      return;
+    }
     setBusy(true);
     try {
       await createPledge({
@@ -119,7 +125,10 @@ function PledgesPage() {
     e.preventDefault();
     if (!settle) return;
     const cents = parseToCents(settleAmount);
-    if (!cents || cents <= 0) return toast.error("Enter an amount greater than zero.");
+    if (!cents || cents <= 0) {
+      toast.error("Enter an amount greater than zero.");
+      return;
+    }
     setBusy(true);
     try {
       await settlePledgeFn({
@@ -151,7 +160,8 @@ function PledgesPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Pledges</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            A pledge is a promised gift. It counts as income when promised, and is tracked until paid.
+            A pledge is a promised gift. It counts as income when promised, and is tracked until
+            paid.
           </p>
         </div>
         <Link to="/funds" className="text-sm font-medium text-primary hover:underline">
@@ -160,11 +170,19 @@ function PledgesPage() {
       </div>
 
       {canWrite && (
-        <form onSubmit={submit} className="mt-6 grid gap-3 rounded-lg border bg-card p-5 sm:grid-cols-3">
+        <form
+          onSubmit={submit}
+          className="mt-6 grid gap-3 rounded-lg border bg-card p-5 sm:grid-cols-3"
+        >
           <h2 className="font-display text-lg font-semibold sm:col-span-3">Record a pledge</h2>
           <label className="text-sm">
             Donor
-            <input required value={donor} onChange={(e) => setDonor(e.target.value)} className={inputCls} />
+            <input
+              required
+              value={donor}
+              onChange={(e) => setDonor(e.target.value)}
+              className={inputCls}
+            />
           </label>
           <label className="text-sm">
             Amount
@@ -190,7 +208,11 @@ function PledgesPage() {
           </label>
           <label className="text-sm">
             Income account
-            <select value={revenueId} onChange={(e) => setRevenueId(e.target.value)} className={inputCls}>
+            <select
+              value={revenueId}
+              onChange={(e) => setRevenueId(e.target.value)}
+              className={inputCls}
+            >
               {revenue.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -210,7 +232,12 @@ function PledgesPage() {
           </label>
           <label className="text-sm">
             Expected by
-            <input type="date" value={expected} onChange={(e) => setExpected(e.target.value)} className={inputCls} />
+            <input
+              type="date"
+              value={expected}
+              onChange={(e) => setExpected(e.target.value)}
+              className={inputCls}
+            />
           </label>
           <label className="text-sm sm:col-span-2">
             Note
@@ -247,7 +274,9 @@ function PledgesPage() {
                   <td className="py-2">{p.pledgeDate}</td>
                   <td className="py-2 text-right tabular-nums">{formatCents(p.amountCents)}</td>
                   <td className="py-2 text-right tabular-nums">{formatCents(p.paidCents)}</td>
-                  <td className="py-2 text-right tabular-nums">{formatCents(p.outstandingCents)}</td>
+                  <td className="py-2 text-right tabular-nums">
+                    {formatCents(p.outstandingCents)}
+                  </td>
                   <td className="py-2">{STATUS[p.status]}</td>
                   <td className="space-x-3 py-2 text-right whitespace-nowrap">
                     {canWrite && p.status === "open" && (
@@ -287,7 +316,10 @@ function PledgesPage() {
         </div>
 
         {settle && (
-          <form onSubmit={submitSettle} className="mt-4 grid gap-3 rounded-md border p-4 sm:grid-cols-4">
+          <form
+            onSubmit={submitSettle}
+            className="mt-4 grid gap-3 rounded-md border p-4 sm:grid-cols-4"
+          >
             <div className="text-sm font-medium sm:col-span-4">
               {settle.kind === "payment" ? "Record a payment" : "Write off what is left"}
             </div>
@@ -314,7 +346,11 @@ function PledgesPage() {
             {settle.kind === "payment" && (
               <label className="text-sm">
                 Money went to
-                <select value={cashId} onChange={(e) => setCashId(e.target.value)} className={inputCls}>
+                <select
+                  value={cashId}
+                  onChange={(e) => setCashId(e.target.value)}
+                  className={inputCls}
+                >
                   {cash.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name}

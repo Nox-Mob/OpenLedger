@@ -113,7 +113,12 @@ export async function settlePledge(
     idempotencyKey: string;
   },
 ) {
-  assertPledgeSettlement(input.status, input.pledgeAmountCents, input.settledCents, input.amountCents);
+  assertPledgeSettlement(
+    input.status,
+    input.pledgeAmountCents,
+    input.settledCents,
+    input.amountCents,
+  );
   return postTransaction(repos, {
     orgId: input.orgId,
     userId: input.userId,

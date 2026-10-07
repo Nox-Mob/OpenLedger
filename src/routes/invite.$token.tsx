@@ -63,7 +63,9 @@ function InvitePage() {
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-md rounded-lg border bg-card p-8 text-center">
         <h1 className="font-display text-2xl font-bold">Join an organization</h1>
-        {state === "checking" && <p className="mt-3 text-muted-foreground">Checking your invite.</p>}
+        {state === "checking" && (
+          <p className="mt-3 text-muted-foreground">Checking your invite.</p>
+        )}
         {state === "joining" && <p className="mt-3 text-muted-foreground">Adding you now.</p>}
         {state === "signin" && (
           <>

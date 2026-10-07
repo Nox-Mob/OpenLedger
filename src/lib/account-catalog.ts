@@ -80,7 +80,8 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       subtype: "pledges_receivable",
       defaultOn: false,
       why: "Track gifts donors have promised but not paid yet.",
-      whyNot: "Skip it if you only record gifts when the money arrives. It is added for you when you record your first pledge.",
+      whyNot:
+        "Skip it if you only record gifts when the money arrives. It is added for you when you record your first pledge.",
     },
     {
       key: "donations",
