@@ -15,6 +15,13 @@
       "when": 1791349510372,
       "tag": "0001_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791351033365,
+      "tag": "0002_deferrable_org_delete_fks",
+      "breakpoints": true
     }
   ]
 }
