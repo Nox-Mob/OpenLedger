@@ -17,64 +17,14 @@ async function all(build: (from: number, to: number) => PromiseLike<{ data: any;
   }
 }
 
-const ORG_TABLES = [
-  // order matches domain/backup TABLES minus entries/transaction_tags
-  "accounts",
-  "categories",
-  "tags",
-  "projects",
-  "funds",
-  "transactions",
-  "import_batches",
-  "import_profiles",
-  "bank_transactions",
-  "reconciliations",
-  "period_closes",
-  "pledges",
-  "pledge_payments",
-  "budgets",
-  "user_roles",
-  "audit_log",
-] as const;
-
 /** Full JSON backup of one organization (admins only). Read through the caller's RLS client. */
 export const exportBackup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId }).parse(input))
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
-    const db = context.supabase as any;
-    const { data: org, error } = await db
-      .from("organizations")
-      .select("*")
-      .eq("id", data.orgId)
-      .single();
-    if (error) throw new Error(error.message);
-    const tables: Record<string, any[]> = {};
-    for (const t of ORG_TABLES)
-      tables[t] = await all((f, to) =>
-        db.from(t).select("*").eq("org_id", data.orgId).order("id").range(f, to),
-      );
-    tables["entries"] = (
-      await all((f, to) =>
-        db
-          .from("entries")
-          .select("*, transactions!inner(org_id)")
-          .eq("transactions.org_id", data.orgId)
-          .order("id")
-          .range(f, to),
-      )
-    ).map(({ transactions: _t, ...e }: any) => e);
-    tables["transaction_tags"] = (
-      await all((f, to) =>
-        db
-          .from("transaction_tags")
-          .select("*, transactions!inner(org_id)")
-          .eq("transactions.org_id", data.orgId)
-          .order("transaction_id")
-          .range(f, to),
-      )
-    ).map(({ transactions: _t, ...e }: any) => e);
+    const { readBackupData } = await import("./backup-export.server");
+    const { organization: org, tables } = await readBackupData(context.supabase, data.orgId);
     const counts = Object.fromEntries(Object.entries(tables).map(([k, v]) => [k, v.length]));
     await writeAudit({
       org_id: data.orgId,
