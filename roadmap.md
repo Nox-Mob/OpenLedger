@@ -7,6 +7,7 @@
 - [x] 15. CSV/XLSX exports + signed full backup + restore into a new org (formula-injection escaping)
 - [x] 18. Budgets: yearly or monthly per income/expense account, budget vs actual
 - [x] 21. Observability: admin history (audit log) viewer
+- [ ] Clarify the restore file picker and confirmation name; test a moderately sized signed export and restore.
 
 ## Future (unscheduled, not assigned to a version)
 - Local desktop edition: Tauri + embedded SQLite, offline use, no Docker/Node/internet for end users. Groundwork (ports, SQLite adapter, contract tests) exists; packaging needs a Rust toolchain. Do not advertise desktop installers as available.

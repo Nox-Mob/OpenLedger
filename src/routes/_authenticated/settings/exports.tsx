@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { FileUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useOrgContext } from "@/components/AppShell";
 import {
   checkBackupFile,
@@ -159,6 +161,8 @@ function ExportsPage() {
 type Check = Awaited<ReturnType<typeof checkBackupFile>>;
 
 function RestoreSection() {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const qc = useQueryClient();
   const fp = useQuery({
     queryKey: ["install-fingerprint"],
@@ -175,6 +179,7 @@ function RestoreSection() {
     setError(null);
     setConfirm("");
     setText(null);
+    setFileName(file?.name ?? null);
     if (!file) return;
     if (file.size > 25 * 1024 * 1024) return setError("The backup file is larger than 25 MB.");
     setBusy(true);
@@ -219,17 +224,28 @@ function RestoreSection() {
           This install's fingerprint: <span className="font-mono">{fp.data.fingerprint}</span>
         </p>
       )}
-      <label className="mt-4 block text-sm font-medium" htmlFor="backup-file">
+      <p className="mt-4 text-sm font-medium">
         Backup file
-      </label>
+      </p>
       <input
+        ref={fileInput}
         id="backup-file"
         type="file"
         accept="application/json,.json"
         disabled={busy}
         onChange={(e) => onFile(e.target.files?.[0])}
-        className="mt-1 block text-sm"
+        aria-label="Backup file"
+        className="sr-only"
       />
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <Button variant="outline" disabled={busy} onClick={() => fileInput.current?.click()}>
+          <FileUp aria-hidden="true" />
+          {fileName ? "Choose another backup" : "Choose backup file"}
+        </Button>
+        <span className="min-w-0 break-all text-sm" aria-live="polite">
+          {fileName ?? "No file selected"}
+        </span>
+      </div>
       {busy && !check && <p className="mt-3 text-sm text-muted-foreground">Checking…</p>}
       {error && (
         <p role="alert" className="mt-3 text-sm font-medium text-destructive">
@@ -258,22 +274,31 @@ function RestoreSection() {
             {check.counts["audit_log"] ?? 0} history entries.
           </p>
           <label className="block font-medium" htmlFor="confirm-name">
-            Type <span className="font-mono">{check.orgName}</span> to confirm
+            Organization name to confirm
           </label>
+          <p
+            id="restore-confirm-name"
+            className="w-fit max-w-full break-words rounded-md border border-primary bg-accent px-4 py-3 font-mono text-lg font-semibold text-accent-foreground select-all"
+          >
+            {check.orgName}
+          </p>
           <input
             id="confirm-name"
+            aria-describedby="restore-confirm-name"
+            autoComplete="off"
+            placeholder="Enter the organization name"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2"
           />
           <div>
-            <button
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            <Button
+              className="h-auto min-h-9 whitespace-normal text-left"
               disabled={busy || confirm.trim() !== check.orgName.trim()}
               onClick={restore}
             >
               {busy ? "Restoring…" : "Restore into a new organization"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
