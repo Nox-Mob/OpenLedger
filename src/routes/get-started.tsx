@@ -29,11 +29,10 @@ function GetStartedPage() {
   return (
     <WebsiteShell>
       <div className="mx-auto max-w-4xl px-5 py-14 sm:px-8 sm:py-20">
-        <p className="website-eyebrow">Development source / Web edition</p>
-        <h1 className="mt-5 font-display text-4xl sm:text-5xl">Make it your own.</h1>
+        <h1 className="font-display text-4xl sm:text-5xl">Make it your own.</h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-          OpenLedgerApp is available as source code today. This is a web application you set up—not
-          a one-click desktop installer.
+          OpenLedgerApp is available as source code today. This is a web application you set up,
+          not a one-click desktop installer.
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
           <Button size="lg" asChild>
