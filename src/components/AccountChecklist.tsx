@@ -76,7 +76,7 @@ export function AccountChecklist({
                       )}
                       {!r.checked && !r.locked && (
                         <span className="mt-1 block text-xs font-medium text-muted-foreground">
-                          Archived — available to reactivate at any time.
+                          Archived, available to reactivate at any time.
                         </span>
                       )}
                     </span>

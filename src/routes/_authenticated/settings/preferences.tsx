@@ -57,7 +57,7 @@ function PreferencesSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Your preferences</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose what each term is called on your screens. This only affects what you see — reports
+          Choose what each term is called on your screens. This only affects what you see. Reports
           and PDF exports always use the{" "}
           <Link to="/settings" className="text-primary underline underline-offset-2">
             organization's wording
