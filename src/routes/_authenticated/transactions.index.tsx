@@ -145,8 +145,8 @@ function TransactionsPage() {
                           </table>
                           {terms.levels.debitCredit !== "accounting" && (
                             <p className="mt-2 text-xs text-muted-foreground">
-                              Every transaction moves money between accounts. Increases always
-                              equal decreases.
+                              Every transaction moves money between accounts. Increases always equal
+                              decreases.
                             </p>
                           )}
                         </td>

@@ -137,9 +137,7 @@ function LandingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <h2 className="font-display text-3xl sm:text-4xl">
-              One ledger. Your way to run it.
-            </h2>
+            <h2 className="font-display text-3xl sm:text-4xl">One ledger. Your way to run it.</h2>
           </div>
           <p className="max-w-sm leading-7 text-muted-foreground">
             Three editions are the goal. Today, we're building the web foundation.
