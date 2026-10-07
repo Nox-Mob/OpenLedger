@@ -12,7 +12,12 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Members can be removed, anyone except the owner can leave, owners can transfer ownership to another admin, and owners can delete an organization after typing its name.
 - Budgets: set a yearly or monthly budget for each income and expense account and compare it to actual results.
 - Exports: reports and all transactions download as CSV or Excel, with protection against spreadsheet formula tricks.
-- Full backup: admins can download one file with everything in an organization. Restore is not available yet.
+- Full backup: admins can download one signed file with everything in an organization. Any change to the file is detected.
+- Restore: a backup is restored into a new organization after its signature and every record are checked, and every transaction is re-checked against the bookkeeping rules. Backups from another install can be restored and are labeled with that install's fingerprint.
+
+### Fixed
+
+- Deleting an organization that has transactions no longer fails.
 - History: admins can browse who changed what and when, under Settings.
 
 ## [0.0.2] - 2026-10-06
