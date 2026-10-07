@@ -82,12 +82,20 @@ export const saveBudget = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     } else {
       assertBudgetAmount(data.amountCents);
-      const { error } = await context.supabase
+      // Keep the record's app-generated ID stable: update if it exists, else insert.
+      const { data: existing } = await context.supabase
         .from("budgets")
-        .upsert(
-          { id: newId(), ...match, amount_cents: data.amountCents },
-          { onConflict: "org_id,account_id,period_type,period_start", ignoreDuplicates: false },
-        );
+        .select("id")
+        .match(match)
+        .maybeSingle();
+      const { error } = existing
+        ? await context.supabase
+            .from("budgets")
+            .update({ amount_cents: data.amountCents })
+            .eq("id", existing.id)
+        : await context.supabase
+            .from("budgets")
+            .insert({ id: newId(), ...match, amount_cents: data.amountCents });
       if (error) throw new Error(error.message);
     }
     await writeAudit({
