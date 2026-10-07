@@ -93,16 +93,15 @@ function LandingPage() {
           <p>
             We're building a smaller, clearer alternative: proper accounting underneath, language
             you understand on top, and source code you can inspect. Software that works for your
-            organization—not the other way around.
+            organization, not the other way around.
           </p>
         </div>
       </section>
 
       <section className="border-y border-border bg-muted/40">
-        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 md:grid-cols-[1fr_1.15fr] md:gap-20">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-[1fr_1.15fr] md:gap-20">
           <div>
-            <p className="website-eyebrow">02 / Honest boundaries</p>
-            <h2 className="mt-4 font-display text-3xl leading-snug sm:text-4xl">
+            <h2 className="font-display text-3xl leading-snug sm:text-4xl">
               A ledger.
               <br />
               Not a magic wand.
@@ -119,7 +118,7 @@ function LandingPage() {
               ],
               [
                 "Not an everything-suite",
-                "No payroll, automated tax filing, or live bank feeds today. Nonprofit funds are basic tags—not full fund accounting.",
+                "No payroll, automated tax filing, or live bank feeds today. Nonprofit funds are basic tags, not full fund accounting.",
               ],
               [
                 "Not a finished product",
@@ -138,8 +137,7 @@ function LandingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <p className="website-eyebrow">03 / The direction</p>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl">
+            <h2 className="font-display text-3xl sm:text-4xl">
               One ledger. Your way to run it.
             </h2>
           </div>
@@ -154,7 +152,7 @@ function LandingPage() {
               title: "On your desktop",
               label: "Planned",
               detail:
-                "Free, standalone accounting for freelancers and solo operators. Local to your computer, designed to work offline—without a server to set up.",
+                "Free, standalone accounting for freelancers and solo operators. Local to your computer, designed to work offline, without a server to set up.",
               note: "No desktop installer yet.",
             },
             {
@@ -197,10 +195,9 @@ function LandingPage() {
       </section>
 
       <section className="border-t border-border bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-5 py-14 sm:px-8 md:flex-row md:items-center">
+        <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-5 py-16 sm:px-8 sm:py-20 md:flex-row md:items-center">
           <div>
-            <p className="text-xs uppercase tracking-widest opacity-80">Built in the open</p>
-            <h2 className="mt-4 font-display text-3xl">Start with the source.</h2>
+            <h2 className="font-display text-3xl">Start with the source.</h2>
             <p className="mt-4 max-w-xl leading-7 opacity-85">
               Download the development version, follow the setup guide, and help shape what comes
               next. A more self-contained app is on the roadmap.
