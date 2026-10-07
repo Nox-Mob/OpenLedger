@@ -101,18 +101,53 @@ function ReportsPage() {
     }
   }
 
+  async function exportSheet(kind: "csv" | "xlsx") {
+    if (!org) return;
+    const ex = await import("@/lib/export");
+    const s = await import("@/lib/report-sheets");
+    const sheet =
+      tab === "income" && income
+        ? s.incomeSheet(terms.incomeStatement, income, terms)
+        : tab === "balance" && balance
+          ? s.balanceSheetSheet(terms.balanceSheet, balance, terms)
+          : tab === "trial" && trialQuery.data
+            ? s.trialSheet(trialQuery.data)
+            : null;
+    if (!sheet) return;
+    const base = ex.safeFileName(
+      `${org.name}-${sheet.name}-${tab === "income" ? `${from}-to-${to}` : asOf}`,
+    );
+    try {
+      if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
+      else await ex.downloadXlsx([sheet], `${base}.xlsx`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not export");
+    }
+  }
+  const sheetReady = tab === "income" ? !!income : tab === "balance" ? !!balance : !!trialQuery.data;
+  const btn =
+    "inline-flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50";
+
   return (
     <AppShell>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-2xl font-bold">Reports</h1>
-        <button
-          onClick={exportPdf}
-          disabled={exporting || tab === "trial" || (tab === "income" ? !income : !balance)}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          {exporting ? "Preparing…" : "Export PDF"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => exportSheet("csv")} disabled={!sheetReady} className={btn}>
+            CSV
+          </button>
+          <button onClick={() => exportSheet("xlsx")} disabled={!sheetReady} className={btn}>
+            Excel
+          </button>
+          <button
+            onClick={exportPdf}
+            disabled={exporting || tab === "trial" || (tab === "income" ? !income : !balance)}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? "Preparing…" : "Export PDF"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center gap-2">
