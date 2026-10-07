@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useOrgContext } from "@/components/AppShell";
-import { exportBackup, exportTransactions } from "@/lib/backup.functions";
+import {
+  checkBackupFile,
+  exportBackup,
+  exportTransactions,
+  getInstallFingerprint,
+  restoreBackup,
+} from "@/lib/backup.functions";
+import { setStoredOrgId } from "@/lib/current-org";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings/exports")({
@@ -87,7 +95,7 @@ function ExportsPage() {
     const data = await exportBackup({ data: { orgId: org!.id } });
     ex.downloadJson(
       data,
-      `${ex.safeFileName(org!.name)}-backup-${data.exportedAt.slice(0, 10)}.json`,
+      `${ex.safeFileName(org!.name)}-backup-${data.manifest.exportedAt.slice(0, 10)}.json`,
     );
     toast.success("Backup downloaded");
   }
@@ -117,7 +125,8 @@ function ExportsPage() {
           </button>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Reports can be exported as CSV, Excel or PDF from the Reports page.
+          Reports can be exported as CSV, Excel or PDF from the Reports page. Spreadsheets are for
+          reading only and can't be restored; use a full backup for that.
         </p>
       </section>
 
@@ -126,7 +135,7 @@ function ExportsPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           One file with everything in this organization: accounts, transactions, bank imports,
           statement checks, funds, pledges, budgets, members and history. Keep it somewhere safe.
-          Restoring from a backup is not available yet.
+          The file is signed by this server, so any change to it is detected.
         </p>
         <div className="mt-4">
           <button
@@ -141,6 +150,133 @@ function ExportsPage() {
           )}
         </div>
       </section>
+
+      <RestoreSection />
     </div>
+  );
+}
+
+type Check = Awaited<ReturnType<typeof checkBackupFile>>;
+
+function RestoreSection() {
+  const qc = useQueryClient();
+  const fp = useQuery({
+    queryKey: ["install-fingerprint"],
+    queryFn: () => getInstallFingerprint(),
+  });
+  const [text, setText] = useState<string | null>(null);
+  const [check, setCheck] = useState<Check | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onFile(file: File | undefined) {
+    setCheck(null);
+    setError(null);
+    setConfirm("");
+    setText(null);
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) return setError("The backup file is larger than 25 MB.");
+    setBusy(true);
+    try {
+      const t = await file.text();
+      setCheck(await checkBackupFile({ data: { text: t } }));
+      setText(t);
+    } catch (e: any) {
+      setError(e?.message ?? "This backup can't be restored.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restore() {
+    if (!text || !check) return;
+    setBusy(true);
+    try {
+      const r = await restoreBackup({ data: { text, confirmName: confirm } });
+      toast.success(`Restored as "${r.name}"`);
+      await qc.invalidateQueries();
+      setStoredOrgId(r.orgId);
+      setCheck(null);
+      setText(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Restore failed. Nothing was saved.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="rounded-lg border bg-card p-5">
+      <h2 className="font-display text-lg font-semibold">Restore a backup</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        A backup is restored into a new organization. Your existing books are never changed. Files
+        that were edited after they were downloaded are refused, and every transaction is checked
+        again before anything is saved. Other members are not copied; invite them again.
+      </p>
+      {fp.data?.fingerprint && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          This install's fingerprint: <span className="font-mono">{fp.data.fingerprint}</span>
+        </p>
+      )}
+      <label className="mt-4 block text-sm font-medium" htmlFor="backup-file">
+        Backup file
+      </label>
+      <input
+        id="backup-file"
+        type="file"
+        accept="application/json,.json"
+        disabled={busy}
+        onChange={(e) => onFile(e.target.files?.[0])}
+        className="mt-1 block text-sm"
+      />
+      {busy && !check && <p className="mt-3 text-sm text-muted-foreground">Checking…</p>}
+      {error && (
+        <p role="alert" className="mt-3 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
+      {check && (
+        <div className="mt-4 space-y-3 rounded-md border p-4 text-sm">
+          <p>
+            <span className="font-semibold">{check.orgName}</span>, created{" "}
+            {new Date(check.exportedAt).toLocaleString()}
+          </p>
+          {check.sameInstall ? (
+            <p>Signed by this install. The file is unchanged.</p>
+          ) : (
+            <p className="font-medium">
+              Signed by another install (fingerprint{" "}
+              <span className="font-mono">{check.installFingerprint}</span>). The file is unchanged
+              since that install signed it. Make sure the fingerprint matches the install you
+              expect. The restored organization will be labeled as coming from another install.
+            </p>
+          )}
+          <p className="text-muted-foreground">
+            {check.counts["accounts"] ?? 0} accounts, {check.counts["transactions"] ?? 0}{" "}
+            transactions, {check.counts["bank_transactions"] ?? 0} bank rows,{" "}
+            {check.counts["audit_log"] ?? 0} history entries.
+          </p>
+          <label className="block font-medium" htmlFor="confirm-name">
+            Type <span className="font-mono">{check.orgName}</span> to confirm
+          </label>
+          <input
+            id="confirm-name"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2"
+          />
+          <div>
+            <button
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              disabled={busy || confirm.trim() !== check.orgName.trim()}
+              onClick={restore}
+            >
+              {busy ? "Restoring…" : "Restore into a new organization"}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

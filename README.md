@@ -80,6 +80,7 @@ Pick **one** path for the database and sign-in service, then finish with the sha
    VITE_SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
    SUPABASE_URL=https://<project-ref>.supabase.co
    SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
+   BACKUP_SIGNING_SEED=<64+ random characters, keep it stable; signs backups>
    SUPABASE_SERVICE_ROLE_KEY=<service-role key>
    LOVABLE_API_KEY=<optional, enables AI PDF import>
    ```
@@ -141,6 +142,7 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    VITE_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY>
    SUPABASE_URL=http://<server-ip>:8000
    SUPABASE_PUBLISHABLE_KEY=<ANON_KEY>
+   BACKUP_SIGNING_SEED=<64+ random characters, keep it stable; signs backups>
    SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
    LOVABLE_API_KEY=<optional, enables AI PDF import>
    ```
