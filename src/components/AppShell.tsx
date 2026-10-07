@@ -144,15 +144,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3">
           <div className="mb-2 flex items-center justify-between gap-2 px-3">
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-sidebar-foreground/50">
-            <Link to="/terms" className="hover:text-sidebar-foreground">
-              Terms
-            </Link>
-            <Link to="/privacy" className="hover:text-sidebar-foreground">
-              Privacy
-            </Link>
-            <Link to="/not-advice" className="hover:text-sidebar-foreground">
-              Not advice
-            </Link>
+              <Link to="/terms" className="hover:text-sidebar-foreground">
+                Terms
+              </Link>
+              <Link to="/privacy" className="hover:text-sidebar-foreground">
+                Privacy
+              </Link>
+              <Link to="/not-advice" className="hover:text-sidebar-foreground">
+                Not advice
+              </Link>
             </div>
             <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" />
           </div>

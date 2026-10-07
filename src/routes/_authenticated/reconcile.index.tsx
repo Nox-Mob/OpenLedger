@@ -123,8 +123,8 @@ function ReconcileIndex() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">{terms.reconcile}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Compare your books with a bank or card statement. Nothing in your books changes. You're
-        only confirming what matches.
+        Compare your books with a bank or card statement. Nothing in your books changes. You're only
+        confirming what matches.
       </p>
 
       <div className="mt-6 max-w-3xl rounded-lg border bg-card p-6">

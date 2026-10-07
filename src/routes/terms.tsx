@@ -52,10 +52,10 @@ function TermsPage() {
       <section>
         <h2>2. Self-hosted OpenLedgerApp software</h2>
         <p>
-          If you install or operate OpenLedgerApp yourself, you, not the hosted-service
-          operator, control that deployment, its security, backups, availability, user access,
-          updates, and legal compliance. Open-source software rights are governed by the license
-          included with the source code. These hosted-service terms do not replace that license.
+          If you install or operate OpenLedgerApp yourself, you, not the hosted-service operator,
+          control that deployment, its security, backups, availability, user access, updates, and
+          legal compliance. Open-source software rights are governed by the license included with
+          the source code. These hosted-service terms do not replace that license.
         </p>
       </section>
       <section>
