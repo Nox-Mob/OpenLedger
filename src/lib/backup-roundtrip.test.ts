@@ -43,10 +43,10 @@ class BackupStore {
         if (this.failTable === table)
           return { data: null, error: { message: "Injected write failure" } };
         if (table === "entries") {
-          const txIds = new Set(payload.map((r) => r.transaction_id));
+          const txIds = new Set(payload.map((r) => r["transaction_id"]));
           for (const id of txIds) {
-            const lines = payload.filter((r) => r.transaction_id === id);
-            if (lines.length < 2 || lines.reduce((n, r) => n + Number(r.amount_cents), 0) !== 0)
+            const lines = payload.filter((r) => r["transaction_id"] === id);
+            if (lines.length < 2 || lines.reduce((n, r) => n + Number(r["amount_cents"]), 0) !== 0)
               return { data: null, error: { message: "Unbalanced request" } };
           }
         }
@@ -55,9 +55,9 @@ class BackupStore {
           payload.some((r) =>
             stored.some(
               (s) =>
-                s.org_id === r.org_id &&
-                s.account_id === r.account_id &&
-                s.status === "in_progress",
+                s["org_id"] === r["org_id"] &&
+                s["account_id"] === r["account_id"] &&
+                s["status"] === "in_progress",
             ),
           )
         )
@@ -71,11 +71,13 @@ class BackupStore {
         if (table === "organizations") {
           for (const org of selected) {
             const txIds = new Set(
-              (this.tables.transactions ?? []).filter((t) => t.org_id === org.id).map((t) => t.id),
+              (this.tables["transactions"] ?? [])
+                .filter((t) => t["org_id"] === org["id"])
+                .map((t) => t["id"]),
             );
             for (const name of TABLES)
               this.tables[name] = (this.tables[name] ?? []).filter(
-                (r) => r.org_id !== org.id && !txIds.has(r.transaction_id),
+                (r) => r["org_id"] !== org["id"] && !txIds.has(r["transaction_id"]),
               );
           }
         }
@@ -86,8 +88,10 @@ class BackupStore {
           .slice(start, end === Infinity ? undefined : end + 1)
           .map((r) => {
             if (!columns.includes("transactions!inner")) return structuredClone(r);
-            const tx = (this.tables.transactions ?? []).find((t) => t.id === r.transaction_id);
-            return { ...structuredClone(r), transactions: { org_id: tx?.org_id } };
+            const tx = (this.tables["transactions"] ?? []).find(
+              (t) => t["id"] === r["transaction_id"],
+            );
+            return { ...structuredClone(r), transactions: { org_id: tx?.["org_id"] } };
           });
         return { data: single ? rows[0] : rows, error: null };
       }
@@ -100,10 +104,10 @@ class BackupStore {
       },
       eq: (key: string, value: unknown) => {
         filters.push(
-          key === "transactions.org_id"
+          key === "transactions['org_id']"
             ? (r) =>
-                (this.tables.transactions ?? []).some(
-                  (t) => t.id === r.transaction_id && t.org_id === value,
+                (this.tables["transactions"] ?? []).some(
+                  (t) => t["id"] === r["transaction_id"] && t["org_id"] === value,
                 )
             : (r) => r[key] === value,
         );
@@ -150,7 +154,7 @@ class BackupStore {
 const ORG_ID = "00000000-0000-4000-8000-000000000001";
 function fixture(db: BackupStore) {
   db.tables = Object.fromEntries(TABLES.map((t) => [t, []]));
-  db.tables.organizations = [
+  db.tables["organizations"] = [
     {
       id: ORG_ID,
       name: "Community Books",
@@ -295,18 +299,18 @@ function fixture(db: BackupStore) {
 }
 
 function reports(tables: Record<string, Row[]>) {
-  const accounts = new Map((tables.accounts ?? []).map((r) => [r.id, r]));
-  const txs = new Map((tables.transactions ?? []).map((r) => [r.id, r]));
-  const rows: LedgerRow[] = (tables.entries ?? []).flatMap((e) => {
-    const account = accounts.get(e.account_id);
-    const tx = txs.get(e.transaction_id);
-    if (!account || !tx || tx.status === "void") return [];
+  const accounts = new Map((tables["accounts"] ?? []).map((r) => [r["id"], r]));
+  const txs = new Map((tables["transactions"] ?? []).map((r) => [r["id"], r]));
+  const rows: LedgerRow[] = (tables["entries"] ?? []).flatMap((e) => {
+    const account = accounts.get(e["account_id"]);
+    const tx = txs.get(e["transaction_id"]);
+    if (!account || !tx || tx["status"] === "void") return [];
     return [
       {
-        amountCents: Number(e.amount_cents),
-        accountName: String(account.name),
-        accountType: account.type as LedgerRow["accountType"],
-        transactionDate: String(tx.transaction_date),
+        amountCents: Number(e["amount_cents"]),
+        accountName: String(account["name"]),
+        accountType: account["type"] as LedgerRow["accountType"],
+        transactionDate: String(tx["transaction_date"]),
       },
     ];
   });
@@ -336,9 +340,9 @@ describe("moderately sized organization backup roundtrip", () => {
     );
     const serialized = JSON.stringify(exported);
     const verified = await verifyBackup(JSON.parse(serialized), keys.publicRaw);
-    expect(verified.counts.transactions).toBe(1500);
-    expect(verified.counts.entries).toBe(4500);
-    expect(verified.counts.accounts).toBe(4);
+    expect(verified.counts["transactions"]).toBe(1500);
+    expect(verified.counts["entries"]).toBe(4500);
+    expect(verified.counts["accounts"]).toBe(4);
     for (const table of [
       "transactions",
       "entries",
@@ -350,13 +354,15 @@ describe("moderately sized organization backup roundtrip", () => {
     const original = structuredClone(db.tables);
     const restored = await restoreIntoNewOrg(db, "restoring-user", verified);
     const restoredTxIds = new Set(
-      (db.tables.transactions ?? []).filter((t) => t.org_id === restored.orgId).map((t) => t.id),
+      (db.tables["transactions"] ?? [])
+        .filter((t) => t["org_id"] === restored.orgId)
+        .map((t) => t["id"]),
     );
     const tables = Object.fromEntries(
       TABLES.map((t) => [
         t,
         (db.tables[t] ?? []).filter(
-          (r) => r.org_id === restored.orgId || restoredTxIds.has(r.transaction_id),
+          (r) => r["org_id"] === restored.orgId || restoredTxIds.has(r["transaction_id"]),
         ),
       ]),
     );
@@ -368,35 +374,42 @@ describe("moderately sized organization backup roundtrip", () => {
       expect(tables[table]).toHaveLength(
         (verified.counts[table] ?? 0) + (table === "audit_log" ? 1 : 0),
       );
-      const sourceIds = new Set((exported.tables[table] ?? []).map((r) => r.id).filter(Boolean));
-      for (const row of tables[table] ?? []) if (row.id) expect(sourceIds.has(row.id)).toBe(false);
-    }
-    for (const [table, refs] of Object.entries(REFS))
+      const sourceIds = new Set((exported.tables[table] ?? []).map((r) => r["id"]).filter(Boolean));
       for (const row of tables[table] ?? [])
-        for (const [column, target] of Object.entries(refs))
+        if (row["id"]) expect(sourceIds.has(row["id"])).toBe(false);
+    }
+    for (const [table, refs] of Object["entries"](REFS))
+      for (const row of tables[table] ?? [])
+        for (const [column, target] of Object["entries"](refs))
           if (row[column] != null)
-            expect((tables[target] ?? []).some((r) => r.id === row[column])).toBe(true);
+            expect((tables[target] ?? []).some((r) => r["id"] === row[column])).toBe(true);
     checkRestorable(tables);
     expect(reports(tables)).toEqual(reports(exported.tables));
     expect(reports(tables).balance.balanced).toBe(true);
-    expect((tables.reconciliations ?? []).filter((r) => r.status === "completed")).toHaveLength(2);
-    expect((tables.reconciliations ?? []).filter((r) => r.status === "in_progress")).toHaveLength(
-      1,
-    );
-    expect((tables.entries ?? []).filter((r) => r.reconciliation_id)).toHaveLength(1440);
-    expect((tables.accounts ?? []).find((r) => r.name === "archived")?.is_active).toBe(false);
     expect(
-      (db.tables.organizations ?? []).find((r) => r.id === restored.orgId)?.books_locked_through,
-    ).toBe("2026-01-31");
-    expect((tables.audit_log ?? []).filter((r) => r.action === "restored.created")).toHaveLength(
-      1500,
+      (tables["reconciliations"] ?? []).filter((r) => r["status"] === "completed"),
+    ).toHaveLength(2);
+    expect(
+      (tables["reconciliations"] ?? []).filter((r) => r["status"] === "in_progress"),
+    ).toHaveLength(1);
+    expect((tables["entries"] ?? []).filter((r) => r["reconciliation_id"])).toHaveLength(1440);
+    expect((tables["accounts"] ?? []).find((r) => r["name"] === "archived")?.["is_active"]).toBe(
+      false,
     );
+    expect(
+      (db.tables["organizations"] ?? []).find((r) => r["id"] === restored.orgId)?.[
+        "books_locked_through"
+      ],
+    ).toBe("2026-01-31");
+    expect(
+      (tables["audit_log"] ?? []).filter((r) => r["action"] === "restored.created"),
+    ).toHaveLength(1500);
     expect(db.writes.every((w) => w.size <= 500)).toBe(true);
     for (const table of TABLES)
       expect(
         (db.tables[table] ?? []).filter((r) =>
           original[table]?.some((s) =>
-            s.id ? s.id === r.id : s.transaction_id === r.transaction_id,
+            s["id"] ? s["id"] === r["id"] : s["transaction_id"] === r["transaction_id"],
           ),
         ),
       ).toEqual(original[table]);
@@ -419,6 +432,6 @@ describe("moderately sized organization backup roundtrip", () => {
     );
     for (const table of ["organizations", ...TABLES])
       expect(db.tables[table]).toEqual(original[table]);
-    expect(db.tables.deleted_organizations).toHaveLength(1);
+    expect(db.tables["deleted_organizations"]).toHaveLength(1);
   }, 30000);
 });
