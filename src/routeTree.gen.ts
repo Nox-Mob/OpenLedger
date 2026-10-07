@@ -23,9 +23,11 @@ import { Route as AuthenticatedFundsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLedgerRouteImport } from './routes/_authenticated/ledger'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPledgesRouteImport } from './routes/_authenticated/pledges'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedReconcileIndexRouteImport } from './routes/_authenticated/reconcile.index'
 import { Route as AuthenticatedReconcileIdRouteImport } from './routes/_authenticated/reconcile.$id'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
@@ -105,6 +107,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPledgesRoute = AuthenticatedPledgesRouteImport.update({
+  id: '/pledges',
+  path: '/pledges',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
@@ -119,6 +126,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedReconcileIndexRoute =
   AuthenticatedReconcileIndexRouteImport.update({
@@ -189,9 +201,11 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pledges': typeof AuthenticatedPledgesRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/settings/close': typeof AuthenticatedSettingsCloseRoute
@@ -216,8 +230,10 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pledges': typeof AuthenticatedPledgesRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/settings/close': typeof AuthenticatedSettingsCloseRoute
@@ -244,9 +260,11 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/ledger': typeof AuthenticatedLedgerRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pledges': typeof AuthenticatedPledgesRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/reconcile/$id': typeof AuthenticatedReconcileIdRoute
   '/_authenticated/settings/accounts': typeof AuthenticatedSettingsAccountsRoute
   '/_authenticated/settings/close': typeof AuthenticatedSettingsCloseRoute
@@ -273,9 +291,11 @@ export interface FileRouteTypes {
     | '/import'
     | '/ledger'
     | '/onboarding'
+    | '/pledges'
     | '/projects'
     | '/reports'
     | '/settings'
+    | '/invite/$token'
     | '/reconcile/$id'
     | '/settings/accounts'
     | '/settings/close'
@@ -300,8 +320,10 @@ export interface FileRouteTypes {
     | '/import'
     | '/ledger'
     | '/onboarding'
+    | '/pledges'
     | '/projects'
     | '/reports'
+    | '/invite/$token'
     | '/reconcile/$id'
     | '/settings/accounts'
     | '/settings/close'
@@ -327,9 +349,11 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/ledger'
     | '/_authenticated/onboarding'
+    | '/_authenticated/pledges'
     | '/_authenticated/projects'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
+    | '/invite/$token'
     | '/_authenticated/reconcile/$id'
     | '/_authenticated/settings/accounts'
     | '/_authenticated/settings/close'
@@ -351,6 +375,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -453,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pledges': {
+      id: '/_authenticated/pledges'
+      path: '/pledges'
+      fullPath: '/pledges'
+      preLoaderRoute: typeof AuthenticatedPledgesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projects': {
       id: '/_authenticated/projects'
       path: '/projects'
@@ -473,6 +505,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/reconcile/': {
       id: '/_authenticated/reconcile/'
@@ -567,6 +606,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLedgerRoute: typeof AuthenticatedLedgerRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPledgesRoute: typeof AuthenticatedPledgesRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
@@ -582,6 +622,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLedgerRoute: AuthenticatedLedgerRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPledgesRoute: AuthenticatedPledgesRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
@@ -604,6 +645,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

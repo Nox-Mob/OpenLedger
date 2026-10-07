@@ -433,8 +433,8 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async ledgerRows(orgId, opts) {
         const rows = await db.select<any>(
-          `SELECT e.amount_cents, e.account_id, e.project_id, a.name AS account_name, a.type AS account_type,
-                  t.transaction_date
+          `SELECT e.amount_cents, e.account_id, e.project_id, e.fund_id, a.name AS account_name, a.type AS account_type,
+                  t.transaction_date, t.source
            FROM entries e JOIN transactions t ON t.id = e.transaction_id JOIN accounts a ON a.id = e.account_id
            WHERE t.org_id = ? AND t.status = 'posted' AND t.source <> 'closing' ${opts?.to ? "AND t.transaction_date <= ?" : ""}`,
           opts?.to ? [orgId, opts.to] : [orgId],
@@ -445,6 +445,8 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           accountName: r.account_name,
           accountType: r.account_type,
           projectId: r.project_id ?? null,
+          fundId: r.fund_id ?? null,
+          source: r.source,
           transactionDate: r.transaction_date,
         }));
       },

@@ -112,6 +112,8 @@ export interface TransactionRepository {
       accountName: string;
       accountType: AccountType;
       projectId: Id | null;
+      fundId: Id | null;
+      source: TransactionSource;
       transactionDate: IsoDate;
     }[]
   >;
