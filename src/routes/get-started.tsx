@@ -37,7 +37,7 @@ function GetStartedPage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
           <Button size="lg" asChild>
-            <a href="/downloads/openledgerapp-source.zip" download>
+            <a href="https://github.com/Nox-Mob/OpenLedgerApp/archive/refs/heads/main.zip" target="_blank" rel="noopener noreferrer">
               <Download /> Download source ZIP
             </a>
           </Button>

@@ -7,7 +7,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ### Added
 - Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
-- Getting-started page and downloadable development source (the app only, without the public website).
+- Getting-started page linking to the source archive on GitHub (the app source, without the public website).
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed

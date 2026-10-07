@@ -15,7 +15,7 @@ The public website is at `/`; account holders use `/auth` to sign in and `/ledge
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and [BLUEPRINT.md](BLUEPRINT.md) for the v0.0.2 website and planned v0.0.3 desktop-ready architecture. The future free standalone desktop edition, managed cloud offering, optional donations, and synchronization are goals, not shipped features or pricing commitments.
 
-Source ZIP downloads are snapshots packaged with the website; refresh the archive when preparing a release. Exclude `.env`, local overrides, credentials, dependencies, Git metadata, and generated output.
+Source ZIP downloads point to the GitHub `main` branch archive (github.com/Nox-Mob/OpenLedgerApp); the /get-started page links to it.
 
 ---
 
