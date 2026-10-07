@@ -27,7 +27,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Marketing strips and badge labels above headlines, including the checkmark strip and early-development line on the home page.
 - The mailing address from legal pages; legal notices now cite the support email only.
 
-## [0.0.1] — 2026-10-01
+## [0.0.1] - 2026-10-01
 
 Initial usable web foundation.
 
