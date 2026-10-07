@@ -10,6 +10,7 @@ import {
   ListChecks,
   FolderKanban,
   PiggyBank,
+  HandCoins,
   FileBarChart,
   Settings,
   LogOut,
@@ -68,6 +69,7 @@ const NAV = [
   { to: "/reconcile", label: "Reconcile", icon: ListChecks },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/funds", label: "Funds", icon: PiggyBank },
+  { to: "/pledges", label: "Pledges", icon: HandCoins },
   { to: "/reports", label: "Reports", icon: FileBarChart },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;

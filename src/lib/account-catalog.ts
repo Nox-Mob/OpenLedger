@@ -74,6 +74,15 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       whyNot: "Always needed; opening balances land here.",
     },
     {
+      key: "pledges_receivable",
+      name: "Pledges Receivable",
+      type: "asset",
+      subtype: "pledges_receivable",
+      defaultOn: false,
+      why: "Track gifts donors have promised but not paid yet.",
+      whyNot: "Skip it if you only record gifts when the money arrives. It is added for you when you record your first pledge.",
+    },
+    {
       key: "donations",
       name: "Donations",
       type: "revenue",
