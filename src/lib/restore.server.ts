@@ -134,8 +134,6 @@ export async function restoreIntoNewOrg(
       ),
     );
     const recIdByEntry = new Map<string, string>();
-    const { ids } = { ids: null as unknown };
-    void ids;
     // Entries carry their (already remapped) reconciliation_id from the backup.
     for (const e of T("entries")) if (e["reconciliation_id"]) recIdByEntry.set(String(e["id"]), String(e["reconciliation_id"]));
     const entriesByRec = new Map<string, string[]>();
