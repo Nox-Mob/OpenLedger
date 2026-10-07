@@ -22,21 +22,30 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+export const PENDING_INVITE_KEY = "openledgerapp-pending-invite";
+
 function AuthPage() {
   const navigate = useNavigate();
+  // A pending invite link (saved before sign-in) takes priority over the dashboard.
+  function goAfterAuth() {
+    const token = sessionStorage.getItem(PENDING_INVITE_KEY);
+    if (token) void navigate({ to: "/invite/$token", params: { token } });
+    else void navigate({ to: "/ledger" });
+  }
   // OAuth returns here, keeping the public homepage public while restoring app access.
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) void navigate({ to: "/ledger" });
+      if (active && data.session) goAfterAuth();
     });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) void navigate({ to: "/ledger" });
+      if (event === "SIGNED_IN" && session) goAfterAuth();
     });
     return () => {
       active = false;
       data.subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -103,7 +112,7 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/ledger" });
+        goAfterAuth();
       } else {
         if (!legalAgreement)
           throw new Error("Agree to the Terms and Privacy Policy to create an account.");
