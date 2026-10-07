@@ -23,6 +23,11 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Public website does not advertise or link the development preview or shared demo.
 - Consistent section spacing across the website and app.
 
+### Removed
+- Marketing strips and eyebrow badges above headlines on the public website.
+- Legal mailing address from legal notices; contact is by email only.
+- Em dashes and en dashes from all user-facing copy.
+
 ## [0.0.1] - 2026-10-01
 
 Initial usable web foundation.
