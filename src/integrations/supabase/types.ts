@@ -246,6 +246,30 @@ export type Database = {
           },
         ]
       }
+      deleted_organizations: {
+        Row: {
+          deleted_at: string
+          deleted_by: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: []
+      }
       entries: {
         Row: {
           account_id: string
@@ -507,6 +531,53 @@ export type Database = {
         }
         Relationships: []
       }
+      org_invites: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          org_id: string
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token_hash: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id: string
+          org_id: string
+          revoked_at?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token_hash: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token_hash?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           ai_pdf_enabled: boolean
@@ -590,6 +661,128 @@ export type Database = {
           },
           {
             foreignKeyName: "period_closes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pledge_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          kind: string
+          org_id: string
+          paid_date: string
+          pledge_id: string
+          transaction_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id: string
+          kind?: string
+          org_id: string
+          paid_date: string
+          pledge_id: string
+          transaction_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          org_id?: string
+          paid_date?: string
+          pledge_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledge_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledge_payments_pledge_id_fkey"
+            columns: ["pledge_id"]
+            isOneToOne: false
+            referencedRelation: "pledges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledge_payments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pledges: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          donor_name: string
+          expected_date: string | null
+          fund_id: string | null
+          id: string
+          note: string | null
+          org_id: string
+          pledge_date: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          donor_name: string
+          expected_date?: string | null
+          fund_id?: string | null
+          id: string
+          note?: string | null
+          org_id: string
+          pledge_date: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          donor_name?: string
+          expected_date?: string | null
+          fund_id?: string | null
+          id?: string
+          note?: string | null
+          org_id?: string
+          pledge_date?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledges_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledges_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledges_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
@@ -906,6 +1099,8 @@ export type Database = {
         | "adjustment"
         | "transfer"
         | "closing"
+        | "release"
+        | "pledge"
       transaction_status: "posted" | "void"
     }
     CompositeTypes: {
@@ -1047,6 +1242,8 @@ export const Constants = {
         "adjustment",
         "transfer",
         "closing",
+        "release",
+        "pledge",
       ],
       transaction_status: ["posted", "void"],
     },
