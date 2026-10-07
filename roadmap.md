@@ -2,8 +2,9 @@
 
 ## v0.0.2 — Public website
 - [x] Rename the app to OpenLedgerApp throughout website, app screens, legal copy, reports, and documentation; standardize all webpage titles.
-- [ ] Public landing page: purpose, boundaries, development status, future distribution model, and source download/setup.
-- [ ] Markdown changelog and public release-notes page.
+- [x] Public landing page: purpose, boundaries, development status, future distribution model, and source download/setup.
+- [x] Markdown changelog and public release-notes page.
+- [x] High-contrast dark mode toggle (website header and app sidebar); consistent section spacing; no eyebrow badges or em dashes in user-facing copy.
 - No preview links, demo calls to action, or sample credentials on the public website. Keep the development sample account intact.
 
 ## v0.0.3 — Desktop-ready foundations (planned, not shipped)
