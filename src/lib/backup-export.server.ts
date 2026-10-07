@@ -1,4 +1,5 @@
 // Backup reads shared by the signed export handler and its roundtrip regression tests.
+const PAGE = 1000;
 async function all(build: (from: number, to: number) => PromiseLike<{ data: any; error: any }>) {
   const out: any[] = [];
   for (let from = 0; ; from += PAGE) {
