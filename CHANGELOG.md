@@ -2,6 +2,15 @@
 
 Notable changes to OpenLedgerApp are recorded here. This project follows the structure of Keep a Changelog. Pre-1.0 software remains under active development.
 
+## [Unreleased]
+
+### Added
+
+- Fund accounting for nonprofits: restricted and unrestricted funds, fund balances, net assets with and without donor restrictions, and releases from restriction.
+- Pledges: record promised gifts, take payments, and write off what will not arrive.
+- Invite links: admins create single use links with a role that expire after 7 days, and can revoke them.
+- Members can be removed, anyone except the owner can leave, owners can transfer ownership to another admin, and owners can delete an organization after typing its name.
+
 ## [0.0.2] - 2026-10-06
 
 ### Added
