@@ -1,4 +1,3 @@
-import { demoAllowedHere } from "@/lib/demo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
@@ -8,14 +7,16 @@ import { lovable } from "@/integrations/lovable";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Open Ledger" },
+      { title: "Sign In - OpenLedgerApp" },
       {
         name: "description",
         content:
-          "Sign in to Open Ledger, free open-source accounting for small businesses and nonprofits.",
+          "Sign in to OpenLedgerApp, free open-source accounting for small businesses and nonprofits.",
       },
-      { property: "og:title", content: "Sign in — Open Ledger" },
-      { property: "og:description", content: "Sign in to Open Ledger." },
+      { property: "og:title", content: "Sign In - OpenLedgerApp" },
+      { property: "og:description", content: "Sign in to OpenLedgerApp." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
@@ -23,12 +24,20 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  // Dev server builds and the editor's preview link both show the demo buttons;
-  // a published app (project--<id>.lovable.app) never does.
-  const [showDemo, setShowDemo] = useState(false);
+  // OAuth returns here, keeping the public homepage public while restoring app access.
   useEffect(() => {
-    setShowDemo(demoAllowedHere());
-  }, []);
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) void navigate({ to: "/ledger" });
+    });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) void navigate({ to: "/ledger" });
+    });
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
+  }, [navigate]);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -94,7 +103,7 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        navigate({ to: "/ledger" });
       } else {
         if (!legalAgreement)
           throw new Error("Agree to the Terms and Privacy Policy to create an account.");
@@ -119,7 +128,7 @@ function AuthPage() {
   async function signInWithGoogle() {
     setError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth`,
     });
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
@@ -129,7 +138,7 @@ function AuthPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <BookOpen className="mx-auto h-8 w-8 text-primary" />
-          <h1 className="font-display mt-3 text-2xl font-bold">Open Ledger</h1>
+          <h1 className="font-display mt-3 text-2xl font-bold">OpenLedgerApp</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Simple, honest accounting for small businesses and nonprofits.
           </p>
@@ -235,21 +244,6 @@ function AuthPage() {
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
 
-          {showDemo && (
-            <div className="mt-3 rounded-md border border-dashed border-input p-3 text-center text-xs text-muted-foreground">
-              <p>Sample data account (both sample organizations)</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setEmail("demo@demo.org");
-                }}
-                className="mt-1 font-medium text-foreground underline underline-offset-2"
-              >
-                Use demo@demo.org
-              </button>
-            </div>
-          )}
           <div className="mt-5 flex justify-center gap-3 border-t pt-4 text-xs text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground">
               Terms

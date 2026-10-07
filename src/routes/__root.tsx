@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Open Ledger — Simple accounting for small teams" },
+      { title: "OpenLedgerApp" },
       {
         name: "description",
         content:
-          "Open Ledger is free, open-source double-entry accounting for very small businesses and nonprofits.",
+          "OpenLedgerApp is free, open-source double-entry accounting for very small businesses and nonprofits.",
       },
-      { property: "og:title", content: "Open Ledger — Simple accounting for small teams" },
+      { property: "og:title", content: "OpenLedgerApp" },
       {
         property: "og:description",
         content:
@@ -116,6 +116,12 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          // Apply the saved theme before first paint to avoid a flash of the wrong mode.
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("openledgerapp-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         {children}

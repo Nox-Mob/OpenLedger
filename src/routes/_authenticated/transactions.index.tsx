@@ -10,10 +10,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/transactions/")({
   head: () => ({
     meta: [
-      { title: "Transactions — Open Ledger" },
+      { title: "Transactions - OpenLedgerApp" },
       { name: "description", content: "Every transaction in your ledger." },
-      { property: "og:title", content: "Transactions — Open Ledger" },
+      { property: "og:title", content: "Transactions - OpenLedgerApp" },
       { property: "og:description", content: "Every transaction in your ledger." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: TransactionsPage,
@@ -143,8 +145,8 @@ function TransactionsPage() {
                           </table>
                           {terms.levels.debitCredit !== "accounting" && (
                             <p className="mt-2 text-xs text-muted-foreground">
-                              Every transaction moves money between accounts — increases always
-                              equal decreases.
+                              Every transaction moves money between accounts. Increases always equal
+                              decreases.
                             </p>
                           )}
                         </td>

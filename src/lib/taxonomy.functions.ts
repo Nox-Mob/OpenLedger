@@ -1,3 +1,6 @@
+import { newId } from "./domain/ledger";
+import { createSupabaseRepositories } from "./adapters/supabase";
+import { postOpeningBalance } from "./services/ledger";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -56,6 +59,7 @@ export const createAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
     const { error } = await context.supabase.from("accounts").insert({
+      id: newId(),
       org_id: data.orgId,
       name: data.name,
       type: data.type,
@@ -80,56 +84,10 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
-    const { data: selected, error: selectedError } = await context.supabase
-      .from("accounts")
-      .select("id, is_active")
-      .eq("org_id", data.orgId)
-      .in("id", [data.accountId, data.equityAccountId]);
-    if (selectedError) throw new Error(selectedError.message);
-    if ((selected ?? []).length !== 2 || selected?.some((account) => !account.is_active)) {
-      throw new Error("Opening balances can only use active accounts in this organization.");
-    }
-    const { supabase, userId } = context;
-    // One live opening balance per account: retries/double-clicks can't stack them.
-    const { data: existing } = await supabase
-      .from("entries")
-      .select("id, transactions!inner(id, source, status, org_id)")
-      .eq("account_id", data.accountId)
-      .eq("transactions.org_id", data.orgId)
-      .eq("transactions.source", "opening_balance")
-      .eq("transactions.status", "posted")
-      .limit(1);
-    if (existing?.length) {
-      throw new Error(
-        "This account already has an opening balance. Void it first if it needs to change.",
-      );
-    }
-    const { data: tx, error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        org_id: data.orgId,
-        transaction_date: data.date,
-        description: "Opening balance",
-        source: "opening_balance",
-        created_by: userId,
-        idempotency_key: `opening:${data.accountId}:${data.date}:${data.amountCents}`,
-      })
-      .select("id")
-      .single();
-    if (txError) {
-      if (txError.code === "23505") return { ok: true, duplicate: true };
-      throw new Error(txError.message);
-    }
-
-    const { error } = await supabase.from("entries").insert([
-      { transaction_id: tx.id, account_id: data.accountId, amount_cents: data.amountCents },
-      { transaction_id: tx.id, account_id: data.equityAccountId, amount_cents: -data.amountCents },
-    ]);
-    if (error) {
-      await supabase.from("transactions").delete().eq("id", tx.id);
-      throw new Error(error.message);
-    }
-    return { ok: true };
+    return postOpeningBalance(createSupabaseRepositories(context.supabase), {
+      ...data,
+      userId: context.userId,
+    });
   });
 
 function makeCrud(
@@ -159,7 +117,9 @@ function makeCrud(
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as any;
       await assertCan(context.supabase, context.userId, orgId, "write");
-      const { error } = await context.supabase.from(table).insert({ org_id: orgId, name, ...rest });
+      const { error } = await context.supabase
+        .from(table)
+        .insert({ id: newId(), org_id: orgId, name, ...rest });
       if (error) throw new Error(error.message);
       return { ok: true };
     });

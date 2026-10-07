@@ -12,16 +12,18 @@ import type { TermOverrides } from "@/lib/terminology";
 export const Route = createFileRoute("/_authenticated/settings/preferences")({
   head: () => ({
     meta: [
-      { title: "Your Preferences — Open Ledger" },
+      { title: "Your Preferences - OpenLedgerApp" },
       {
         name: "description",
         content: "Personal display preferences that only affect what you see.",
       },
-      { property: "og:title", content: "Your Preferences — Open Ledger" },
+      { property: "og:title", content: "Your Preferences - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Personal display preferences that only affect what you see.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PreferencesSettings,
@@ -55,7 +57,7 @@ function PreferencesSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Your preferences</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose what each term is called on your screens. This only affects what you see — reports
+          Choose what each term is called on your screens. This only affects what you see. Reports
           and PDF exports always use the{" "}
           <Link to="/settings" className="text-primary underline underline-offset-2">
             organization's wording

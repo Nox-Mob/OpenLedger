@@ -10,13 +10,15 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
     meta: [
-      { title: "Organization Profile — Open Ledger" },
+      { title: "Organization Profile - OpenLedgerApp" },
       { name: "description", content: "Organization name, type, currency, and fiscal year." },
-      { property: "og:title", content: "Organization Profile — Open Ledger" },
+      { property: "og:title", content: "Organization Profile - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Organization name, type, currency, and fiscal year.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OrgProfileSettings,
@@ -162,7 +164,7 @@ function OrgProfileSettings() {
             </div>
             {orgType !== null && orgType !== org.orgType && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Changing type only changes labels and report names — your accounts and transactions
+                Changing type only changes labels and report names. Your accounts and transactions
                 stay as they are.
               </p>
             )}
@@ -171,7 +173,7 @@ function OrgProfileSettings() {
             <span className="text-sm font-medium">Wording</span>
             <p className="mt-1 text-xs text-muted-foreground">
               How the app and reports talk to everyone in this organization. The books underneath
-              are always proper double-entry — this only changes the words.
+              are always proper double-entry; this only changes the words.
             </p>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {(
@@ -214,7 +216,7 @@ function OrgProfileSettings() {
               ))}
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Fine-tune each term — drag a slider to choose what it's called. Picking a level above
+              Fine-tune each term: drag a slider to choose what it's called. Picking a level above
               resets every term to that level.
             </p>
             <div className="mt-2">
@@ -327,9 +329,9 @@ function OrgProfileSettings() {
       </div>
 
       <div className="rounded-lg border bg-card p-5">
-        <h2 className="font-display text-lg font-semibold">About Open Ledger</h2>
+        <h2 className="font-display text-lg font-semibold">About OpenLedgerApp</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Free, open-source accounting. Your ledger is the source of truth — bank imports are just
+          Free, open-source accounting. Your ledger is the source of truth. Bank imports are just
           evidence. Every change is recorded in an audit history.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">Version 0.0.1</p>

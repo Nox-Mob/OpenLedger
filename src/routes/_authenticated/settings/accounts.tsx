@@ -10,10 +10,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/accounts")({
   head: () => ({
     meta: [
-      { title: "Accounts Setup — Open Ledger" },
+      { title: "Accounts Setup - OpenLedgerApp" },
       { name: "description", content: "Choose which accounts your organization uses." },
-      { property: "og:title", content: "Accounts Setup — Open Ledger" },
+      { property: "og:title", content: "Accounts Setup - OpenLedgerApp" },
       { property: "og:description", content: "Choose which accounts your organization uses." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AccountsSetup,

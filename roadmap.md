@@ -1,4 +1,21 @@
-# Open Ledger V0.0.1 — Roadmap
+# OpenLedgerApp — Roadmap
+
+## v0.0.2 — Public website
+- [x] Rename the app to OpenLedgerApp throughout website, app screens, legal copy, reports, and documentation; standardize all webpage titles.
+- [x] Public landing page: purpose, boundaries, development status, future distribution model, and source download/setup.
+- [x] Markdown changelog and public release-notes page.
+- [x] High-contrast dark mode toggle (website header and app sidebar); consistent section spacing; no eyebrow badges or em dashes in user-facing copy.
+- No preview links, demo calls to action, or sample credentials on the public website. Keep the development sample account intact.
+
+## v0.0.3 — Desktop-ready foundations (planned, not shipped)
+- [ ] Isolate infrastructure/data access from the UI and pure accounting/domain logic; retain the current web deployment.
+- [ ] Define repository interfaces and consistent record identities for PostgreSQL and a future SQLite adapter.
+- [ ] Investigate Tauri packaging with embedded SQLite: standalone offline use, local configuration/audit/files, no Docker, Node, or internet required for end users.
+- [ ] Preserve a path to optional future sync; synchronization is not part of the immediate release.
+- Distribution goal: free local desktop for solo users/freelancers; self-hosted community edition; managed cloud. Cloud pricing and optional donations remain undecided. Do not advertise desktop installers as available.
+- [ ] Future installer: ask cloud-hosted versus self-hosted backend, clone source, write ignored local configuration, optionally provision Docker, apply migrations safely, build/start app.
+
+## v0.0.1 — Completed foundation and remaining maintenance
 
 - [x] 1. Enable Lovable Cloud + email auth + Google sign-in
 - [x] 2. Schema migration: orgs, roles, accounts, transactions, entries (balanced-entry trigger), categories, tags, projects, funds, bank_transactions (dedup fingerprint), audit_log — RLS + grants

@@ -16,10 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/close")({
   head: () => ({
     meta: [
-      { title: "Close the Books — Open Ledger" },
+      { title: "Close the Books - OpenLedgerApp" },
       { name: "description", content: "Lock a period and close the fiscal year." },
-      { property: "og:title", content: "Close the Books — Open Ledger" },
+      { property: "og:title", content: "Close the Books - OpenLedgerApp" },
       { property: "og:description", content: "Lock a period and close the fiscal year." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CloseBooksSettings,
@@ -181,7 +183,7 @@ function CloseBooksSettings() {
           {org.orgType === "nonprofit"
             ? "net result into Net Assets"
             : "profit into Retained Earnings"}
-          , then locks the books through the year's last day. It can't be undone — the closing entry
+          , then locks the books through the year's last day. It can't be undone. The closing entry
           becomes part of the audit trail.
         </p>
         <div className="mt-4 space-y-3">

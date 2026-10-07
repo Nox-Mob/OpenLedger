@@ -1,6 +1,5 @@
 export const LEGAL_CONFIG = {
   operatorName: "Alex Weeks Home Lab",
-  mailingAddress: "[HOSTING COMPANY MAILING ADDRESS]",
   jurisdiction: "State of Oklahoma",
   privacyEmail: "support@awhl.com",
   supportEmail: "support@awhl.com",

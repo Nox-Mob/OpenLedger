@@ -6,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — Open Ledger" },
-      { name: "description", content: "Reset your Open Ledger password." },
-      { property: "og:title", content: "Reset password — Open Ledger" },
-      { property: "og:description", content: "Reset your Open Ledger password." },
+      { title: "Reset Password - OpenLedgerApp" },
+      { name: "description", content: "Reset your OpenLedgerApp password." },
+      { property: "og:title", content: "Reset Password - OpenLedgerApp" },
+      { property: "og:description", content: "Reset your OpenLedgerApp password." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -61,7 +61,7 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
     if (error) return setError(error.message);
-    navigate({ to: "/" });
+    navigate({ to: "/ledger" });
   }
 
   return (

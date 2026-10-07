@@ -33,12 +33,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({
     meta: [
-      { title: "Import Bank File — Open Ledger" },
+      { title: "Import Bank File - OpenLedgerApp" },
       {
         name: "description",
         content: "Import CSV, OFX/QFX or PDF bank statements and post rows to your ledger.",
       },
-      { property: "og:title", content: "Import Bank File — Open Ledger" },
+      { property: "og:title", content: "Import Bank File - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Import CSV, OFX/QFX or PDF bank statements and post rows to your ledger.",
@@ -242,7 +242,7 @@ function ImportPage() {
         if (!parsed.length) throw new Error("No transactions found in this PDF.");
         setRows(await markDuplicates(parsed));
         toast.message(
-          "Please check each row against your statement — PDF reading can make mistakes.",
+          "Please check each row against your statement. PDF reading can make mistakes.",
         );
       } else {
         setFormat("csv");
@@ -342,7 +342,7 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
     } catch (err: any) {
-      toast.error(err.message ?? "Import failed — nothing was saved.");
+      toast.error(err.message ?? "Import failed. Nothing was saved.");
     } finally {
       setBusy(null);
     }
@@ -423,7 +423,7 @@ function ImportPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">Import Bank File</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Bank rows are evidence — nothing enters your books until you post it to the ledger. Supports
+        Bank rows are evidence. Nothing enters your books until you post it to the ledger. Supports
         CSV, OFX/QFX and PDF statements.
       </p>
 
@@ -636,7 +636,7 @@ function ImportPage() {
               <h3 className="text-sm font-semibold">
                 Statement period{" "}
                 <span className="font-normal text-muted-foreground">
-                  (optional — used to check against your statement later)
+                  (optional, used to check against your statement later)
                 </span>
               </h3>
               <div className="mt-3 grid gap-3 md:grid-cols-4">
@@ -707,7 +707,7 @@ function ImportPage() {
                       checked={acceptMismatch}
                       onChange={(e) => setAcceptMismatch(e.target.checked)}
                     />
-                    Import anyway — I'll review every row before posting
+                    Import anyway. I'll review every row before posting
                   </label>
                 </div>
               )}

@@ -7,16 +7,18 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/members")({
   head: () => ({
     meta: [
-      { title: "Users & Roles — Open Ledger" },
+      { title: "Users & Roles - OpenLedgerApp" },
       {
         name: "description",
         content: "Manage who belongs to the organization and what they can do.",
       },
-      { property: "og:title", content: "Users & Roles — Open Ledger" },
+      { property: "og:title", content: "Users & Roles - OpenLedgerApp" },
       {
         property: "og:description",
         content: "Manage who belongs to the organization and what they can do.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: MembersSettings,

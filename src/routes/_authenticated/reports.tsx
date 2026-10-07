@@ -11,10 +11,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
-      { title: "Reports — Open Ledger" },
+      { title: "Reports - OpenLedgerApp" },
       { name: "description", content: "Income statement and balance sheet reports." },
-      { property: "og:title", content: "Reports — Open Ledger" },
+      { property: "og:title", content: "Reports - OpenLedgerApp" },
       { property: "og:description", content: "Income statement and balance sheet reports." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReportsPage,

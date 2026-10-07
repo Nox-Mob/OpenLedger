@@ -16,10 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/funds")({
   head: () => ({
     meta: [
-      { title: "Funds, Categories & Tags — Open Ledger" },
+      { title: "Funds - OpenLedgerApp" },
       { name: "description", content: "Manage funds, categories, and tags." },
-      { property: "og:title", content: "Funds, Categories & Tags — Open Ledger" },
+      { property: "og:title", content: "Funds - OpenLedgerApp" },
       { property: "og:description", content: "Manage funds, categories, and tags." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FundsPage,
@@ -118,7 +120,7 @@ function FundsPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">Funds, Categories & Tags</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Organize your transactions — basic fund tags (not full fund accounting yet) for grants,
+        Organize your transactions: basic fund tags (not full fund accounting yet) for grants,
         categories for detail, tags for anything.
       </p>
 

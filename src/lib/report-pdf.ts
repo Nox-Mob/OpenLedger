@@ -60,7 +60,7 @@ async function setup(org: OrgInfo, title: string, subtitle: string, pref: Termin
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       doc.text(
-        `Prepared with Open Ledger · Amounts in ${org.currency} · Fiscal year starts ${fy} · Generated ${prettyDate(new Date().toISOString().slice(0, 10))}`,
+        `Prepared with OpenLedgerApp · Amounts in ${org.currency} · Fiscal year starts ${fy} · Generated ${prettyDate(new Date().toISOString().slice(0, 10))}`,
         56,
         h - 32,
       );

@@ -17,7 +17,7 @@ export function LegalPage({
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2 font-display font-bold">
-            <BookOpen className="h-5 w-5 text-primary" /> Open Ledger
+            <BookOpen className="h-5 w-5 text-primary" /> OpenLedgerApp
           </Link>
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
             Sign in

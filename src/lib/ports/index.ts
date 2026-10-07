@@ -1,0 +1,196 @@
+// Repository ports: the only way application code may read or write ledger data.
+// Adapters (Supabase/Postgres now, SQLite/Tauri later) implement these.
+// Contract for every adapter:
+// - Callers pass app-generated IDs (newId()); adapters never invent IDs.
+// - Callers run src/lib/domain rules first; adapters may also enforce them (DB triggers).
+// - Adapters throw on storage errors; `DuplicateKeyError` signals an idempotency/unique hit.
+// - Every method is scoped by orgId; cloud adapters additionally rely on RLS.
+
+import type {
+  Account,
+  AccountType,
+  AuditEvent,
+  AuditRecord,
+  BankTransaction,
+  Id,
+  IsoDate,
+  Member,
+  Organization,
+  PeriodClose,
+  Project,
+  Reconciliation,
+  ReconEntry,
+  ReconcileMode,
+  Role,
+  Transaction,
+  StatementInfo,
+  TransactionSource,
+} from "../domain/models";
+
+export class DuplicateKeyError extends Error {
+  constructor(message = "Duplicate key") {
+    super(message);
+    this.name = "DuplicateKeyError";
+  }
+}
+
+export interface OrgRepository {
+  get(orgId: Id): Promise<Organization | null>;
+  listForUser(userId: Id): Promise<(Organization & { role: Role })[]>;
+  create(org: Omit<Organization, "createdAt">): Promise<void>;
+  updateSettings(
+    orgId: Id,
+    patch: Partial<
+      Pick<
+        Organization,
+        | "name"
+        | "orgType"
+        | "currency"
+        | "fiscalYearStartMonth"
+        | "timezone"
+        | "terminology"
+        | "termOverrides"
+        | "aiPdfEnabled"
+      >
+    >,
+  ): Promise<void>;
+  setBooksLockedThrough(orgId: Id, date: IsoDate | null): Promise<void>;
+  roleOf(userId: Id, orgId: Id): Promise<Role | null>;
+  listMembers(orgId: Id): Promise<Member[]>;
+}
+
+export interface AccountRepository {
+  list(orgId: Id, opts?: { includeArchived?: boolean }): Promise<Account[]>;
+  getMany(orgId: Id, ids: Id[]): Promise<Account[]>;
+  create(accounts: Omit<Account, "createdAt">[]): Promise<void>;
+  rename(orgId: Id, id: Id, name: string): Promise<void>;
+  setActive(orgId: Id, id: Id, isActive: boolean): Promise<void>;
+  hasOpeningBalance(orgId: Id, accountId: Id): Promise<boolean>;
+}
+
+export interface NewTransaction {
+  id: Id;
+  orgId: Id;
+  transactionDate: IsoDate;
+  postedDate: IsoDate | null;
+  description: string;
+  source: Exclude<TransactionSource, "closing">;
+  createdBy: Id;
+  idempotencyKey: string | null;
+  entries: {
+    id: Id;
+    accountId: Id;
+    amountCents: number;
+    categoryId?: Id | null | undefined;
+    projectId?: Id | null | undefined;
+    fundId?: Id | null | undefined;
+    memo?: string | null | undefined;
+  }[];
+  tagIds?: Id[] | undefined;
+}
+
+export interface TransactionRepository {
+  /** Writes header + entries atomically (or compensates). Throws DuplicateKeyError on idempotency hit. */
+  post(tx: NewTransaction): Promise<void>;
+  findByIdempotencyKey(orgId: Id, key: string): Promise<Id | null>;
+  get(orgId: Id, id: Id): Promise<Transaction | null>;
+  list(
+    orgId: Id,
+    opts?: { accountId?: Id; from?: IsoDate; to?: IsoDate; limit?: number; includeVoid?: boolean },
+  ): Promise<Transaction[]>;
+  /** posted → void only. Returns false if it was already void (lost a race). */
+  markVoid(orgId: Id, id: Id): Promise<boolean>;
+  clearReconciliation(entryIds: Id[]): Promise<void>;
+  /** Signed ledger rows for report math (posted only, legacy 'closing' excluded). */
+  ledgerRows(
+    orgId: Id,
+    opts?: { to?: IsoDate },
+  ): Promise<
+    {
+      amountCents: number;
+      accountId: Id;
+      accountName: string;
+      accountType: AccountType;
+      projectId: Id | null;
+      transactionDate: IsoDate;
+    }[]
+  >;
+}
+
+export interface BankTransactionRepository {
+  insertMany(
+    rows: Omit<BankTransaction, "transactionId" | "needsReview">[],
+  ): Promise<{ inserted: number; duplicates: number }>;
+  get(orgId: Id, id: Id): Promise<BankTransaction | null>;
+  listUnmatched(orgId: Id, accountId?: Id): Promise<BankTransaction[]>;
+  /** Links only if still unlinked; false means someone else claimed it. */
+  claim(orgId: Id, id: Id, transactionId: Id): Promise<boolean>;
+  unlinkTransaction(orgId: Id, transactionId: Id): Promise<number>;
+  listInPeriod(orgId: Id, accountId: Id, from: IsoDate, to: IsoDate): Promise<BankTransaction[]>;
+  latestStatement(orgId: Id, accountId: Id): Promise<StatementInfo | null>;
+}
+
+export interface ReconciliationRepository {
+  start(r: {
+    id: Id;
+    orgId: Id;
+    accountId: Id;
+    periodStart: IsoDate;
+    periodEnd: IsoDate;
+    beginningBalanceCents: number;
+    endingBalanceCents: number;
+    mode: ReconcileMode;
+    batchId: Id | null;
+    createdBy: Id;
+  }): Promise<void>;
+  get(orgId: Id, id: Id): Promise<Reconciliation | null>;
+  /** Lookup by id alone; the adapter's own scoping (RLS / single-tenant file) applies. */
+  locate(id: Id): Promise<Reconciliation | null>;
+  list(orgId: Id, accountId?: Id): Promise<Reconciliation[]>;
+  /** Ticked-line count per reconciliation in the org. */
+  itemCounts(orgId: Id): Promise<Record<Id, number>>;
+  /** Posted entries on the account dated <= throughDate, unticked or ticked by this check. */
+  workspaceEntries(
+    accountId: Id,
+    throughDate: IsoDate,
+    reconciliationId: Id,
+  ): Promise<ReconEntry[]>;
+  /** Entries ticked by this check. */
+  entriesOf(reconciliationId: Id): Promise<ReconEntry[]>;
+  /** Ticks only unticked lines on the check's account; unticks only this check's lines. */
+  setTicked(reconciliationId: Id, entryIds: Id[], ticked: boolean): Promise<void>;
+  clearedTotalCents(reconciliationId: Id): Promise<number>;
+  finish(orgId: Id, id: Id, userId: Id): Promise<void>;
+  reopen(orgId: Id, id: Id): Promise<void>;
+  /** In-progress only: unticks its lines and removes it. */
+  discard(orgId: Id, id: Id): Promise<void>;
+}
+
+export interface PeriodCloseRepository {
+  list(orgId: Id): Promise<PeriodClose[]>;
+  find(orgId: Id, fiscalYearEnd: IsoDate): Promise<PeriodClose | null>;
+  /** Throws DuplicateKeyError if that fiscal year is already closed. */
+  create(c: Omit<PeriodClose, "createdAt">): Promise<void>;
+}
+
+export interface ProjectRepository {
+  list(orgId: Id): Promise<Project[]>;
+}
+
+export interface AuditRepository {
+  /** Append-only. Cloud adapter writes with the service role. */
+  append(event: AuditEvent): Promise<void>;
+  listFor(orgId: Id, entity: string, entityId: Id, limit?: number): Promise<AuditRecord[]>;
+}
+
+/** Everything a request needs, built per request by the active adapter. */
+export interface Repositories {
+  orgs: OrgRepository;
+  accounts: AccountRepository;
+  transactions: TransactionRepository;
+  bank: BankTransactionRepository;
+  reconciliations: ReconciliationRepository;
+  periodCloses: PeriodCloseRepository;
+  projects: ProjectRepository;
+  audit: AuditRepository;
+}

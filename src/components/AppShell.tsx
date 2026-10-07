@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getMyOrgs, getMyProfile } from "@/lib/org.functions";
 import { useCurrentOrgId, setStoredOrgId } from "@/lib/current-org";
 import { getTerms, type OrgType, type Terminology } from "@/lib/terminology";
@@ -59,7 +60,7 @@ export function useOrgContext() {
 }
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/ledger", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/transactions/new", label: "New Transaction", icon: PlusCircle, write: true },
   { to: "/accounts", label: "Accounts", icon: Landmark },
@@ -87,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
         <div className="flex items-center gap-2 px-5 py-5">
           <BookOpen className="h-5 w-5 text-sidebar-primary" />
-          <span className="font-display text-lg font-bold">Open Ledger</span>
+          <span className="font-display text-lg font-bold">OpenLedgerApp</span>
         </div>
 
         {orgs.length > 1 && (
@@ -127,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                activeOptions={{ exact: item.to === "/" }}
+                activeOptions={{ exact: item.to === "/ledger" }}
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 activeProps={{
                   className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
@@ -141,16 +142,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="p-3">
-          <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 px-3 text-[11px] text-sidebar-foreground/50">
-            <Link to="/terms" className="hover:text-sidebar-foreground">
-              Terms
-            </Link>
-            <Link to="/privacy" className="hover:text-sidebar-foreground">
-              Privacy
-            </Link>
-            <Link to="/not-advice" className="hover:text-sidebar-foreground">
-              Not advice
-            </Link>
+          <div className="mb-2 flex items-center justify-between gap-2 px-3">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-sidebar-foreground/50">
+              <Link to="/terms" className="hover:text-sidebar-foreground">
+                Terms
+              </Link>
+              <Link to="/privacy" className="hover:text-sidebar-foreground">
+                Privacy
+              </Link>
+              <Link to="/not-advice" className="hover:text-sidebar-foreground">
+                Not advice
+              </Link>
+            </div>
+            <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" />
           </div>
           <button
             onClick={signOut}

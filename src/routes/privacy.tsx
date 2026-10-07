@@ -5,16 +5,17 @@ import { LEGAL_CONFIG } from "@/lib/legal";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Open Ledger" },
+      { title: "Privacy Policy - OpenLedgerApp" },
       {
         name: "description",
-        content: "How Alex Weeks Home Lab protects Open Ledger data and preserves user ownership.",
+        content:
+          "How Alex Weeks Home Lab protects OpenLedgerApp data and preserves user ownership.",
       },
-      { property: "og:title", content: "Privacy Policy — Open Ledger" },
+      { property: "og:title", content: "Privacy Policy - OpenLedgerApp" },
       {
         property: "og:description",
         content:
-          "Open Ledger users own their data. We do not sell it or share it for anyone else's use.",
+          "OpenLedgerApp users own their data. We do not sell it or share it for anyone else's use.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -33,12 +34,12 @@ function PrivacyPage() {
         <h2>1. Scope and who we are</h2>
         <p>
           This Privacy Policy describes how {LEGAL_CONFIG.operatorName} (“we,” “us,” or “our”)
-          handles information when it operates the hosted Open Ledger service, website, and related
-          support (together, the “Service”). It applies to account holders, organization members,
-          and visitors who use the hosted Service.
+          handles information when it operates the hosted OpenLedgerApp service, website, and
+          related support (together, the “Service”). It applies to account holders, organization
+          members, and visitors who use the hosted Service.
         </p>
         <p>
-          If you use a self-hosted copy of Open Ledger, the person or organization operating that
+          If you use a self-hosted copy of OpenLedgerApp, the person or organization operating that
           installation controls its data practices. This policy does not govern independent,
           self-hosted installations that we do not operate.
         </p>
@@ -47,7 +48,7 @@ function PrivacyPage() {
         <h2>2. Your data belongs to you</h2>
         <p>
           You retain 100% ownership of the content and records you or your authorized users enter,
-          import, upload, or create through Open Ledger (“Your Data”). Using the Service does not
+          import, upload, or create through OpenLedgerApp (“Your Data”). Using the Service does not
           transfer ownership of Your Data to us. You give us only the limited permission needed to
           host, process, back up, secure, and display Your Data so we can provide features you
           choose to use. This permission ends when Your Data is deleted, except for temporary backup
@@ -83,7 +84,7 @@ function PrivacyPage() {
       <section>
         <h2>4. How we use information</h2>
         <p>
-          We use information only to provide and maintain Open Ledger; authenticate users and
+          We use information only to provide and maintain OpenLedgerApp; authenticate users and
           enforce organization permissions; process transactions, imports, reconciliations, and
           reports you request; protect accounts and prevent abuse; diagnose errors and improve
           reliability; respond to support requests; communicate important Service or policy changes;
@@ -94,7 +95,7 @@ function PrivacyPage() {
         <h2>5. We do not sell or share your data</h2>
         <p>
           We do not sell, rent, trade, or license Your Data or personal information. We do not share
-          it with advertisers, data brokers, marketers, other Open Ledger organizations, or anyone
+          it with advertisers, data brokers, marketers, other OpenLedgerApp organizations, or anyone
           who wants to use it for their own purposes. We do not use Your Data to advertise to you or
           to build advertising profiles. Because we aren’t like that.
         </p>
@@ -134,8 +135,8 @@ function PrivacyPage() {
           Deleted information may remain temporarily in encrypted backups until those backups age
           out. We may retain limited security logs, acceptance records, or other information when
           reasonably necessary to prevent fraud, resolve disputes, enforce agreements, or comply
-          with law. Deleting bookkeeping records may be limited where Open Ledger preserves an audit
-          trail; in that case, you may delete the organization or account instead.
+          with law. Deleting bookkeeping records may be limited where OpenLedgerApp preserves an
+          audit trail; in that case, you may delete the organization or account instead.
         </p>
       </section>
       <section>

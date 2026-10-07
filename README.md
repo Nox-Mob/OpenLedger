@@ -1,4 +1,4 @@
-# Open Ledger
+# OpenLedgerApp
 
 Open-source, self-hostable double-entry accounting for very small businesses and nonprofits.
 
@@ -8,6 +8,14 @@ Open-source, self-hostable double-entry accounting for very small businesses and
 - Every organization's data is isolated by row-level security in the database.
 
 Built with React 19 + TanStack Start (Vite), Tailwind CSS v4, and Supabase (Postgres, Auth, Storage).
+
+## Public website and release notes
+
+The public website is at `/`; account holders use `/auth` to sign in and `/ledger` for the dashboard. `/get-started` describes the two backend setup paths and offers a development source archive. It is not a desktop installer. The website does not advertise the preview or development demo.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes and [BLUEPRINT.md](BLUEPRINT.md) for the v0.0.2 website and planned v0.0.3 desktop-ready architecture. The future free standalone desktop edition, managed cloud offering, optional donations, and synchronization are goals, not shipped features or pricing commitments.
+
+Source ZIP downloads point to the GitHub `main` branch archive (github.com/Nox-Mob/OpenLedgerApp); the /get-started page links to it.
 
 ---
 
@@ -210,7 +218,7 @@ Run it under a process manager so it restarts on crash and boot, e.g. systemd (`
 
 ```ini
 [Unit]
-Description=Open Ledger
+Description=OpenLedgerApp
 After=network.target
 
 [Service]

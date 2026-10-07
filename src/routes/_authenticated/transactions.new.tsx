@@ -19,10 +19,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/transactions/new")({
   head: () => ({
     meta: [
-      { title: "New Transaction — Open Ledger" },
+      { title: "New Transaction - OpenLedgerApp" },
       { name: "description", content: "Record money in, money out, or a transfer." },
-      { property: "og:title", content: "New Transaction — Open Ledger" },
+      { property: "og:title", content: "New Transaction - OpenLedgerApp" },
       { property: "og:description", content: "Record money in, money out, or a transfer." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: NewTransactionPage,
@@ -203,7 +205,7 @@ function NewTransactionPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">New Transaction</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Record what happened — the ledger keeps both sides balanced for you.
+        Record what happened. The ledger keeps both sides balanced for you.
       </p>
 
       <div className="mt-5 flex gap-2">
