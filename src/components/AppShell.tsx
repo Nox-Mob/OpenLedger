@@ -68,6 +68,7 @@ const NAV = [
   { to: "/import", label: "Import Bank File", icon: Upload, write: true },
   { to: "/reconcile", label: "Reconcile", icon: ListChecks },
   { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/budgets", label: "Budgets", icon: Target },
   { to: "/funds", label: "Funds", icon: PiggyBank },
   { to: "/pledges", label: "Pledges", icon: HandCoins },
   { to: "/reports", label: "Reports", icon: FileBarChart },

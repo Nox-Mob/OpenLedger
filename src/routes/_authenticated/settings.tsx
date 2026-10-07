@@ -20,6 +20,8 @@ const SECTIONS = [
   { to: "/settings/accounts", label: "Accounts", exact: false },
   { to: "/settings/members", label: "Users & roles", exact: false },
   { to: "/settings/close", label: "Close the books", exact: false },
+  { to: "/settings/exports", label: "Exports and backup", exact: false },
+  { to: "/settings/history", label: "History", exact: false },
   { to: "/settings/preferences", label: "Your preferences", exact: false },
 ] as const;
 
