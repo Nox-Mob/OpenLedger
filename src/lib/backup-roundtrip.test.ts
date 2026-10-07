@@ -1,30 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { checkRestorable, keysFromSeed, REFS, TABLES, verifyBackup } from "./domain/backup";
+import {
+  checkRestorable,
+  keysFromSeed,
+  REFS,
+  signBackup,
+  TABLES,
+  verifyBackup,
+} from "./domain/backup";
 import { computeBalance, computeIncome, computeTrialBalance, type LedgerRow } from "./report-math";
 
 type Row = Record<string, unknown>;
-const state = vi.hoisted(() => ({ db: null as unknown, keys: null as unknown }));
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => {
-    const builder = {
-      middleware: () => builder,
-      validator: () => builder,
-      handler: (fn: (args: unknown) => unknown) => (args: { data: unknown }) =>
-        fn({ data: args.data, context: { supabase: state.db, userId: "restoring-user" } }),
-    };
-    return builder;
-  },
-}));
-vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
-vi.mock("./permissions", () => ({ assertCan: vi.fn() }));
-vi.mock("./audit", () => ({ writeAudit: vi.fn() }));
-vi.mock("./backup-key.server", () => ({ getSigningKeys: async () => state.keys }));
+const state = vi.hoisted(() => ({ db: null as unknown }));
 vi.mock("@/integrations/supabase/client.server", () => ({
   get supabaseAdmin() {
     return state.db;
   },
 }));
-import { exportBackup } from "./backup.functions";
+import { readBackupData } from "./backup-export.server";
 import { restoreIntoNewOrg } from "./restore.server";
 
 // In-process persistence double exercises the actual export pagination and restore writes.
@@ -331,13 +323,18 @@ describe("moderately sized organization backup roundtrip", () => {
     db = new BackupStore();
     fixture(db);
     state.db = db;
-    state.keys = await keysFromSeed("test-only-backup-seed".repeat(4));
   });
 
   it("exports and restores 1,500 transactions, all tables, links and reports", async () => {
-    const exported = await exportBackup({ data: { orgId: ORG_ID } });
+    const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
+    const source = await readBackupData(db, ORG_ID);
+    const exported = await signBackup(
+      keys,
+      source.organization,
+      source.tables,
+      "2026-10-07T00:00:00Z",
+    );
     const serialized = JSON.stringify(exported);
-    const keys = state.keys as Awaited<ReturnType<typeof keysFromSeed>>;
     const verified = await verifyBackup(JSON.parse(serialized), keys.publicRaw);
     expect(verified.counts.transactions).toBe(1500);
     expect(verified.counts.entries).toBe(4500);
@@ -406,8 +403,14 @@ describe("moderately sized organization backup roundtrip", () => {
   }, 30000);
 
   it("removes the partial organization after a later restore write fails", async () => {
-    const exported = await exportBackup({ data: { orgId: ORG_ID } });
-    const keys = state.keys as Awaited<ReturnType<typeof keysFromSeed>>;
+    const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
+    const source = await readBackupData(db, ORG_ID);
+    const exported = await signBackup(
+      keys,
+      source.organization,
+      source.tables,
+      "2026-10-07T00:00:00Z",
+    );
     const verified = await verifyBackup(JSON.parse(JSON.stringify(exported)), keys.publicRaw);
     const original = structuredClone(db.tables);
     db.failTable = "budgets";
