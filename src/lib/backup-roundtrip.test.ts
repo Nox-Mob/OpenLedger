@@ -104,7 +104,7 @@ class BackupStore {
       },
       eq: (key: string, value: unknown) => {
         filters.push(
-          key === "transactions['org_id']"
+          key === "transactions.org_id"
             ? (r) =>
                 (this.tables["transactions"] ?? []).some(
                   (t) => t["id"] === r["transaction_id"] && t["org_id"] === value,
