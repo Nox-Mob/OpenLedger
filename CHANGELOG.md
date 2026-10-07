@@ -2,7 +2,7 @@
 
 Notable changes to OpenLedgerApp are recorded here. This project follows the structure of Keep a Changelog. Pre-1.0 software remains under active development.
 
-## [0.0.2] - Unreleased
+## [0.0.2] - 2026-10-06
 
 ### Added
 - High-contrast dark mode with a toggle in the website header and the app sidebar. It remembers your choice and follows the system preference on first visit.
