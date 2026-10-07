@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { BookOpen, ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function WebsiteShell({ children }: { children: ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function WebsiteShell({ children }: { children: ReactNode }) {
             </span>
           </Link>
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-5">
+            <ThemeToggle />
             <Button variant="ghost" asChild>
               <Link to="/changelog">Changelog</Link>
             </Button>

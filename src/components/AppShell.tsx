@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getMyOrgs, getMyProfile } from "@/lib/org.functions";
 import { useCurrentOrgId, setStoredOrgId } from "@/lib/current-org";
 import { getTerms, type OrgType, type Terminology } from "@/lib/terminology";
@@ -141,7 +142,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="p-3">
-          <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 px-3 text-[11px] text-sidebar-foreground/50">
+          <div className="mb-2 flex items-center justify-between gap-2 px-3">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-sidebar-foreground/50">
             <Link to="/terms" className="hover:text-sidebar-foreground">
               Terms
             </Link>
@@ -151,6 +153,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/not-advice" className="hover:text-sidebar-foreground">
               Not advice
             </Link>
+            </div>
+            <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" />
           </div>
           <button
             onClick={signOut}
