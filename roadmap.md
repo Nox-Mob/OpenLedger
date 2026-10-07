@@ -4,9 +4,9 @@
 - [x] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
 - [x] 16. Invites, remove member, transfer ownership, org deletion (account deletion still open)
 - [x] Server functions use `.validator()` everywhere (no deprecated `.inputValidator()` left)
-- [ ] 15. CSV/XLSX exports + org backup/restore (formula-injection escaping)
-- [ ] 18. Budgets entry
-- [ ] 21. Observability + audit log viewer + backups
+- [x] 15. CSV/XLSX exports + full JSON backup (formula-injection escaping). Restore still open
+- [x] 18. Budgets: yearly or monthly per income/expense account, budget vs actual
+- [x] 21. Observability: admin history (audit log) viewer
 
 ## Future (unscheduled, not assigned to a version)
 - Local desktop edition: Tauri + embedded SQLite, offline use, no Docker/Node/internet for end users. Groundwork (ports, SQLite adapter, contract tests) exists; packaging needs a Rust toolchain. Do not advertise desktop installers as available.
@@ -17,6 +17,7 @@
 ## Open backlog
 - [ ] 19. MFA  - [ ] 20. "Cash basis" labels; A/R, A/P later  - [ ] 22. Performance at 10k–50k entries
 - [ ] Account deletion (part of 16)
+- [ ] Restore from backup; budgets, exports and history behind the ports for desktop
 - [ ] 23–32. README, org switcher, terminology note, empty/error states, a11y, input validation, currency rules, undo wording, catalog duplicate protection
 - [ ] Reduce legacy `any` types (non-blocking warnings)
 - Deferred: accrual basis, invoices/bills, bank feeds (Plaid), receipt attachments

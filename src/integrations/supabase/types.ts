@@ -214,6 +214,54 @@ export type Database = {
           },
         ]
       }
+      budgets: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          created_at: string
+          id: string
+          org_id: string
+          period_start: string
+          period_type: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          created_at?: string
+          id: string
+          org_id: string
+          period_start: string
+          period_type: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          org_id?: string
+          period_start?: string
+          period_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
