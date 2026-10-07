@@ -14,6 +14,11 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Exports: reports and all transactions download as CSV or Excel, with protection against spreadsheet formula tricks.
 - Full backup: admins can download one signed file with everything in an organization. Any change to the file is detected.
 - Restore: a backup is restored into a new organization after its signature and every record are checked, and every transaction is re-checked against the bookkeeping rules. Backups from another install can be restored and are labeled with that install's fingerprint.
+- Backup regression tests cover exporting and restoring 1,500 transactions with 4,500 ledger lines, related records, unchanged reports, and cleanup after a simulated restore failure.
+
+### Changed
+
+- Restore now has a clearly labeled backup file button, shows the selected filename, and highlights the organization name required for confirmation.
 
 ### Fixed
 
