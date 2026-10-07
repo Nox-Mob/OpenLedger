@@ -8,7 +8,7 @@ const orgId = z.string().uuid();
 const PAGE = 1000;
 
 async function all(build: (from: number, to: number) => PromiseLike<{ data: any; error: any }>) {
-  const out: unknown[] = [];
+  const out: any[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await build(from, from + PAGE - 1);
     if (error) throw new Error(error.message);
@@ -49,7 +49,7 @@ export const exportBackup = createServerFn({ method: "POST" })
       .eq("id", data.orgId)
       .single();
     if (error) throw new Error(error.message);
-    const tables: Record<string, unknown[]> = {};
+    const tables: Record<string, any[]> = {};
     for (const t of ORG_TABLES)
       tables[t] = await all((f, to) =>
         db.from(t).select("*").eq("org_id", data.orgId).order("id").range(f, to),
