@@ -86,7 +86,13 @@ export const exportBackup = createServerFn({ method: "POST" })
     });
     const { getSigningKeys } = await import("./backup-key.server");
     const { signBackup } = await import("./domain/backup");
-    return signBackup(await getSigningKeys(), org, tables, new Date().toISOString());
+    const signed = await signBackup(await getSigningKeys(), org, tables, new Date().toISOString());
+    return signed as unknown as {
+      manifest: typeof signed.manifest;
+      signature: string;
+      organization: any;
+      tables: Record<string, any[]>;
+    };
   });
 
 /** Every posted and voided transaction line, for spreadsheet export. */
