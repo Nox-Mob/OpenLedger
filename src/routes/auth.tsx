@@ -1,3 +1,4 @@
+import { PENDING_INVITE_KEY } from "@/lib/invite-link";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
@@ -21,8 +22,6 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
-
-export const PENDING_INVITE_KEY = "openledgerapp-pending-invite";
 
 function AuthPage() {
   const navigate = useNavigate();
