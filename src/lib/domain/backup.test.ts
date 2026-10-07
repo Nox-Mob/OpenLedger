@@ -13,13 +13,21 @@ import { computeTrialBalance } from "@/lib/report-math";
 
 const ORG = { id: "org-1", name: "Acme", currency: "USD" };
 function sample() {
-  const t: Record<string, Record<string, unknown>[]> = Object.fromEntries(TABLES.map((n) => [n, []]));
+  const t: Record<string, Record<string, unknown>[]> = Object.fromEntries(
+    TABLES.map((n) => [n, []]),
+  );
   t["accounts"] = [
     { id: "a-cash", org_id: "org-1", name: "Cash", type: "asset" },
     { id: "a-rev", org_id: "org-1", name: "Sales", type: "revenue" },
   ];
   t["transactions"] = [
-    { id: "t1", org_id: "org-1", description: "Sale", status: "posted", transaction_date: "2026-01-05" },
+    {
+      id: "t1",
+      org_id: "org-1",
+      description: "Sale",
+      status: "posted",
+      transaction_date: "2026-01-05",
+    },
   ];
   t["entries"] = [
     { id: "e1", transaction_id: "t1", account_id: "a-cash", amount_cents: 1250 },
@@ -76,7 +84,9 @@ describe("signed backups", async () => {
     const v = await verifyBackup(forged, keys.publicRaw);
     expect(v.sameInstall).toBe(false);
     // ...and the bookkeeping re-check still catches the unbalanced result.
-    expect(() => checkRestorable(remapTables(v.backup.tables, () => crypto.randomUUID()).tables)).toThrow();
+    expect(() =>
+      checkRestorable(remapTables(v.backup.tables, () => crypto.randomUUID()).tables),
+    ).toThrow();
   });
 });
 
@@ -85,7 +95,9 @@ describe("restore planning", () => {
     const src = sample();
     const { tables } = remapTables(src, () => crypto.randomUUID());
     expect(tables["accounts"]![0]!["id"]).not.toBe("a-cash");
-    expect(tables["bank_transactions"]![0]!["transaction_id"]).toBe(tables["transactions"]![0]!["id"]);
+    expect(tables["bank_transactions"]![0]!["transaction_id"]).toBe(
+      tables["transactions"]![0]!["id"],
+    );
     checkRestorable(tables);
     const rows = (t: Record<string, Record<string, unknown>[]>) =>
       t["entries"]!.map((e) => {
@@ -107,6 +119,8 @@ describe("restore planning", () => {
     expect(() => remapTables(bad, () => crypto.randomUUID())).toThrow(/missing/);
     const link = sample();
     link["bank_transactions"]![0]!["amount_cents"] = 5;
-    expect(() => checkRestorable(remapTables(link, () => crypto.randomUUID()).tables)).toThrow(/bank row/);
+    expect(() => checkRestorable(remapTables(link, () => crypto.randomUUID()).tables)).toThrow(
+      /bank row/,
+    );
   });
 });

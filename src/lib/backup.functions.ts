@@ -17,7 +17,8 @@ async function all(build: (from: number, to: number) => PromiseLike<{ data: any;
   }
 }
 
-const ORG_TABLES = [ // order matches domain/backup TABLES minus entries/transaction_tags
+const ORG_TABLES = [
+  // order matches domain/backup TABLES minus entries/transaction_tags
   "accounts",
   "categories",
   "tags",
@@ -168,7 +169,10 @@ export const listHistory = createServerFn({ method: "GET" })
     };
   });
 
-const backupText = z.string().min(2).max(26 * 1024 * 1024);
+const backupText = z
+  .string()
+  .min(2)
+  .max(26 * 1024 * 1024);
 
 async function verifyText(text: string) {
   const { MAX_BACKUP_BYTES, verifyBackup, BackupRejected } = await import("./domain/backup");

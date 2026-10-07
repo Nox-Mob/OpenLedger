@@ -145,7 +145,8 @@ export async function installFingerprint(publicRaw: string) {
 
 /** Derive a stable Ed25519 key pair from a secret seed string (32 bytes via SHA-256). */
 export async function keysFromSeed(seed: string): Promise<SigningKeys> {
-  if (!seed || seed.length < 32) throw new Error("Backup signing is not configured on this server.");
+  if (!seed || seed.length < 32)
+    throw new Error("Backup signing is not configured on this server.");
   const raw = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(seed)));
   const pkcs8 = new Uint8Array(PKCS8_ED25519_PREFIX.length + 32);
   pkcs8.set(PKCS8_ED25519_PREFIX);
@@ -213,7 +214,10 @@ export interface VerifiedBackup {
 }
 
 /** Check format, signature and every fingerprint. Throws BackupRejected on any mismatch. */
-export async function verifyBackup(input: unknown, localPublicRaw: string): Promise<VerifiedBackup> {
+export async function verifyBackup(
+  input: unknown,
+  localPublicRaw: string,
+): Promise<VerifiedBackup> {
   const b = input as SignedBackup;
   if (!b || typeof b !== "object" || !b.manifest || typeof b.signature !== "string")
     throw new BackupRejected(
@@ -237,7 +241,10 @@ export async function verifyBackup(input: unknown, localPublicRaw: string): Prom
   } catch {
     ok = false;
   }
-  if (!ok) throw new BackupRejected("The backup's signature doesn't match. It was changed after it was created.");
+  if (!ok)
+    throw new BackupRejected(
+      "The backup's signature doesn't match. It was changed after it was created.",
+    );
   if ((await installFingerprint(m.publicKey)) !== m.installFingerprint)
     throw new BackupRejected("The backup's install fingerprint doesn't match its key.");
 
@@ -250,7 +257,9 @@ export async function verifyBackup(input: unknown, localPublicRaw: string): Prom
     const d = await tableDigest(t, rows);
     const expected = m.tables[t];
     if (!expected || d.chain !== expected.chain || d.count !== expected.count)
-      throw new BackupRejected(`Records in "${t.replace(/_/g, " ")}" were changed, added or removed after the backup was created.`);
+      throw new BackupRejected(
+        `Records in "${t.replace(/_/g, " ")}" were changed, added or removed after the backup was created.`,
+      );
     counts[t] = rows.length;
   }
   return {
@@ -278,8 +287,7 @@ export function remapTables(
     IdMap
   >;
   for (const t of TABLES)
-    for (const r of tables[t] ?? [])
-      if (typeof r["id"] === "string") ids[t].set(r["id"], newId());
+    for (const r of tables[t] ?? []) if (typeof r["id"] === "string") ids[t].set(r["id"], newId());
   const out: Record<string, Row[]> = {};
   for (const t of TABLES) {
     const refs = REFS[t] ?? {};
@@ -311,7 +319,10 @@ export function checkRestorable(tables: Record<string, Row[]>): void {
     const amount = Number(e["amount_cents"]);
     const tx = String(e["transaction_id"]);
     if (!accounts.has(String(e["account_id"])))
-      throw new LedgerRuleError("restore_ref", "An entry uses an account that isn't in the backup.");
+      throw new LedgerRuleError(
+        "restore_ref",
+        "An entry uses an account that isn't in the backup.",
+      );
     const list = byTx.get(tx) ?? [];
     list.push({ accountId: String(e["account_id"]), amountCents: amount });
     byTx.set(tx, list);
@@ -334,7 +345,8 @@ export function checkRestorable(tables: Record<string, Row[]>): void {
     const lines = byTx.get(String(b["transaction_id"])) ?? [];
     if (
       !lines.some(
-        (l) => l.accountId === String(b["account_id"]) && l.amountCents === Number(b["amount_cents"]),
+        (l) =>
+          l.accountId === String(b["account_id"]) && l.amountCents === Number(b["amount_cents"]),
       )
     )
       throw new LedgerRuleError(

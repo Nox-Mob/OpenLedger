@@ -55,12 +55,31 @@ export async function restoreIntoNewOrg(
     await insertAll(
       db,
       "accounts",
-      withOrg(accounts.map((a) => ({ ...pick(a, ["id", "name", "type", "subtype", "created_at"]), is_active: true }))),
+      withOrg(
+        accounts.map((a) => ({
+          ...pick(a, ["id", "name", "type", "subtype", "created_at"]),
+          is_active: true,
+        })),
+      ),
     );
     for (const t of ["categories", "tags"])
-      await insertAll(db, t, withOrg(T(t).map((r) => pick(r, ["id", "name", "type", "created_at"]))));
-    await insertAll(db, "projects", withOrg(T("projects").map((r) => pick(r, ["id", "name", "budget_cents", "status", "created_at"]))));
-    await insertAll(db, "funds", withOrg(T("funds").map((r) => pick(r, ["id", "name", "is_restricted", "created_at"]))));
+      await insertAll(
+        db,
+        t,
+        withOrg(T(t).map((r) => pick(r, ["id", "name", "type", "created_at"]))),
+      );
+    await insertAll(
+      db,
+      "projects",
+      withOrg(
+        T("projects").map((r) => pick(r, ["id", "name", "budget_cents", "status", "created_at"])),
+      ),
+    );
+    await insertAll(
+      db,
+      "funds",
+      withOrg(T("funds").map((r) => pick(r, ["id", "name", "is_restricted", "created_at"]))),
+    );
 
     // Transactions, then their entries grouped so each request holds whole transactions
     // (the balance check runs when each request commits).
@@ -69,7 +88,16 @@ export async function restoreIntoNewOrg(
       "transactions",
       withOrg(
         T("transactions").map((r) => ({
-          ...pick(r, ["id", "transaction_date", "posted_date", "description", "source", "status", "idempotency_key", "created_at"]),
+          ...pick(r, [
+            "id",
+            "transaction_date",
+            "posted_date",
+            "description",
+            "source",
+            "status",
+            "idempotency_key",
+            "created_at",
+          ]),
           created_by: userId,
         })),
       ),
@@ -88,12 +116,26 @@ export async function restoreIntoNewOrg(
       if (batch.length + lines.length > CHUNK) await flush();
       batch.push(
         ...lines.map((e) =>
-          pick(e, ["id", "transaction_id", "account_id", "amount_cents", "category_id", "project_id", "fund_id", "memo", "created_at"]),
+          pick(e, [
+            "id",
+            "transaction_id",
+            "account_id",
+            "amount_cents",
+            "category_id",
+            "project_id",
+            "fund_id",
+            "memo",
+            "created_at",
+          ]),
         ),
       );
     }
     await flush();
-    await insertAll(db, "transaction_tags", T("transaction_tags").map((r) => pick(r, ["transaction_id", "tag_id"])));
+    await insertAll(
+      db,
+      "transaction_tags",
+      T("transaction_tags").map((r) => pick(r, ["transaction_id", "tag_id"])),
+    );
 
     await insertAll(
       db,
@@ -101,21 +143,55 @@ export async function restoreIntoNewOrg(
       withOrg(
         T("import_batches").map((r) => ({
           ...pick(r, [
-            "id", "account_id", "file_name", "format", "statement_start", "statement_end",
-            "beginning_balance_cents", "ending_balance_cents", "rows_total", "rows_imported",
-            "rows_duplicate", "rows_error", "status", "balance_mismatch_cents", "created_at",
+            "id",
+            "account_id",
+            "file_name",
+            "format",
+            "statement_start",
+            "statement_end",
+            "beginning_balance_cents",
+            "ending_balance_cents",
+            "rows_total",
+            "rows_imported",
+            "rows_duplicate",
+            "rows_error",
+            "status",
+            "balance_mismatch_cents",
+            "created_at",
           ]),
           created_by: userId,
         })),
       ),
     );
-    await insertAll(db, "import_profiles", withOrg(T("import_profiles").map((r) => pick(r, ["id", "account_id", "name", "mapping", "created_at"]))));
+    await insertAll(
+      db,
+      "import_profiles",
+      withOrg(
+        T("import_profiles").map((r) =>
+          pick(r, ["id", "account_id", "name", "mapping", "created_at"]),
+        ),
+      ),
+    );
     await insertAll(
       db,
       "bank_transactions",
       withOrg(
         T("bank_transactions").map((r) =>
-          pick(r, ["id", "account_id", "bank_date", "description", "amount_cents", "external_id", "fingerprint", "transaction_id", "raw", "batch_id", "needs_review", "row_seq", "created_at"]),
+          pick(r, [
+            "id",
+            "account_id",
+            "bank_date",
+            "description",
+            "amount_cents",
+            "external_id",
+            "fingerprint",
+            "transaction_id",
+            "raw",
+            "batch_id",
+            "needs_review",
+            "row_seq",
+            "created_at",
+          ]),
         ),
       ),
     );
@@ -127,7 +203,17 @@ export async function restoreIntoNewOrg(
       "reconciliations",
       withOrg(
         recs.map((r) => ({
-          ...pick(r, ["id", "account_id", "period_start", "period_end", "beginning_balance_cents", "ending_balance_cents", "mode", "batch_id", "created_at"]),
+          ...pick(r, [
+            "id",
+            "account_id",
+            "period_start",
+            "period_end",
+            "beginning_balance_cents",
+            "ending_balance_cents",
+            "mode",
+            "batch_id",
+            "created_at",
+          ]),
           status: "in_progress",
           created_by: userId,
         })),
@@ -135,30 +221,95 @@ export async function restoreIntoNewOrg(
     );
     const recIdByEntry = new Map<string, string>();
     // Entries carry their (already remapped) reconciliation_id from the backup.
-    for (const e of T("entries")) if (e["reconciliation_id"]) recIdByEntry.set(String(e["id"]), String(e["reconciliation_id"]));
+    for (const e of T("entries"))
+      if (e["reconciliation_id"]) recIdByEntry.set(String(e["id"]), String(e["reconciliation_id"]));
     const entriesByRec = new Map<string, string[]>();
-    for (const [entryId, recId] of recIdByEntry) entriesByRec.set(recId, [...(entriesByRec.get(recId) ?? []), entryId]);
+    for (const [entryId, recId] of recIdByEntry)
+      entriesByRec.set(recId, [...(entriesByRec.get(recId) ?? []), entryId]);
     for (const [recId, entryIds] of entriesByRec)
       for (let i = 0; i < entryIds.length; i += CHUNK) {
-        const { error } = await db.from("entries").update({ reconciliation_id: recId }).in("id", entryIds.slice(i, i + CHUNK));
+        const { error } = await db
+          .from("entries")
+          .update({ reconciliation_id: recId })
+          .in("id", entryIds.slice(i, i + CHUNK));
         if (error) throw new Error(`Could not restore statement check lines: ${error.message}`);
       }
     for (const r of recs.filter((x) => x["status"] === "completed")) {
       const { error } = await db
         .from("reconciliations")
-        .update({ status: "completed", completed_by: userId, completed_at: r["completed_at"] ?? new Date().toISOString() })
+        .update({
+          status: "completed",
+          completed_by: userId,
+          completed_at: r["completed_at"] ?? new Date().toISOString(),
+        })
         .eq("id", r["id"]);
       if (error) throw new Error(`Could not finish a restored statement check: ${error.message}`);
     }
 
-    await insertAll(db, "period_closes", withOrg(T("period_closes").map((r) => ({ ...pick(r, ["id", "fiscal_year_end", "transaction_id", "net_income_cents", "created_at"]), closed_by: userId }))));
+    await insertAll(
+      db,
+      "period_closes",
+      withOrg(
+        T("period_closes").map((r) => ({
+          ...pick(r, ["id", "fiscal_year_end", "transaction_id", "net_income_cents", "created_at"]),
+          closed_by: userId,
+        })),
+      ),
+    );
     await insertAll(
       db,
       "pledges",
-      withOrg(T("pledges").map((r) => ({ ...pick(r, ["id", "donor_name", "fund_id", "amount_cents", "pledge_date", "expected_date", "note", "status", "transaction_id", "created_at"]), created_by: userId }))),
+      withOrg(
+        T("pledges").map((r) => ({
+          ...pick(r, [
+            "id",
+            "donor_name",
+            "fund_id",
+            "amount_cents",
+            "pledge_date",
+            "expected_date",
+            "note",
+            "status",
+            "transaction_id",
+            "created_at",
+          ]),
+          created_by: userId,
+        })),
+      ),
     );
-    await insertAll(db, "pledge_payments", withOrg(T("pledge_payments").map((r) => pick(r, ["id", "pledge_id", "transaction_id", "kind", "amount_cents", "paid_date", "created_at"]))));
-    await insertAll(db, "budgets", withOrg(T("budgets").map((r) => pick(r, ["id", "account_id", "period_type", "period_start", "amount_cents", "created_at"]))));
+    await insertAll(
+      db,
+      "pledge_payments",
+      withOrg(
+        T("pledge_payments").map((r) =>
+          pick(r, [
+            "id",
+            "pledge_id",
+            "transaction_id",
+            "kind",
+            "amount_cents",
+            "paid_date",
+            "created_at",
+          ]),
+        ),
+      ),
+    );
+    await insertAll(
+      db,
+      "budgets",
+      withOrg(
+        T("budgets").map((r) =>
+          pick(r, [
+            "id",
+            "account_id",
+            "period_type",
+            "period_start",
+            "amount_cents",
+            "created_at",
+          ]),
+        ),
+      ),
+    );
 
     // Archive accounts and lock the books last, so earlier writes weren't blocked.
     const archived = accounts.filter((a) => a["is_active"] === false).map((a) => a["id"]);
@@ -167,7 +318,10 @@ export async function restoreIntoNewOrg(
       if (error) throw new Error(`Could not archive restored accounts: ${error.message}`);
     }
     if (src["books_locked_through"]) {
-      const { error } = await db.from("organizations").update({ books_locked_through: src["books_locked_through"] }).eq("id", orgId);
+      const { error } = await db
+        .from("organizations")
+        .update({ books_locked_through: src["books_locked_through"] })
+        .eq("id", orgId);
       if (error) throw new Error(`Could not restore the books lock date: ${error.message}`);
     }
 
@@ -181,11 +335,17 @@ export async function restoreIntoNewOrg(
       entity: String(h["entity"]),
       entity_id: null,
       before: h["before"] ?? null,
-      after: { original: h["after"] ?? null, original_user: h["user_id"] ?? null, original_entity_id: h["entity_id"] ?? null },
+      after: {
+        original: h["after"] ?? null,
+        original_user: h["user_id"] ?? null,
+        original_entity_id: h["entity_id"] ?? null,
+      },
       created_at: h["created_at"],
     }));
     for (let i = 0; i < history.length; i += CHUNK) {
-      const { error } = await supabaseAdmin.from("audit_log").insert(history.slice(i, i + CHUNK) as any);
+      const { error } = await supabaseAdmin
+        .from("audit_log")
+        .insert(history.slice(i, i + CHUNK) as any);
       if (error) throw new Error(`Could not restore history: ${error.message}`);
     }
     const { error: markErr } = await supabaseAdmin.from("audit_log").insert({
@@ -210,7 +370,9 @@ export async function restoreIntoNewOrg(
   } catch (err) {
     // Roll back the half-built organization (same path as owner delete).
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("deleted_organizations").insert({ id: newId(), org_id: orgId, name, deleted_by: userId } as any);
+    await supabaseAdmin
+      .from("deleted_organizations")
+      .insert({ id: newId(), org_id: orgId, name, deleted_by: userId } as any);
     await supabaseAdmin.from("organizations").delete().eq("id", orgId);
     throw err;
   }
