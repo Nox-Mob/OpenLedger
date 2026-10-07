@@ -196,54 +196,54 @@ export async function restoreIntoNewOrg(
       ),
     );
 
-    // Statement checks: open, tick their lines, then finish (the database re-checks difference = 0).
-    const recs = T("reconciliations");
-    await insertAll(
-      db,
-      "reconciliations",
-      withOrg(
-        recs.map((r) => ({
-          ...pick(r, [
-            "id",
-            "account_id",
-            "period_start",
-            "period_end",
-            "beginning_balance_cents",
-            "ending_balance_cents",
-            "mode",
-            "batch_id",
-            "created_at",
-          ]),
-          status: "in_progress",
-          created_by: userId,
-        })),
-      ),
+    // Statement checks, one at a time in their original order (only one may be open per
+    // account): open, tick their lines, then finish (the database re-checks difference = 0).
+    const recs = [...T("reconciliations")].sort((a, b) =>
+      String(a["created_at"] ?? "").localeCompare(String(b["created_at"] ?? "")),
     );
-    const recIdByEntry = new Map<string, string>();
-    // Entries carry their (already remapped) reconciliation_id from the backup.
-    for (const e of T("entries"))
-      if (e["reconciliation_id"]) recIdByEntry.set(String(e["id"]), String(e["reconciliation_id"]));
     const entriesByRec = new Map<string, string[]>();
-    for (const [entryId, recId] of recIdByEntry)
-      entriesByRec.set(recId, [...(entriesByRec.get(recId) ?? []), entryId]);
-    for (const [recId, entryIds] of entriesByRec)
+    for (const e of T("entries"))
+      if (e["reconciliation_id"]) {
+        const k = String(e["reconciliation_id"]);
+        entriesByRec.set(k, [...(entriesByRec.get(k) ?? []), String(e["id"])]);
+      }
+    for (const r of recs) {
+      const { error: insErr } = await db.from("reconciliations").insert({
+        ...pick(r, [
+          "id",
+          "account_id",
+          "period_start",
+          "period_end",
+          "beginning_balance_cents",
+          "ending_balance_cents",
+          "mode",
+          "batch_id",
+          "created_at",
+        ]),
+        org_id: orgId,
+        status: "in_progress",
+        created_by: userId,
+      });
+      if (insErr) throw new Error(`Could not restore a statement check: ${insErr.message}`);
+      const entryIds = entriesByRec.get(String(r["id"])) ?? [];
       for (let i = 0; i < entryIds.length; i += CHUNK) {
         const { error } = await db
           .from("entries")
-          .update({ reconciliation_id: recId })
+          .update({ reconciliation_id: r["id"] })
           .in("id", entryIds.slice(i, i + CHUNK));
         if (error) throw new Error(`Could not restore statement check lines: ${error.message}`);
       }
-    for (const r of recs.filter((x) => x["status"] === "completed")) {
-      const { error } = await db
-        .from("reconciliations")
-        .update({
-          status: "completed",
-          completed_by: userId,
-          completed_at: r["completed_at"] ?? new Date().toISOString(),
-        })
-        .eq("id", r["id"]);
-      if (error) throw new Error(`Could not finish a restored statement check: ${error.message}`);
+      if (r["status"] === "completed") {
+        const { error } = await db
+          .from("reconciliations")
+          .update({
+            status: "completed",
+            completed_by: userId,
+            completed_at: r["completed_at"] ?? new Date().toISOString(),
+          })
+          .eq("id", r["id"]);
+        if (error) throw new Error(`Could not finish a restored statement check: ${error.message}`);
+      }
     }
 
     await insertAll(
