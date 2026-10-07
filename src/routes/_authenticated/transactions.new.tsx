@@ -205,7 +205,7 @@ function NewTransactionPage() {
     <AppShell>
       <h1 className="font-display text-2xl font-bold">New Transaction</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Record what happened — the ledger keeps both sides balanced for you.
+        Record what happened. The ledger keeps both sides balanced for you.
       </p>
 
       <div className="mt-5 flex gap-2">

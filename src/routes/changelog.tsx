@@ -27,8 +27,7 @@ function ChangelogPage() {
   return (
     <WebsiteShell>
       <div className="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
-        <p className="website-eyebrow">The project, in progress</p>
-        <div className="release-notes mt-5">
+        <div className="release-notes">
           {changelog.split("\n").map((line, index) => {
             if (line.startsWith("# "))
               return (

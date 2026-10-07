@@ -183,7 +183,7 @@ function CloseBooksSettings() {
           {org.orgType === "nonprofit"
             ? "net result into Net Assets"
             : "profit into Retained Earnings"}
-          , then locks the books through the year's last day. It can't be undone — the closing entry
+          , then locks the books through the year's last day. It can't be undone. The closing entry
           becomes part of the audit trail.
         </p>
         <div className="mt-4 space-y-3">

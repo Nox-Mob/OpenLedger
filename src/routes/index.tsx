@@ -1,14 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  ArrowDown,
-  Download,
-  Monitor,
-  Server,
-  Cloud,
-  Check,
-  GitBranch,
-} from "lucide-react";
+import { ArrowRight, ArrowDown, Download, Monitor, Server, Cloud } from "lucide-react";
 import { WebsiteShell } from "@/components/WebsiteShell";
 import { Button } from "@/components/ui/button";
 import deskImage from "@/assets/open-ledger-desk.jpg";
@@ -48,11 +39,7 @@ function LandingPage() {
         />
         <div className="website-hero-shade absolute inset-0 -z-10" />
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
-          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-hero-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-hero-accent" /> Independent by design. Open
-            by nature.
-          </p>
-          <h1 className="mt-8 font-display text-5xl leading-tight text-hero-foreground sm:text-6xl">
+          <h1 className="font-display text-5xl leading-tight text-hero-foreground sm:text-6xl">
             OpenLedgerApp
           </h1>
           <p className="mt-5 max-w-lg text-2xl leading-snug text-hero-foreground sm:text-3xl">
@@ -62,7 +49,7 @@ function LandingPage() {
           </p>
           <p className="mt-6 max-w-md text-base leading-7 text-hero-muted">
             Open-source double-entry accounting for small businesses, freelancers, and nonprofits.
-            Built for the people doing the work—not just the people who speak accounting.
+            Built for the people doing the work, not just the people who speak accounting.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
@@ -85,33 +72,15 @@ function LandingPage() {
               </a>
             </Button>
           </div>
-          <p className="mt-7 flex items-center gap-2 text-xs text-hero-muted">
-            <GitBranch className="h-3.5 w-3.5" /> Early development · Web app available · Desktop
-            planned
-          </p>
         </div>
       </section>
-
-      <div className="border-b border-border bg-muted/50">
-        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-8 gap-y-3 px-5 py-5 text-xs font-medium sm:px-8 sm:text-sm">
-          {["Real double-entry books", "Open source, not a black box", "Your data stays yours"].map(
-            (text) => (
-              <span key={text} className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                {text}
-              </span>
-            ),
-          )}
-        </div>
-      </div>
 
       <section
         id="why"
         className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-[1fr_1.15fr] md:gap-20"
       >
         <div>
-          <p className="website-eyebrow">01 / The reason</p>
-          <h2 className="mt-4 font-display text-3xl leading-snug sm:text-4xl">
+          <h2 className="font-display text-3xl leading-snug sm:text-4xl">
             Small teams deserve
             <br className="hidden sm:block" /> better books.
           </h2>
@@ -124,16 +93,15 @@ function LandingPage() {
           <p>
             We're building a smaller, clearer alternative: proper accounting underneath, language
             you understand on top, and source code you can inspect. Software that works for your
-            organization—not the other way around.
+            organization, not the other way around.
           </p>
         </div>
       </section>
 
       <section className="border-y border-border bg-muted/40">
-        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 md:grid-cols-[1fr_1.15fr] md:gap-20">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-[1fr_1.15fr] md:gap-20">
           <div>
-            <p className="website-eyebrow">02 / Honest boundaries</p>
-            <h2 className="mt-4 font-display text-3xl leading-snug sm:text-4xl">
+            <h2 className="font-display text-3xl leading-snug sm:text-4xl">
               A ledger.
               <br />
               Not a magic wand.
@@ -150,7 +118,7 @@ function LandingPage() {
               ],
               [
                 "Not an everything-suite",
-                "No payroll, automated tax filing, or live bank feeds today. Nonprofit funds are basic tags—not full fund accounting.",
+                "No payroll, automated tax filing, or live bank feeds today. Nonprofit funds are basic tags, not full fund accounting.",
               ],
               [
                 "Not a finished product",
@@ -169,8 +137,7 @@ function LandingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <p className="website-eyebrow">03 / The direction</p>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl">
+            <h2 className="font-display text-3xl sm:text-4xl">
               One ledger. Your way to run it.
             </h2>
           </div>
@@ -185,7 +152,7 @@ function LandingPage() {
               title: "On your desktop",
               label: "Planned",
               detail:
-                "Free, standalone accounting for freelancers and solo operators. Local to your computer, designed to work offline—without a server to set up.",
+                "Free, standalone accounting for freelancers and solo operators. Local to your computer, designed to work offline, without a server to set up.",
               note: "No desktop installer yet.",
             },
             {
@@ -228,10 +195,9 @@ function LandingPage() {
       </section>
 
       <section className="border-t border-border bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-5 py-14 sm:px-8 md:flex-row md:items-center">
+        <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-5 py-16 sm:px-8 sm:py-20 md:flex-row md:items-center">
           <div>
-            <p className="text-xs uppercase tracking-widest opacity-80">Built in the open</p>
-            <h2 className="mt-4 font-display text-3xl">Start with the source.</h2>
+            <h2 className="font-display text-3xl">Start with the source.</h2>
             <p className="mt-4 max-w-xl leading-7 opacity-85">
               Download the development version, follow the setup guide, and help shape what comes
               next. A more self-contained app is on the roadmap.
