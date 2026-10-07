@@ -15,6 +15,7 @@ import {
 import * as recon from "@/lib/services/reconciliation";
 import * as reports from "@/lib/services/reports";
 import * as settings from "@/lib/services/settings";
+import * as fundsSvc from "@/lib/services/funds";
 
 const ORG = "10000000-0000-4000-8000-000000000001";
 const OTHER = "10000000-0000-4000-8000-000000000002";
@@ -360,6 +361,39 @@ describe.each(adapters)("%s adapter", (name, make) => {
     await expect(postTransaction(repos, sale({ transactionDate: "2026-06-01" }))).rejects.toThrow();
     await settings.setBooksLock(repos, ORG, USER, null);
     expect((await repos.orgs.get(ORG))?.booksLockedThrough).toBeNull();
+  });
+
+  it("tracks restricted funds and limits releases to what is left", async () => {
+    const FUND = "10000000-0000-4000-8000-0000000000f1";
+    const funds = [{ id: FUND, name: "Roof", isRestricted: true }];
+    await postTransaction(
+      repos,
+      sale({
+        entries: [
+          { accountId: CASH, amountCents: 5000 },
+          { accountId: SALES, amountCents: -5000, fundId: FUND },
+        ],
+      }),
+    );
+    const input = {
+      orgId: ORG,
+      userId: USER,
+      fundId: FUND,
+      funds,
+      date: "2026-03-01",
+      idempotencyKey: "release:1",
+    };
+    await fundsSvc.releaseFund(repos, { ...input, amountCents: 2000 });
+    const s = await fundsSvc.fundSummary(repos, ORG, funds);
+    expect(s.funds[0]).toMatchObject({
+      receivedCents: 5000,
+      releasedCents: 2000,
+      remainingCents: 3000,
+    });
+    expect(s.netAssets).toMatchObject({ totalCents: 5000, withRestrictionsCents: 3000 });
+    await expect(
+      fundsSvc.releaseFund(repos, { ...input, amountCents: 3001, idempotencyKey: "release:2" }),
+    ).rejects.toThrow(/only has/);
   });
 
   if (name === "sqlite") {
