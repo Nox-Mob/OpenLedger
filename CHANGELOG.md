@@ -10,6 +10,10 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Pledges: record promised gifts, take payments, and write off what will not arrive.
 - Invite links: admins create single use links with a role that expire after 7 days, and can revoke them.
 - Members can be removed, anyone except the owner can leave, owners can transfer ownership to another admin, and owners can delete an organization after typing its name.
+- Budgets: set a yearly or monthly budget for each income and expense account and compare it to actual results.
+- Exports: reports and all transactions download as CSV or Excel, with protection against spreadsheet formula tricks.
+- Full backup: admins can download one file with everything in an organization. Restore is not available yet.
+- History: admins can browse who changed what and when, under Settings.
 
 ## [0.0.2] - 2026-10-06
 
