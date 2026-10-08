@@ -82,7 +82,7 @@ describe("full-year business scenario", () => {
       [10, 99_999],
       [13, -99_999],
     ]);
-    await voidTransaction(repos, { orgId: ORG, userId: USER, id: mistake.id });
+    await voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: mistake.id } as any);
 
     const rows = await repos.transactions.ledgerRows(ORG);
     const income = computeIncome(rows);
