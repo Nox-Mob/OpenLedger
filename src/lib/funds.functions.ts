@@ -301,31 +301,44 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
       idempotencyKey: `pledge-${data.kind}:${data.idempotencyKey}`,
     });
     if (tx.duplicate) return { ok: true };
-    const { error: e2 } = await supabase.from("pledge_payments").insert({
-      id: newId(),
-      org_id: data.orgId,
-      pledge_id: p.id,
-      transaction_id: tx.id,
-      kind: data.kind,
-      amount_cents: data.amountCents,
-      paid_date: data.date,
-    });
-    if (e2) throw new Error(e2.message);
+    // The payment record, any status change and their history are saved together.
+    const paymentId = newId();
     const remaining = pledgeOutstanding(Number(p.amount_cents), settled + data.amountCents);
-    if (remaining === 0) {
-      const status = data.kind === "write_off" ? "written_off" : "paid";
-      await auditedWrite(
-        supabase,
-        data.orgId,
-        [{ table: "pledges", op: "update", values: { status }, match: { id: p.id } }],
+    const status = remaining === 0 ? (data.kind === "write_off" ? "written_off" : "paid") : null;
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [
         {
-          action: "update",
-          entity: "pledge",
-          entityId: p.id,
-          before: { status: p.status },
-          after: { status },
+          table: "pledge_payments",
+          op: "insert",
+          values: {
+            id: paymentId,
+            pledge_id: p.id,
+            transaction_id: tx.id,
+            kind: data.kind,
+            amount_cents: data.amountCents,
+            paid_date: data.date,
+          },
         },
-      );
-    }
+        ...(status
+          ? [
+              {
+                table: "pledges",
+                op: "update" as const,
+                values: { status },
+                match: { id: p.id },
+              },
+            ]
+          : []),
+      ],
+      {
+        action: data.kind === "write_off" ? "write_off" : "payment",
+        entity: "pledge",
+        entityId: p.id,
+        before: { status: p.status },
+        after: { amountCents: data.amountCents, status: status ?? p.status },
+      },
+    );
     return { ok: true };
   });
