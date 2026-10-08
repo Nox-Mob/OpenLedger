@@ -124,25 +124,23 @@ export async function closeFiscalYear(
       "Choose an active equity account (retained earnings / net assets).",
     );
   const { netIncomeCents } = await fiscalYearNetIncome(repos, orgId, fiscalYearEnd);
+  // The close record, the book lock and the history entry are saved together.
   try {
-    await repos.periodCloses.create({
-      id: newId(),
-      orgId,
+    await repos.periodCloses.closeAndLock(
+      { id: newId(), orgId, fiscalYearEnd, netIncomeCents, closedBy: userId },
       fiscalYearEnd,
-      netIncomeCents,
-      closedBy: userId,
-    });
+      {
+        orgId,
+        userId,
+        action: "close_fiscal_year",
+        entity: "period_close",
+        entityId: orgId,
+        after: { fiscal_year_end: fiscalYearEnd, net_income_cents: netIncomeCents },
+      },
+    );
   } catch (e) {
     if (e instanceof DuplicateKeyError) return { ok: true, duplicate: true };
     throw e;
   }
-  await repos.orgs.setBooksLockedThrough(orgId, fiscalYearEnd, {
-    orgId,
-    userId,
-    action: "close_fiscal_year",
-    entity: "period_close",
-    entityId: orgId,
-    after: { fiscal_year_end: fiscalYearEnd, net_income_cents: netIncomeCents },
-  });
   return { ok: true, netIncomeCents };
 }

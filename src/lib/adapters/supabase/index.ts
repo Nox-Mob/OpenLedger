@@ -763,6 +763,27 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return data ? toClose(data) : null;
       },
+      async closeAndLock(c, lockThrough, audit) {
+        await auditedWrite(
+          sb,
+          c.orgId,
+          [
+            {
+              table: "period_closes",
+              op: "insert",
+              values: {
+                id: c.id,
+                fiscal_year_end: c.fiscalYearEnd,
+                transaction_id: null,
+                net_income_cents: c.netIncomeCents,
+                closed_by: c.closedBy,
+              },
+            },
+            { table: "organizations", op: "update", values: { books_locked_through: lockThrough } },
+          ],
+          entryOf(audit),
+        );
+      },
       async create(c) {
         const { error } = await sb.from("period_closes").insert({
           id: c.id,
