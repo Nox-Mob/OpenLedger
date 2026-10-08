@@ -35,11 +35,20 @@ function HistoryPage() {
   const { org } = useOrgContext();
   const [page, setPage] = useState(0);
   const [entity, setEntity] = useState("");
+  const [kind, setKind] = useState<"" | "change" | "ledger" | "system">("");
   const [open, setOpen] = useState<string | null>(null);
   const isAdmin = org?.role === "admin";
   const q = useQuery({
-    queryKey: ["history", org?.id, page, entity],
-    queryFn: () => listHistory({ data: { orgId: org!.id, page, ...(entity ? { entity } : {}) } }),
+    queryKey: ["history", org?.id, page, entity, kind],
+    queryFn: () =>
+      listHistory({
+        data: {
+          orgId: org!.id,
+          page,
+          ...(entity ? { entity } : {}),
+          ...(kind ? { kind } : {}),
+        },
+      }),
     enabled: !!org && isAdmin,
   });
   if (!org) return null;
@@ -78,6 +87,23 @@ function HistoryPage() {
               {e ? e.replace("_", " ") : "Everything"}
             </option>
           ))}
+        </select>
+        <label htmlFor="kind" className="ml-4 text-muted-foreground">
+          Type
+        </label>
+        <select
+          id="kind"
+          value={kind}
+          onChange={(e) => {
+            setKind(e.target.value as typeof kind);
+            setPage(0);
+          }}
+          className="rounded-md border border-input bg-background px-3 py-1.5"
+        >
+          <option value="">All types</option>
+          <option value="ledger">Money (postings and voids)</option>
+          <option value="change">Setup and settings</option>
+          <option value="system">System (imports, backups, members)</option>
         </select>
       </div>
       <div className="mt-4 overflow-hidden rounded-lg border bg-card">

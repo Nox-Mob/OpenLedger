@@ -2,7 +2,8 @@
 // Server functions call assertCan() after requireSupabaseAuth; the database
 // mirrors the same rules in RLS policies and triggers so nothing slips around.
 
-export type OrgRole = "admin" | "member" | "viewer";
+export const ROLES = ["admin", "member", "viewer"] as const;
+export type OrgRole = (typeof ROLES)[number];
 
 export type OrgAction =
   | "read" // view books, reports, exports
@@ -12,7 +13,8 @@ export type OrgAction =
   | "manage_members" // change member roles
   | "close_books"; // lock books, year-end close, unlock
 
-const MATRIX: Record<OrgAction, readonly OrgRole[]> = {
+/** Declarative capability table. Change permissions here only; tests pin every cell. */
+export const CAPABILITIES: Readonly<Record<OrgAction, readonly OrgRole[]>> = {
   read: ["admin", "member", "viewer"],
   write: ["admin", "member"],
   reopen_reconciliation: ["admin"],
@@ -22,7 +24,7 @@ const MATRIX: Record<OrgAction, readonly OrgRole[]> = {
 };
 
 export function can(role: string | null | undefined, action: OrgAction): boolean {
-  return !!role && (MATRIX[action] as readonly string[]).includes(role);
+  return !!role && (CAPABILITIES[action] as readonly string[]).includes(role);
 }
 
 export class ForbiddenError extends Error {
