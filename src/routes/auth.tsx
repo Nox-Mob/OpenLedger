@@ -70,7 +70,9 @@ function AuthPage() {
   function friendlyError(err: unknown): string {
     const msg = errorMessage(err, "Something went wrong");
     const code =
-      err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code ?? "") : "";
+      err && typeof err === "object" && "code" in err
+        ? String((err as { code: unknown }).code ?? "")
+        : "";
     if (code === "over_email_send_rate_limit" || /rate limit/i.test(msg))
       return "Too many attempts. Wait a few minutes and try again.";
     if (/email not confirmed/i.test(msg)) {

@@ -22,7 +22,9 @@ export function OrgSwitcher({ orgs, current }: { orgs: OrgOption[]; current: Org
         aria-label={`Organization: ${current?.name ?? "none"}. Switch organization`}
       >
         <span className="min-w-0">
-          <span className="block truncate font-medium">{current?.name ?? "Choose organization"}</span>
+          <span className="block truncate font-medium">
+            {current?.name ?? "Choose organization"}
+          </span>
           {current && (
             <span className="block text-xs text-sidebar-accent-foreground/80">
               {roleLabel(current.role)}

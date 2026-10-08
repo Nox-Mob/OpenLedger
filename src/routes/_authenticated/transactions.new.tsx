@@ -244,7 +244,8 @@ function NewTransactionPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Date</label>
-            <input aria-label="Date"
+            <input
+              aria-label="Date"
               type="date"
               required
               value={date}
@@ -254,7 +255,8 @@ function NewTransactionPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Description</label>
-            <input aria-label="Description"
+            <input
+              aria-label="Description"
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -275,7 +277,8 @@ function NewTransactionPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Amount</label>
-                <input aria-label="Amount"
+                <input
+                  aria-label="Amount"
                   required
                   inputMode="decimal"
                   value={amount}
@@ -289,7 +292,9 @@ function NewTransactionPage() {
                   {mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
                 </label>
                 <select
-                  aria-label={mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
+                  aria-label={
+                    mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"
+                  }
                   required
                   value={moneyAccountId}
                   onChange={(e) => setMoneyAccountId(e.target.value)}
@@ -308,7 +313,8 @@ function NewTransactionPage() {
             {mode === "transfer" ? (
               <div>
                 <label className="text-sm font-medium">To account</label>
-                <select aria-label="To account"
+                <select
+                  aria-label="To account"
                   required
                   value={transferToId}
                   onChange={(e) => setTransferToId(e.target.value)}
@@ -498,6 +504,7 @@ function NewTransactionPage() {
                   ))}
                 </select>
                 <input
+                  aria-label={`Line ${i + 1} ${terms.debit}`}
                   inputMode="decimal"
                   value={row.debit}
                   onChange={(e) =>
@@ -511,6 +518,7 @@ function NewTransactionPage() {
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
+                  aria-label={`Line ${i + 1} ${terms.credit}`}
                   inputMode="decimal"
                   value={row.credit}
                   onChange={(e) =>
@@ -524,6 +532,7 @@ function NewTransactionPage() {
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
+                  aria-label={`Line ${i + 1} memo`}
                   value={row.memo}
                   onChange={(e) =>
                     setRows(rows.map((r, j) => (j === i ? { ...r, memo: e.target.value } : r)))
