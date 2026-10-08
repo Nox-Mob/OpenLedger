@@ -31,7 +31,7 @@
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
-- Release notes: `CHANGELOG.md` is the single source for the public changelog; describe planned work in the blueprint/roadmap, not as shipped releases.
+- Release notes: `CHANGELOG.md` is the single public changelog source; planned work goes in the roadmap, not releases.
 
 - Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.
 - IDs: every new record gets an app-generated UUID (newId()), never a DB default, so identity survives future offline sync.
@@ -42,7 +42,7 @@
 - Members: organizations.created_by is the owner; invite links store only a SHA-256 hash of the token and are claimed atomically before the role is granted.
 - Budgets/exports/history: cloud-only server functions for now (no port yet); budgets table keeps one row per account+period with a stable app-generated ID (update, never replace), and every export escapes formula-looking text via src/lib/export.ts.
 - Backups: format v3 manifest (appVersion, attachments slot; v2 still accepted), Ed25519-signed (key derived from server secret BACKUP_SIGNING_SEED) over chained per-row SHA-256 table digests (src/lib/domain/backup.ts); unsigned/changed files are refused. Restore only creates a new org with new IDs, re-runs domain checks, writes via the caller's RLS client, and rolls back by deleting the new org on failure.
-- Backup export reads live in a server-only helper shared with roundtrip tests, so pagination and organization scoping are tested without mocking TanStack RPC; persistence doubles do not replace database RLS/trigger CI checks.
+- Backup export reads live in a server-only helper shared with roundtrip tests (no RPC mocking); doubles don't replace DB RLS/trigger CI checks.
 - Org delete relies on deferrable "no action" FKs and a balance trigger that skips deleted transactions; keep new cascading FKs deferrable.
 - Package manager: Bun only (bun.lock); no package-lock.json, so every install resolves the same tree.
 - Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
