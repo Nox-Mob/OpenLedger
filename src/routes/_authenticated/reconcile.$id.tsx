@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,16 +57,16 @@ function ReconcileWorkspace() {
   });
 
   if (!org) return <OrgPending />;
-  if (q.isLoading || !q.data)
+  if (q.isError)
     return (
       <AppShell>
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
       </AppShell>
     );
-  if (q.error)
+  if (q.isPending || !q.data)
     return (
       <AppShell>
-        <p className="text-sm text-destructive">{(q.error as Error).message}</p>
+        <LoadingState label="Loading statement check" />
       </AppShell>
     );
 

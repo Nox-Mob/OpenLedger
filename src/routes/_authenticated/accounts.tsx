@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,6 +141,19 @@ function AccountsPage() {
       )}
 
       <div className="mt-6 space-y-6">
+        {accountsQuery.isPending && <LoadingState label="Loading accounts" />}
+        {accountsQuery.isError && (
+          <ErrorState
+            message={errorMessage(accountsQuery.error)}
+            onRetry={() => accountsQuery.refetch()}
+          />
+        )}
+        {accountsQuery.isSuccess && groups.length === 0 && (
+          <EmptyState
+            title="No accounts yet"
+            description="Add an account above, or choose from the list in Settings, Accounts."
+          />
+        )}
         {groups.map((g) => (
           <div key={g.type}>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
