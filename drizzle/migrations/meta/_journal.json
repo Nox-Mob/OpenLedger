@@ -43,6 +43,13 @@
       "when": 1791435912288,
       "tag": "0005_atomic_audited_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791435954748,
+      "tag": "0006_atomic_audited_writes_functions",
+      "breakpoints": true
     }
   ]
 }
