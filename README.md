@@ -45,7 +45,7 @@ Pick **one** path for the database and sign-in service, then finish with the sha
 
 ### Shared prerequisites
 
-- **Node.js 20+** (with npm) and **Git**.
+- **Node.js 24** (or 22.22.2+) with **npm 11+** and **Git**.
 - Get the code:
 
   ```sh

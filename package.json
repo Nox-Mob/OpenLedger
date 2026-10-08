@@ -24,14 +24,11 @@
     "shell-quote": "1.11.0",
     "source-map-js": "1.2.2",
     "brace-expansion@1": "1.1.21",
-    "exceljs": {
-      ".": "4.4.0",
-      "uuid": "11.1.1"
-    },
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"
     },
-    "brace-expansion@5": "5.0.12"
+    "brace-expansion@5": "5.0.12",
+    "uuid": "11.1.1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -120,5 +117,9 @@
   },
   "allowScripts": {
     "core-js@3.50.0": true
+  },
+  "engines": {
+    "node": ">=22.22.2",
+    "npm": ">=11"
   }
 }
