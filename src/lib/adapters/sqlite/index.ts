@@ -188,7 +188,8 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     await db.execute("BEGIN");
     try {
       const out = await fn();
-      await insertAudit(audit);
+      // `false` means nothing changed (e.g. already claimed), so no history entry.
+      if (out !== false) await insertAudit(audit);
       await db.execute("COMMIT");
       return out;
     } catch (e) {
@@ -275,7 +276,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
             sets.push(`${col} = ?`);
             vals.push(f(p[k]));
           }
-        if (!sets.length) return;
+        if (!sets.length) return false;
         await db.execute(`UPDATE organizations SET ${sets.join(", ")} WHERE id = ?`, [...vals, id]);
         });
       },
@@ -651,7 +652,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
       },
       async setTicked(rid, ids, ticked, audit) {
         return audited(audit, async () => {
-        if (!ids.length) return;
+        if (!ids.length) return false;
         const guard = ticked ? "reconciliation_id IS NULL" : "reconciliation_id = ?";
         await db.execute(
           `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)}) AND ${guard}
@@ -689,7 +690,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           "SELECT status FROM reconciliations WHERE org_id = ? AND id = ?",
           [orgId, id],
         );
-        if (r?.status !== "in_progress") return;
+        if (r?.status !== "in_progress") return false;
         await db.execute(
           "UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?",
           [id],
