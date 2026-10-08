@@ -5,9 +5,12 @@
 // can recompute them. The Ed25519 signature over the manifest is what proves the file
 // is unchanged since a key holder signed it.
 import { assertBalancedEntries, LedgerRuleError } from "./ledger";
+import { APP_VERSION } from "../version";
 
 export const BACKUP_FORMAT = "openledgerapp-backup";
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
+/** Versions this build can still restore. v2 has no appVersion or attachments. */
+export const SUPPORTED_BACKUP_VERSIONS: readonly number[] = [2, 3];
 export const MAX_BACKUP_BYTES = 25 * 1024 * 1024;
 
 type Row = Record<string, unknown>;
@@ -67,6 +70,8 @@ export interface TableDigest {
 export interface BackupManifest {
   format: typeof BACKUP_FORMAT;
   version: number;
+  /** v3+: app version that wrote the file. */
+  appVersion?: string;
   exportedAt: string;
   orgId: string;
   orgName: string;
@@ -74,6 +79,13 @@ export interface BackupManifest {
   tables: Record<string, TableDigest>;
   publicKey: string; // base64url raw Ed25519 public key
   installFingerprint: string;
+  /** v3+: reserved for future receipt attachments (digests only); always empty for now. */
+  attachments?: AttachmentDigest[];
+}
+export interface AttachmentDigest {
+  id: string;
+  sha256: string;
+  bytes: number;
 }
 export interface SignedBackup {
   manifest: BackupManifest;
@@ -183,6 +195,7 @@ export async function signBackup(
   const manifest: BackupManifest = {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
+    appVersion: APP_VERSION,
     exportedAt,
     orgId: String(organization["id"]),
     orgName: String(organization["name"]),
@@ -190,6 +203,7 @@ export async function signBackup(
     tables: digests,
     publicKey: keys.publicRaw,
     installFingerprint: keys.fingerprint,
+    attachments: [],
   };
   const sig = await crypto.subtle.sign(
     { name: "Ed25519" },
@@ -225,8 +239,14 @@ export async function verifyBackup(
     );
   const m = b.manifest;
   if (m.format !== BACKUP_FORMAT) throw new BackupRejected("This is not an OpenLedgerApp backup.");
-  if (m.version !== BACKUP_VERSION)
+  if (!SUPPORTED_BACKUP_VERSIONS.includes(m.version))
     throw new BackupRejected(`Unsupported backup version ${String(m.version)}.`);
+  if (m.version >= 3 && (!Array.isArray(m.attachments) || typeof m.appVersion !== "string"))
+    throw new BackupRejected("The backup manifest is incomplete.");
+  if (m.attachments && m.attachments.length > 0)
+    throw new BackupRejected(
+      "This backup contains attachments, which this version can't restore yet.",
+    );
   if (typeof m.publicKey !== "string" || !m.publicKey)
     throw new BackupRejected("The backup has no signing key.");
 

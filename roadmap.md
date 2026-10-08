@@ -6,13 +6,13 @@
 - [x] 1a. Postings and voids saved atomically with their history (all storage options)
 - [ ] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports) saved atomically
 - [x] 2a. History kinds column (change, ledger, system) with backfill
-- [ ] 2b. History page filter by kind
-- [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions
-- [ ] 4. Declarative role capability table
-- [ ] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
+- [x] 2b. History page filter by kind
+- [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions (ratchet test added; migration of the listed files still open)
+- [x] 4. Declarative role capability table
+- [x] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
 - [x] 6a. Bun is the only package manager (package-lock.json removed)
-- [ ] 6b. Dependency review (docs/dependencies.md), pin core versions, clear loose-type warnings in backup code
-- [ ] 7. Backup format v3 (app version, attachments slot; v2 still restores)
+- [x] 6b. Dependency review (docs/dependencies.md), pin core versions, clear loose-type warnings in backup code
+- [x] 7. Backup format v3 (app version, attachments slot; v2 still restores)
 - [x] 8. docs/architecture.md
 
 ## v0.0.3 - Funds, members, exports, budgets, observability (released 2026-10-07)
