@@ -436,6 +436,25 @@ describe.each(adapters)("%s adapter", (name, make) => {
     ).rejects.toThrow(/only has/);
   });
 
+  it("rolls back a reconciliation finish when history fails", async () => {
+    const input = {
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 0,
+      mode: "simple" as const,
+      batchId: null,
+      userId: USER,
+    };
+    const { id } = await recon.startReconciliation(repos, input);
+    const r = (await repos.reconciliations.locate(id))!;
+    await breakHistory();
+    await expect(recon.completeReconciliation(repos, r, USER)).rejects.toThrow();
+    expect((await repos.reconciliations.locate(id))?.status).toBe("in_progress");
+  });
+
   if (name === "sqlite") {
     it("database guards block edits, deletes, un-void and unbalanced writes", async () => {
       const { id } = await postTransaction(repos, sale());
