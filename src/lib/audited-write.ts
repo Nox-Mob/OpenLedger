@@ -33,7 +33,6 @@ export interface AuditEntry {
 
 export interface WriteResult {
   count: number;
-  ids: string[];
 }
 
 // Loose on purpose: works with both the typed user client and the admin client.
