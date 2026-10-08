@@ -47,4 +47,4 @@
 - Package manager: Bun only (bun.lock); no package-lock.json, so every install resolves the same tree.
 - Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
-- Direct table writes in *.functions.ts are ratcheted by src/lib/direct-writes.test.ts; counts may only fall as workflows move into services.
+- Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.

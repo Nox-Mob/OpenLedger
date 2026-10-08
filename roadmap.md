@@ -7,7 +7,7 @@
 - [x] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports, accounts, pledge status) saved atomically via audited_write
 - [x] 2a. History kinds column (change, ledger, system) with backfill
 - [x] 2b. History page filter by kind
-- [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions (ratchet test added; migration of the listed files still open)
+- [x] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions (ratchet test added; migration of the listed files still open) (all org-data writes go through shared code or audited_write; direct-writes check runs in CI)
 - [x] 4. Declarative role capability table
 - [x] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
 - [x] 6a. Bun is the only package manager (package-lock.json removed)
