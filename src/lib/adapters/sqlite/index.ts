@@ -258,7 +258,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         ]);
       },
       async updateSettings(id, p, audit) {
-        return audited(audit, async () => {
+        await audited(audit, async () => {
           const map: [keyof typeof p, string, (v: any) => SqlValue][] = [
             ["name", "name", (v) => v],
             ["orgType", "org_type", (v) => v],
@@ -281,6 +281,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
             ...vals,
             id,
           ]);
+          return true;
         });
       },
       async setBooksLockedThrough(id, date, audit) {
@@ -654,7 +655,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         return rows.map(toRecon);
       },
       async setTicked(rid, ids, ticked, audit) {
-        return audited(audit, async () => {
+        await audited(audit, async () => {
           if (!ids.length) return false;
           const guard = ticked ? "reconciliation_id IS NULL" : "reconciliation_id = ?";
           await db.execute(
@@ -662,6 +663,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
              AND account_id = (SELECT account_id FROM reconciliations WHERE id = ?)`,
             ticked ? [rid, ...ids, rid] : [null, ...ids, rid, rid],
           );
+          return true;
         });
       },
       async clearedTotalCents(rid) {
@@ -688,7 +690,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         });
       },
       async discard(orgId, id, audit) {
-        return audited(audit, async () => {
+        await audited(audit, async () => {
           const [r] = await db.select<{ status: string }>(
             "SELECT status FROM reconciliations WHERE org_id = ? AND id = ?",
             [orgId, id],
@@ -699,6 +701,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
             [id],
           );
           await db.execute("DELETE FROM reconciliations WHERE id = ?", [id]);
+          return true;
         });
       },
     },
