@@ -289,6 +289,7 @@ function NewTransactionPage() {
                   {mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
                 </label>
                 <select
+                  aria-label={mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
                   required
                   value={moneyAccountId}
                   onChange={(e) => setMoneyAccountId(e.target.value)}
@@ -389,6 +390,7 @@ function NewTransactionPage() {
                     : `What it was for (${terms.expenses})`}
                 </label>
                 <select
+                  aria-label={mode === "in" ? "Where it came from" : "What it was for"}
                   required
                   value={otherAccountId}
                   onChange={(e) => setOtherAccountId(e.target.value)}
@@ -411,6 +413,7 @@ function NewTransactionPage() {
                     Category <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Category"
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={selectCls}
@@ -428,6 +431,7 @@ function NewTransactionPage() {
                     Project <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Project"
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className={selectCls}
@@ -445,6 +449,7 @@ function NewTransactionPage() {
                     Fund <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Fund"
                     value={fundId}
                     onChange={(e) => setFundId(e.target.value)}
                     className={selectCls}
@@ -478,6 +483,7 @@ function NewTransactionPage() {
             {rows.map((row, i) => (
               <div key={i} className="grid grid-cols-[1fr_110px_110px_1fr_32px] gap-2">
                 <select
+                  aria-label={`Line ${i + 1} account`}
                   value={row.accountId}
                   onChange={(e) =>
                     setRows(rows.map((r, j) => (j === i ? { ...r, accountId: e.target.value } : r)))
