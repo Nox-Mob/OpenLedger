@@ -5,7 +5,7 @@ import { assertCan } from "./permissions";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { actualFromLedger, assertBudgetAmount, periodRange } from "./domain/budgets";
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 
 // Budgets are cloud and self-hosted only for now (no port yet), like pledges.
 const isoDate = z.string().regex(/^\d{4}-\d{2}-01$/);
@@ -77,9 +77,14 @@ export const saveBudget = createServerFn({ method: "POST" })
       period_type: data.periodType,
       period_start: data.periodStart,
     };
+    const audit = {
+      action: data.amountCents === null ? "budget.cleared" : "budget.set",
+      entity: "budget",
+      entityId: data.accountId,
+      after: { ...match, amount_cents: data.amountCents },
+    };
     if (data.amountCents === null) {
-      const { error } = await context.supabase.from("budgets").delete().match(match);
-      if (error) throw new Error(error.message);
+      await auditedWrite(context.supabase, data.orgId, [{ table: "budgets", op: "delete", match }], audit);
     } else {
       assertBudgetAmount(data.amountCents);
       // Keep the record's app-generated ID stable: update if it exists, else insert.
@@ -88,23 +93,25 @@ export const saveBudget = createServerFn({ method: "POST" })
         .select("id")
         .match(match)
         .maybeSingle();
-      const { error } = existing
-        ? await context.supabase
-            .from("budgets")
-            .update({ amount_cents: data.amountCents })
-            .eq("id", existing.id)
-        : await context.supabase
-            .from("budgets")
-            .insert({ id: newId(), ...match, amount_cents: data.amountCents });
-      if (error) throw new Error(error.message);
+      await auditedWrite(
+        context.supabase,
+        data.orgId,
+        [
+          existing
+            ? {
+                table: "budgets",
+                op: "update",
+                values: { amount_cents: data.amountCents },
+                match: { id: existing.id },
+              }
+            : {
+                table: "budgets",
+                op: "insert",
+                values: { id: newId(), ...match, amount_cents: data.amountCents },
+              },
+        ],
+        audit,
+      );
     }
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: context.userId,
-      action: data.amountCents === null ? "budget.cleared" : "budget.set",
-      entity: "budget",
-      entity_id: data.accountId,
-      after: { ...match, amount_cents: data.amountCents },
-    });
     return { ok: true };
   });

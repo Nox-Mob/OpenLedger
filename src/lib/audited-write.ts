@@ -2,6 +2,7 @@
 // Use the caller's RLS client for normal writes; pass the admin client plus `asUser` only
 // for the few service-role paths (invite claim, member removal, ownership transfer).
 import { newId } from "./domain/ledger";
+import { DuplicateKeyError } from "./ports";
 
 export type AuditKind = "change" | "ledger" | "system";
 
@@ -83,7 +84,6 @@ export async function auditedWrite(
   });
   if (error) {
     if (/duplicate key/i.test(error.message)) {
-      const { DuplicateKeyError } = await import("./ports");
       throw new DuplicateKeyError(error.message);
     }
     throw new Error(error.message);
