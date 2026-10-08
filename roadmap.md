@@ -1,5 +1,25 @@
 # OpenLedgerApp — Roadmap
 
+## v0.0.5 - Close the gaps and tidy up (in progress)
+
+- [ ] 1. Year-end close and book lock saved in one step
+- [ ] 2. Pledge payment and pledge status saved in one step
+- [ ] 3. Server-written history descriptions
+- [ ] 4. Remove unused drizzle-kit
+- [ ] 5. recharts 2 to 3
+- [ ] 6. eslint 9 to 10
+- [ ] 7. Loose types to zero warnings
+- [ ] 8. Tests for each item
+
+## v0.0.6 - Safety and everyday use (planned)
+
+- [ ] MFA (optional per user, org can require) - [ ] Delete my account - [ ] Org switcher
+- [ ] Empty/loading/error screens - [ ] Accessibility pass - [ ] Shared input checks - [ ] Catalog duplicates + delete never-used accounts
+
+## v0.0.7 - Scale and portability (planned)
+
+- [ ] Performance at 10k to 50k entries - [ ] Budgets/exports/history behind ports - [ ] Cash basis labels - [ ] Self-hosted installer v1
+
 ## v0.0.4 - Stability and foundations (released 2026-10-07)
 
 - [x] History save failures now fail the request instead of reporting success
