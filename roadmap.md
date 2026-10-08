@@ -2,8 +2,10 @@
 
 ## v0.0.4 - Stability and foundations (in progress)
 - [x] History save failures now fail the request instead of reporting success
-- [ ] 1. Change and its history saved atomically (cloud: same database step; desktop/test: one unit of work)
-- [ ] 2. History kinds: change, money, system (+ History page filter, backfill)
+- [x] 1a. Postings and voids saved atomically with their history (all storage options)
+- [ ] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports) saved atomically
+- [x] 2a. History kinds column (change, ledger, system) with backfill
+- [ ] 2b. History page filter by kind
 - [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions
 - [ ] 4. Declarative role capability table
 - [ ] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals

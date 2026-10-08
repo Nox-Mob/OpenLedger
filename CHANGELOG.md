@@ -7,6 +7,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ### Changed
 
 - If a change can't be recorded in history, the request now fails with an error instead of reporting success.
+- Posting or voiding a transaction now saves the transaction and its history entry together. If either fails, nothing is kept.
+- History entries are now sorted into changes, money and system events.
 - Bun is now the only supported package manager.
 - Added an architecture overview in docs/architecture.md.
 
