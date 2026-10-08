@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, listFunds } from "@/lib/taxonomy.functions";
 import { createPledge, listPledges, settlePledgeFn } from "@/lib/funds.functions";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
@@ -70,7 +72,7 @@ function PledgesPage() {
   const [settleKey, setSettleKey] = useState(() => crypto.randomUUID());
 
   if (!org) return null;
-  const accounts = ((accountsQuery.data ?? []) as any[]).filter((a) => a.is_active !== false);
+  const accounts = (accountsQuery.data ?? []).filter((a) => a.isActive);
   const revenue = accounts.filter((a) => a.type === "revenue");
   const cash = accounts.filter((a) => a.type === "asset" && a.subtype !== "pledges_receivable");
   const pledges = pledgesQuery.data ?? [];
@@ -114,8 +116,8 @@ function PledgesPage() {
       setExpected("");
       setKey(crypto.randomUUID());
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -147,8 +149,8 @@ function PledgesPage() {
       setSettleAmount("");
       setSettleKey(crypto.randomUUID());
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -198,7 +200,7 @@ function PledgesPage() {
             Fund
             <select value={fundId} onChange={(e) => setFundId(e.target.value)} className={inputCls}>
               <option value="">No fund (unrestricted)</option>
-              {((fundsQuery.data ?? []) as any[]).map((f) => (
+              {(fundsQuery.data ?? []).map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
                   {f.is_restricted ? " (restricted)" : ""}

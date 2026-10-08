@@ -1,3 +1,4 @@
+import type { Db } from "@/lib/db";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -9,7 +10,7 @@ import * as recon from "./services/reconciliation";
 const uuid = z.string().uuid();
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-type Ctx = { supabase: any; userId: string };
+type Ctx = { supabase: Db; userId: string };
 
 async function load(context: Ctx, id: string, action: Parameters<typeof assertCan>[3]) {
   const repos = createSupabaseRepositories(context.supabase);

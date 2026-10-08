@@ -1,6 +1,7 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -35,8 +36,8 @@ function PreferencesSettings() {
   const [draft, setDraft] = useState<TermOverrides | null>(null);
   const [saving, setSaving] = useState(false);
   if (!org) return null;
-  const orgLevel = (org as any).terminology ?? "simplest";
-  const orgOverrides: TermOverrides = (org as any).termOverrides ?? {};
+  const orgLevel = org.terminology ?? "simplest";
+  const orgOverrides: TermOverrides = org.termOverrides ?? {};
 
   async function save() {
     setSaving(true);
@@ -45,8 +46,8 @@ function PreferencesSettings() {
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       setDraft(null);
       toast.success("Your wording saved");
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not save");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not save"));
     } finally {
       setSaving(false);
     }
@@ -67,7 +68,7 @@ function PreferencesSettings() {
         <div className="mt-4">
           <TermSliders
             orgType={org.orgType}
-            base={(k) => (orgOverrides as any)[k] ?? orgLevel}
+            base={(k) => orgOverrides[k as keyof TermOverrides] ?? orgLevel}
             value={draft ?? userOverrides}
             onChange={setDraft}
             resetLabel="Use organization default"

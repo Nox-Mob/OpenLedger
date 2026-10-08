@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { budgetVsActual, saveBudget } from "@/lib/budgets.functions";
 import { periodStartFor, shiftPeriod, type BudgetPeriod } from "@/lib/domain/budgets";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
@@ -79,8 +81,8 @@ function BudgetsPage() {
       });
       setDrafts(({ [accountId]: _, ...rest }) => rest);
       qc.invalidateQueries({ queryKey: ["budgets", org!.id] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not save budget");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not save budget"));
     }
   }
 

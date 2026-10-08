@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listTransactions, voidTransaction } from "@/lib/transactions.functions";
 import { formatCents } from "@/lib/money";
 import { PlusCircle, Ban } from "lucide-react";
@@ -38,8 +40,8 @@ function TransactionsPage() {
       await voidTransaction({ data: { orgId: org.id, transactionId: id } });
       toast.success("Transaction voided");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not void transaction");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not void transaction"));
     }
   }
 

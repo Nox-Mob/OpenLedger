@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -97,8 +98,8 @@ function OnboardingPage() {
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       navigate({ to: "/ledger" });
-    } catch (err: any) {
-      setError(err.message ?? "Could not create organization");
+    } catch (err) {
+      setError(errorMessage(err, "Could not create organization"));
       setBusy(false);
     }
   }

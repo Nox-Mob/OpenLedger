@@ -1,7 +1,8 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listOrgMembers, updateMemberRole } from "@/lib/org.functions";
 import {
   createInvite,
@@ -88,8 +89,8 @@ function MembersSettings() {
       toast.success(ok);
       refresh();
       return true;
-    } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+    } catch (err) {
+      toast.error(errorMessage(err, "Something went wrong"));
       return false;
     } finally {
       setBusy(false);
@@ -105,8 +106,8 @@ function MembersSettings() {
       await navigator.clipboard?.writeText(url).catch(() => {});
       toast.success("Invite link created and copied");
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }

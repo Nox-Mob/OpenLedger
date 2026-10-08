@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listProjects, createProject } from "@/lib/taxonomy.functions";
 import { projectSummary } from "@/lib/reports.functions";
 import { formatCents, parseToCents } from "@/lib/money";
@@ -49,8 +51,8 @@ function ProjectsPage() {
       setBudget("");
       queryClient.invalidateQueries({ queryKey: ["project-summary"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not create project");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not create project"));
     }
   }
 

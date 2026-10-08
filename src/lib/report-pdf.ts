@@ -1,6 +1,12 @@
 // Client-only PDF export for reports. Loaded dynamically so jsPDF never runs during SSR.
 import type { Terms, Terminology } from "@/lib/terminology";
 import { accountTypeLabel } from "@/lib/terminology";
+import type { jsPDF } from "jspdf";
+import type autoTableFn from "jspdf-autotable";
+import type { CellHookData } from "jspdf-autotable";
+
+type AutoTable = typeof autoTableFn;
+type DocWithTable = jsPDF & { lastAutoTable: { finalY: number } };
 
 type Row = { name: string; totalCents: number };
 interface OrgInfo {
@@ -71,8 +77,8 @@ async function setup(org: OrgInfo, title: string, subtitle: string, pref: Termin
 }
 
 function section(
-  autoTable: any,
-  doc: any,
+  autoTable: AutoTable,
+  doc: jsPDF,
   startY: number,
   heading: string,
   rows: Row[],
@@ -88,11 +94,11 @@ function section(
     body: [
       ...rows.map((r) => [r.name, money(r.totalCents, currency)]),
       ...extra.map((r) => [
-        { content: r.name, styles: { fontStyle: "italic", textColor: MUTED } },
+        { content: r.name, styles: { fontStyle: "italic" as const, textColor: MUTED } },
         money(r.totalCents, currency),
       ]),
       ...(rows.length + extra.length === 0
-        ? [[{ content: "Nothing recorded", styles: { textColor: MUTED, fontStyle: "italic" } }, ""]]
+        ? [[{ content: "Nothing recorded", styles: { textColor: MUTED, fontStyle: "italic" as const } }, ""]]
         : []),
     ],
     foot: [[totalLabel, money(total, currency)]],
@@ -106,15 +112,15 @@ function section(
     headStyles: { fillColor: PAPER, textColor: GREEN, fontStyle: "bold", fontSize: 11 },
     footStyles: { fillColor: PAPER, textColor: INK, fontStyle: "bold" },
     columnStyles: { 1: { halign: "right", font: "courier" } },
-    didParseCell: (d: any) => {
+    didParseCell: (d: CellHookData) => {
       if (d.column.index === 1) d.cell.styles.halign = "right";
     },
     bodyStyles: { lineColor: [225, 219, 207], lineWidth: { bottom: 0.5 } },
   });
-  return (doc as any).lastAutoTable.finalY + 18;
+  return (doc as DocWithTable).lastAutoTable.finalY + 18;
 }
 
-function totalBar(doc: any, y: number, label: string, value: string, negative: boolean) {
+function totalBar(doc: jsPDF, y: number, label: string, value: string, negative: boolean) {
   const w = doc.internal.pageSize.getWidth();
   doc.setFillColor(...GREEN);
   doc.roundedRect(56, y, w - 112, 36, 3, 3, "F");

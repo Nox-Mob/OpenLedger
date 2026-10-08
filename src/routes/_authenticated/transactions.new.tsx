@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
 import { parseToCents, todayISO, formatCents } from "@/lib/money";
@@ -13,6 +15,7 @@ import {
   SlidersHorizontal,
   Plus,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/transactions/new")({
 
 type Mode = "in" | "out" | "transfer" | "advanced";
 
-const MODES: Array<{ id: Mode; label: string; icon: any }> = [
+const MODES: Array<{ id: Mode; label: string; icon: LucideIcon }> = [
   { id: "in", label: "Money In", icon: ArrowDownToLine },
   { id: "out", label: "Money Out", icon: ArrowUpFromLine },
   { id: "transfer", label: "Transfer", icon: Repeat },
@@ -189,8 +192,8 @@ function NewTransactionPage() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       navigate({ to: "/transactions" });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not save transaction");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not save transaction"));
     } finally {
       submittingRef.current = false;
       setBusy(false);
@@ -401,7 +404,7 @@ function NewTransactionPage() {
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(categoriesQuery.data ?? []).map((c: any) => (
+                    {(categoriesQuery.data ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -418,7 +421,7 @@ function NewTransactionPage() {
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(projectsQuery.data ?? []).map((p: any) => (
+                    {(projectsQuery.data ?? []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
@@ -435,7 +438,7 @@ function NewTransactionPage() {
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(fundsQuery.data ?? []).map((f: any) => (
+                    {(fundsQuery.data ?? []).map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
                       </option>

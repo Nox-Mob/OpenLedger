@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, createAccount, setOpeningBalance } from "@/lib/taxonomy.functions";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
 import { accountTypeLabel, displayBalance } from "@/lib/terminology";
@@ -43,7 +45,7 @@ function AccountsPage() {
     e.preventDefault();
     if (!org) return;
     try {
-      await createAccount({ data: { orgId: org.id, name, type: type as any } });
+      await createAccount({ data: { orgId: org.id, name, type: type as "asset" | "liability" | "equity" | "revenue" | "expense" } });
       const cents = parseToCents(opening);
       if (cents && cents !== 0 && (type === "asset" || type === "liability")) {
         const accounts = accountsQuery.data ?? [];
@@ -69,8 +71,8 @@ function AccountsPage() {
       setOpening("");
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not create account");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not create account"));
     }
   }
 

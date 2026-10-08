@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { incomeStatement, balanceSheet, trialBalance } from "@/lib/reports.functions";
 import { fiscalYearStart } from "@/lib/dates";
 import { formatCents, todayISO } from "@/lib/money";
@@ -94,8 +96,8 @@ function ReportsPage() {
         await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
       else if (tab === "balance" && balance)
         await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create PDF");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not create PDF"));
     } finally {
       setExporting(false);
     }
@@ -120,8 +122,8 @@ function ReportsPage() {
     try {
       if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
       else await ex.downloadXlsx([sheet], `${base}.xlsx`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not export");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not export"));
     }
   }
   const sheetReady =

@@ -1,7 +1,8 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import {
   getBooksStatus,
   setBooksLock,
@@ -54,11 +55,8 @@ function CloseBooksSettings() {
   if (!org) return null;
   const isAdmin = org.role === "admin";
   const status = statusQuery.data;
-  const accountsRaw: any = accountsQuery.data;
-  const accounts = (
-    Array.isArray(accountsRaw) ? accountsRaw : (accountsRaw?.accounts ?? [])
-  ) as any[];
-  const equityAccounts = accounts.filter((a) => a.type === "equity" && a.is_active !== false);
+  const accounts = accountsQuery.data ?? [];
+  const equityAccounts = accounts.filter((a) => a.type === "equity" && a.isActive);
   const lockedThrough = status?.booksLockedThrough ?? null;
 
   // Default fiscal year end: the most recent fiscal year boundary before today.
@@ -80,8 +78,8 @@ function CloseBooksSettings() {
       await setBooksLock({ data: { orgId: org.id, lockedThrough: clear ? null : lockDate } });
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
       toast.success(clear ? "Books unlocked" : "Books locked");
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not update the lock");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not update the lock"));
     } finally {
       setBusy(false);
     }
@@ -94,8 +92,8 @@ function CloseBooksSettings() {
     try {
       const p = await previewYearEndClose({ data: { orgId: org.id, fiscalYearEnd } });
       setPreview(p);
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not preview the close");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not preview the close"));
     } finally {
       setBusy(false);
     }
@@ -113,12 +111,12 @@ function CloseBooksSettings() {
           idempotencyKey: safeRandomUUID(),
         },
       });
-      if ((r as any).duplicate) toast.info("That fiscal year was already closed.");
+      if ("duplicate" in r && r.duplicate) toast.info("That fiscal year was already closed.");
       else toast.success("Fiscal year closed and books locked");
       setPreview(null);
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not close the year");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not close the year"));
     } finally {
       setBusy(false);
     }
@@ -262,7 +260,7 @@ function CloseBooksSettings() {
         <h2 className="font-display text-lg font-semibold">Closed years</h2>
         {status?.closes?.length ? (
           <ul className="mt-3 divide-y text-sm">
-            {status.closes.map((c: any) => (
+            {status.closes.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-2">
                 <span>Fiscal year ending {c.fiscal_year_end}</span>
                 <span className="text-muted-foreground">

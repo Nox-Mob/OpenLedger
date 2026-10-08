@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors";
 import { PENDING_INVITE_KEY } from "@/lib/invite-link";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -66,9 +67,10 @@ function AuthPage() {
     return null;
   }
 
-  function friendlyError(err: any): string {
-    const msg = (err?.message ?? "Something went wrong") as string;
-    const code = (err?.code ?? "") as string;
+  function friendlyError(err: unknown): string {
+    const msg = errorMessage(err, "Something went wrong");
+    const code =
+      err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code ?? "") : "";
     if (code === "over_email_send_rate_limit" || /rate limit/i.test(msg))
       return "Too many attempts. Wait a few minutes and try again.";
     if (/email not confirmed/i.test(msg)) {
@@ -120,7 +122,7 @@ function AuthPage() {
         setMessage("Account created. Check your email to verify it, then sign in.");
         setMode("signin");
       }
-    } catch (err: any) {
+    } catch (err) {
       const next = failedAttempts + 1;
       setFailedAttempts(next);
       if (next >= 5) {

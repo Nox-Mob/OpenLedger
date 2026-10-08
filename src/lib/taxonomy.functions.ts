@@ -6,6 +6,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
+import type { Db } from "./db";
+import { duplicateNameMessage, sameName } from "./validation";
+
+/** Names are unique per organization, ignoring case and extra spaces. */
+async function assertNameAvailable(
+  supabase: Db,
+  table: CrudTable | "accounts",
+  orgId: string,
+  name: string,
+) {
+  const { data, error } = await supabase.from(table).select("name").eq("org_id", orgId);
+  if (error) throw new Error(error.message);
+  if ((data ?? []).some((r) => sameName(r.name, name))) throw new Error(duplicateNameMessage(name));
+}
 
 const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
 
@@ -31,11 +45,11 @@ export const listAccounts = createServerFn({ method: "GET" })
     if (eError) throw new Error(eError.message);
 
     const balances = new Map<string, number>();
-    for (const e of (entries ?? []) as any[]) {
+    for (const e of entries ?? []) {
       balances.set(e.account_id, (balances.get(e.account_id) ?? 0) + e.amount_cents);
     }
 
-    return ((accounts ?? []) as any[]).map((a) => ({
+    return (accounts ?? []).map((a) => ({
       id: a.id as string,
       name: a.name as string,
       type: a.type as string,
@@ -59,6 +73,7 @@ export const createAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
+    await assertNameAvailable(context.supabase, "accounts", data.orgId, data.name);
     const id = newId();
     await auditedWrite(
       context.supabase,
@@ -67,7 +82,7 @@ export const createAccount = createServerFn({ method: "POST" })
         {
           table: "accounts",
           op: "insert",
-          values: { id, name: data.name, type: data.type, subtype: data.subtype ?? null },
+          values: { id, name: data.name.trim(), type: data.type, subtype: data.subtype ?? null },
         },
       ],
       {
@@ -101,23 +116,16 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
     });
   });
 
-function makeCrud(
-  table: "categories" | "tags" | "projects" | "funds",
-  extraSchema?: z.ZodRawShape,
-) {
-  const list = createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      const { data: rows, error } = await context.supabase
-        .from(table)
-        .select("*")
-        .eq("org_id", data.orgId)
-        .order("name");
-      if (error) throw new Error(error.message);
-      return rows ?? [];
-    });
+type CrudTable = "categories" | "tags" | "projects" | "funds";
 
+/** Form fields use camelCase; database columns are snake_case. */
+export function toColumns(rest: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(rest).map(([k, v]) => [k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), v]),
+  );
+}
+
+function makeCrud(table: CrudTable, extraSchema?: z.ZodRawShape) {
   const create = createServerFn({ method: "POST" })
     .middleware([requireSupabaseAuth])
     .validator((input) =>
@@ -126,13 +134,17 @@ function makeCrud(
         .parse(input),
     )
     .handler(async ({ data, context }) => {
-      const { orgId, name, ...rest } = data as any;
+      const { orgId, name, ...rest } = data as { orgId: string; name: string } & Record<
+        string,
+        unknown
+      >;
+      await assertNameAvailable(context.supabase, table, orgId, name);
       await assertCan(context.supabase, context.userId, orgId, "write");
       const id = newId();
       await auditedWrite(
         context.supabase,
         orgId,
-        [{ table, op: "insert", values: { id, name, ...rest } }],
+        [{ table, op: "insert", values: { id, name: name.trim(), ...toColumns(rest) } }],
         {
           action: "create",
           entity: table.replace(/s$/, "").replace(/ie$/, "y"),
@@ -143,23 +155,67 @@ function makeCrud(
       return { ok: true };
     });
 
-  return { list, create };
+  return { create };
 }
 
 const categories = makeCrud("categories", {
   type: z.enum(["revenue", "expense"]).default("expense"),
 });
-export const listCategories = categories.list;
+export const listCategories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("categories")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
 export const createCategory = categories.create;
 
 const tags = makeCrud("tags");
-export const listTags = tags.list;
+export const listTags = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("tags")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
 export const createTag = tags.create;
 
 const projects = makeCrud("projects", { budgetCents: z.number().int().min(0).default(0) });
-export const listProjects = projects.list;
+export const listProjects = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("projects")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
 export const createProject = projects.create;
 
 const funds = makeCrud("funds", { isRestricted: z.boolean().default(false) });
-export const listFunds = funds.list;
+export const listFunds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("funds")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
 export const createFund = funds.create;

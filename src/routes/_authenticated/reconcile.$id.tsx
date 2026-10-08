@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import {
   acceptMatches,
   completeReconciliation,
@@ -83,8 +85,8 @@ function ReconcileWorkspace() {
       if (ok) toast.success(ok);
       await qc.invalidateQueries({ queryKey: ["reconciliation", id] });
       qc.invalidateQueries({ queryKey: ["reconciliations"] });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -111,7 +113,7 @@ function ReconcileWorkspace() {
       <td className="px-3 py-2">
         {e.description}
         {badge && <span className="ml-2 rounded bg-muted px-1.5 text-[10px]">{badge}</span>}
-        {(e as any).beforePeriod && (
+        {e.beforePeriod && (
           <span
             className="ml-2 rounded bg-accent px-1.5 text-[10px] text-accent-foreground"
             title="Dated before this statement period. Only tick it if it actually cleared on this statement."
