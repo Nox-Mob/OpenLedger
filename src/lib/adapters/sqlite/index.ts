@@ -3,6 +3,7 @@
 // sql.js in tests. Uses `?` placeholders, which both support.
 import type {
   Account,
+  AuditEvent,
   PeriodClose,
   ReconEntry,
   BankTransaction,

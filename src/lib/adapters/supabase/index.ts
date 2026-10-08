@@ -19,6 +19,17 @@ import { DuplicateKeyError, type Repositories } from "@/lib/ports";
 
 type Db = SupabaseClient<Database>;
 
+function auditJson(e: AuditEvent) {
+  return {
+    id: newId(),
+    action: e.action,
+    entity: e.entity,
+    entity_id: e.entityId ?? null,
+    before: e.before ?? null,
+    after: e.after ?? null,
+  };
+}
+
 function fail(error: { message: string; code?: string } | null): void {
   if (!error) return;
   if (error.code === "23505") throw new DuplicateKeyError(error.message);
@@ -265,22 +276,20 @@ export function createSupabaseRepositories(db: Db): Repositories {
     },
 
     transactions: {
-      async post(tx) {
-        const { error: txError } = await sb.from("transactions").insert({
-          id: tx.id,
-          org_id: tx.orgId,
-          transaction_date: tx.transactionDate,
-          posted_date: tx.postedDate,
-          description: tx.description,
-          source: tx.source,
-          created_by: tx.createdBy,
-          idempotency_key: tx.idempotencyKey,
-        });
-        fail(txError);
-        const { error: eError } = await sb.from("entries").insert(
-          tx.entries.map((e) => ({
+      async post(tx, audit) {
+        // One database function writes the header, lines, tags and history entry together.
+        const { error } = await (sb as any).rpc("post_transaction_atomic", {
+          p_tx: {
+            id: tx.id,
+            org_id: tx.orgId,
+            transaction_date: tx.transactionDate,
+            posted_date: tx.postedDate,
+            description: tx.description,
+            source: tx.source,
+            idempotency_key: tx.idempotencyKey,
+          },
+          p_entries: tx.entries.map((e) => ({
             id: e.id,
-            transaction_id: tx.id,
             account_id: e.accountId,
             amount_cents: e.amountCents,
             category_id: e.categoryId ?? null,
@@ -288,17 +297,10 @@ export function createSupabaseRepositories(db: Db): Repositories {
             fund_id: e.fundId ?? null,
             memo: e.memo ?? null,
           })),
-        );
-        if (eError) {
-          // Compensate: the header has no entries yet, so the delete guard allows it.
-          await sb.from("transactions").delete().eq("id", tx.id);
-          fail(eError);
-        }
-        if (tx.tagIds?.length) {
-          await sb
-            .from("transaction_tags")
-            .insert(tx.tagIds.map((tagId) => ({ transaction_id: tx.id, tag_id: tagId })));
-        }
+          p_tags: tx.tagIds ?? [],
+          p_audit: audit ? auditJson(audit) : null,
+        });
+        fail(error);
       },
       async findByIdempotencyKey(orgId, key) {
         const { data, error } = await sb
@@ -338,16 +340,14 @@ export function createSupabaseRepositories(db: Db): Repositories {
           rows = rows.filter((t) => t.entries.some((e) => e.accountId === opts.accountId));
         return rows;
       },
-      async markVoid(orgId, id) {
-        const { data, error } = await sb
-          .from("transactions")
-          .update({ status: "void" })
-          .eq("org_id", orgId)
-          .eq("id", id)
-          .eq("status", "posted")
-          .select("id");
+      async markVoid(orgId, id, audit) {
+        const { data, error } = await (sb as any).rpc("void_transaction_atomic", {
+          p_org: orgId,
+          p_id: id,
+          p_audit: audit ? auditJson(audit) : null,
+        });
         fail(error);
-        return (data ?? []).length > 0;
+        return data === true;
       },
       async clearReconciliation(entryIds) {
         if (!entryIds.length) return;
