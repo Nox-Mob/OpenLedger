@@ -411,8 +411,16 @@ function ImportPage() {
     i,
     label: mapping?.hasHeader ? h || `Column ${i + 1}` : `Column ${i + 1} (${h.slice(0, 16)})`,
   }));
-  const ColSelect = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
-    <select value={value} onChange={(e) => onChange(Number(e.target.value))} className={inputCls}>
+  const colSelect = ({
+    value,
+    onChange,
+    label,
+  }: {
+    value: number;
+    onChange: (v: number) => void;
+    label: string;
+  }) => (
+    <select aria-label={label} value={value} onChange={(e) => onChange(Number(e.target.value))} className={inputCls}>
       {colOptions.map((c) => (
         <option key={c.i} value={c.i}>
           {c.label}
