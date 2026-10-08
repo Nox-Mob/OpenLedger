@@ -8,13 +8,18 @@
 - [x] 4. drizzle-kit kept: the database-change tool uses it (documented)
 - [x] 5. recharts 2 to 3
 - [x] 6. eslint 9 to 10 (classic hook rules)
-- [ ] 7. Loose types to zero warnings (194 left) and turn on React Compiler lint rules (16 findings)
-- [x] 8. Tests: year-close rollback (all adapters), database checks for recorded change and year close
+- [x] 7. Loose types to zero (now blocking) and React Compiler rules on (set-state-in-effect off on purpose)
+- [x] 9. Organization switcher (moved up from v0.0.6)
+- [x] 10. Empty, loading and error screens (moved up)
+- [x] 11. Accessibility pass: automated scan clean on every page, both themes (moved up)
+- [x] 12. Shared input checks for amounts, dates and names (moved up)
+- [x] 13. Catalog duplicates blocked + delete never-used accounts (moved up)
+- [x] 8. Tests: year-close rollback (all adapters), database checks for recorded change and year close, input checks, account deletion rules, duplicate names, org switcher choice, database checks for catalog guards
 
 ## v0.0.6 - Safety and everyday use (planned)
 
-- [ ] MFA (optional per user, org can require) - [ ] Delete my account - [ ] Org switcher
-- [ ] Empty/loading/error screens - [ ] Accessibility pass - [ ] Shared input checks - [ ] Catalog duplicates + delete never-used accounts
+- [ ] MFA (optional per user, org can require) - [ ] Delete my account
+- [ ] Manual screen reader and keyboard walk-through (automated scan already clean)
 
 ## v0.0.7 - Scale and portability (planned)
 
