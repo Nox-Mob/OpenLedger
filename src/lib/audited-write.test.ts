@@ -9,10 +9,9 @@ describe("audited-write helpers", () => {
   it("builds op JSON with only the fields the caller set", () => {
     const op = toOpJson({ table: "funds", op: "insert", values: { id: "x" } });
     expect(op).toEqual({ table: "funds", op: "insert", values: { id: "x" } });
-    expect(toOpJson({ table: "funds", op: "update", values: { a: 1 }, match: { id: "x" } })).toHaveProperty(
-      "match",
-      { id: "x" },
-    );
+    expect(
+      toOpJson({ table: "funds", op: "update", values: { a: 1 }, match: { id: "x" } }),
+    ).toHaveProperty("match", { id: "x" });
     expect(
       toOpJson({
         table: "entries",
@@ -46,10 +45,16 @@ describe("audited-write helpers", () => {
       entity: "fund",
     });
     expect(seen).not.toHaveProperty("p_user");
-    await auditedWrite(db, "org-1", [{ table: "funds", op: "insert", values: {} }], {
-      action: "x",
-      entity: "fund",
-    }, "user-9");
+    await auditedWrite(
+      db,
+      "org-1",
+      [{ table: "funds", op: "insert", values: {} }],
+      {
+        action: "x",
+        entity: "fund",
+      },
+      "user-9",
+    );
     expect(seen).toMatchObject({ p_user: "user-9" });
   });
 
