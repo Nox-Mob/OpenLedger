@@ -170,7 +170,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "manage_members");
     if (data.userId === userId && data.role !== "admin") {
-      throw new Error("You can't demote yourself — ask another admin to do it.");
+      throw new Error("You can't demote yourself. Ask another admin to do it.");
     }
 
     const { data: before } = await supabase

@@ -159,7 +159,7 @@ export async function exportIncomePdf(p: {
   const { doc, autoTable, footer } = await setup(
     org,
     terms.incomeStatement,
-    `For the period ${prettyDate(p.from)} – ${prettyDate(p.to)}`,
+    `For the period ${prettyDate(p.from)} to ${prettyDate(p.to)}`,
     pref,
   );
   let y = section(

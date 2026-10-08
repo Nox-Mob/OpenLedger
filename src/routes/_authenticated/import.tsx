@@ -871,7 +871,7 @@ function ImportPage() {
                   <td className="tnum px-4 py-2.5 text-xs">
                     {b.statementStart && b.statementEnd
                       ? `${b.statementStart} → ${b.statementEnd}`
-                      : "—"}
+                      : "None"}
                     {b.endingBalanceCents != null && (
                       <span className="ml-2 text-muted-foreground">
                         ends {formatCents(b.endingBalanceCents)}
