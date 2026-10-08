@@ -157,6 +157,16 @@ function HistoryPage() {
                             </pre>
                           </div>
                         </div>
+                        {r.recorded_change ? (
+                          <div className="mt-3">
+                            <p className="text-xs font-semibold">
+                              Saved change (recorded by the database)
+                            </p>
+                            <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap text-xs">
+                              {JSON.stringify(r.recorded_change, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
                   )}
