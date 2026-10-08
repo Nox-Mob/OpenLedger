@@ -320,7 +320,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     },
 
     transactions: {
-      async post(tx) {
+      async post(tx, audit) {
         await db.execute("BEGIN");
         try {
           await db.execute(
@@ -373,6 +373,7 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
               "INSERT INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)",
               [tx.id, tagId],
             );
+          if (audit) await insertAudit(audit);
           await db.execute("COMMIT");
         } catch (e) {
           await db.execute("ROLLBACK");
@@ -417,12 +418,20 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
         return hydrate(rows);
       },
-      async markVoid(orgId, id) {
-        const r = await db.execute(
-          "UPDATE transactions SET status = 'void' WHERE org_id = ? AND id = ? AND status = 'posted'",
-          [orgId, id],
-        );
-        return r.rowsAffected > 0;
+      async markVoid(orgId, id, audit) {
+        await db.execute("BEGIN");
+        try {
+          const r = await db.execute(
+            "UPDATE transactions SET status = 'void' WHERE org_id = ? AND id = ? AND status = 'posted'",
+            [orgId, id],
+          );
+          if (r.rowsAffected > 0 && audit) await insertAudit(audit);
+          await db.execute("COMMIT");
+          return r.rowsAffected > 0;
+        } catch (e) {
+          await db.execute("ROLLBACK");
+          throw e;
+        }
       },
       async clearReconciliation(ids) {
         if (!ids.length) return;
@@ -687,6 +696,9 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
 
     audit: {
       async append(e) {
+        await insertAudit(e);
+      },
+      async _unused(e: AuditEvent) {
         await db.execute(
           "INSERT INTO audit_log (org_id, user_id, action, entity, entity_id, before, after, created_at) VALUES (?,?,?,?,?,?,?,?)",
           [
