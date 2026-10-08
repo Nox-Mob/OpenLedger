@@ -111,6 +111,25 @@ describe.each(adapters)("%s adapter", (name, make) => {
     ]);
   });
 
+  const breakHistory = async () => {
+    if (name === "memory") (repos as any).store.failAudit = true;
+    else await sqliteDriver.execute("ALTER TABLE audit_log RENAME TO audit_log_gone");
+  };
+
+  it("a posting and its history entry are saved together", async () => {
+    const { id } = await postTransaction(repos, sale());
+    expect((await repos.audit.listFor(ORG, "transaction", id)).map((h) => h.action)).toEqual([
+      "create",
+    ]);
+    await breakHistory();
+    await expect(postTransaction(repos, sale({ description: "Lost" }))).rejects.toThrow();
+    expect(await repos.transactions.list(ORG)).toHaveLength(1);
+    await expect(
+      voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id }),
+    ).rejects.toThrow();
+    expect((await repos.transactions.get(ORG, id))?.status).toBe("posted");
+  });
+
   it("idempotency key returns the original", async () => {
     const a = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));
     const b = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));

@@ -29,6 +29,13 @@
       "when": 1791351063217,
       "tag": "0003_balance_check_skip_deleted_tx",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791435048742,
+      "tag": "0004_atomic_ledger_audit",
+      "breakpoints": true
     }
   ]
 }

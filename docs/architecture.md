@@ -15,16 +15,20 @@ Ports (src/lib/ports)  ->  adapters: supabase | sqlite | memory
 ```
 
 ## Where rules live
+
 - If a rule can be unit-tested without a database, it belongs in `src/lib/domain/` and runs before every write.
 - The database enforces what it is best at: foreign keys, uniqueness, RLS, immutability triggers, atomicity. These are a second line of defense, mirrored in the SQLite schema.
 - Every adapter must pass `src/lib/adapters/contract.test.ts`.
 
 ## History
+
 - Every change must have a history entry. If the entry cannot be saved, the request fails (`writeAudit()` throws).
 - Planned (v0.0.4): change and history saved in one atomic step, and history split into change, money and system kinds.
 
 ## Identity and sync
+
 - IDs are app-generated UUIDs. Posted transactions are immutable (void and re-post), which makes future event-based sync tractable. Sync is not scheduled.
 
 ## Backups
+
 - Signed manifest over chained per-row hashes; restore always creates a new organization and re-runs domain checks. See `src/lib/domain/backup.ts`.

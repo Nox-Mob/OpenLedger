@@ -7,6 +7,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ### Changed
 
 - If a change can't be recorded in history, the request now fails with an error instead of reporting success.
+- Posting or voiding a transaction now saves the transaction and its history entry together. If either fails, nothing is kept.
+- History entries are now sorted into changes, money and system events.
 - Bun is now the only supported package manager.
 - Added an architecture overview in docs/architecture.md.
 
@@ -36,6 +38,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ## [0.0.2] - 2026-10-06
 
 ### Added
+
 - High-contrast dark mode with a toggle in the website header and the app sidebar. It remembers your choice and follows the system preference on first visit.
 - Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
@@ -43,6 +46,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed
+
 - Groundwork for the future desktop edition: a local SQLite storage option with the same bookkeeping protections, tested against the same rules as the cloud app (not yet packaged as an app).
 - Statement checks, reports, organization settings, books lock and year-end close now run in the same shared, storage-independent code, ready for the future desktop edition.
 - Every new record (organizations, accounts, statement checks, year-end closes, import batches, history entries, categories) now gets its ID from the app instead of the database.
@@ -55,6 +59,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Consistent section spacing across the website and app.
 
 ### Removed
+
 - Marketing strips and eyebrow badges above headlines on the public website.
 - Legal mailing address from legal notices; contact is by email only.
 - Em dashes and en dashes from all user-facing copy.
@@ -64,6 +69,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 Initial usable web foundation.
 
 ### Added
+
 - Organization-scoped double-entry accounting, chart of accounts, opening balances, and transaction register.
 - Money in, money out, transfers, and advanced entry flows with duplicate-submit protection.
 - CSV, OFX/QFX, and reviewed PDF bank imports; reconciliation and completion locks.
@@ -74,12 +80,14 @@ Initial usable web foundation.
 - Automated unit tests, database-rule checks, CI, and deployment documentation.
 
 ### Security and data integrity
+
 - Balanced-entry enforcement, organization isolation, and permission checks.
 - Posted transactions corrected by voiding and re-entry rather than destructive editing.
 - Bank evidence protection, account archiving, and reconciliation locks.
 - Startup data-safety safeguards and manual development-only sample seeding.
 
 ### Known limitations
+
 - Pre-1.0 development software; review results and keep independent backups.
 - Fund tags are not full nonprofit fund accounting.
 - No standalone desktop installer, automated bank feeds, payroll, or tax filing.

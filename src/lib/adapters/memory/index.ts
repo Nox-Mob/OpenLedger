@@ -24,6 +24,8 @@ export interface MemoryStore {
   bank: Map<string, BankTransaction>;
   reconciliations: Map<string, Reconciliation>;
   audit: (AuditEvent & { at: string })[];
+  /** Test hook: make every history write fail. */
+  failAudit?: boolean;
   periodCloses: Map<string, PeriodClose>;
   projects: Map<string, Project>;
   statements: (StatementInfo & { orgId: string; accountId: string })[];
@@ -67,6 +69,9 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
       .filter((e) => pred(e))
       .map(({ accountId: _a, ...e }) => e);
   let tick = 0;
+  // Monotonic fake clock so "newest first" ordering is deterministic in tests.
+  const pushAudit = (e: AuditEvent) =>
+    s.audit.push({ ...e, at: new Date(Date.parse(NOW) + tick++).toISOString() });
   return {
     store: s,
     orgs: {
@@ -134,8 +139,9 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
       },
     },
     transactions: {
-      async post(tx) {
+      async post(tx, audit) {
         if (s.transactions.has(tx.id)) throw new DuplicateKeyError();
+        if (audit && s.failAudit) throw new Error("history unavailable");
         if (
           tx.idempotencyKey &&
           [...s.transactions.values()].some(
@@ -167,6 +173,7 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
             reconciliationId: null,
           })),
         });
+        if (audit) pushAudit(audit);
       },
       async findByIdempotencyKey(orgId, key) {
         for (const t of s.transactions.values())
@@ -190,10 +197,12 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
           .slice(0, opts?.limit ?? 100);
       },
-      async markVoid(orgId, id) {
+      async markVoid(orgId, id, audit) {
         const t = s.transactions.get(id);
         if (!t || t.orgId !== orgId || t.status !== "posted") return false;
+        if (audit && s.failAudit) throw new Error("history unavailable");
         t.status = "void";
+        if (audit) pushAudit(audit);
         return true;
       },
       async clearReconciliation(ids) {
@@ -403,8 +412,8 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
     },
     audit: {
       async append(e) {
-        // Monotonic fake clock so "newest first" ordering is deterministic in tests.
-        s.audit.push({ ...e, at: new Date(Date.parse(NOW) + tick++).toISOString() });
+        if (s.failAudit) throw new Error("history unavailable");
+        pushAudit(e);
       },
       async listFor(orgId, entity, entityId, limit = 50) {
         return s.audit

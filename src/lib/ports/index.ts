@@ -90,8 +90,11 @@ export interface NewTransaction {
 }
 
 export interface TransactionRepository {
-  /** Writes header + entries atomically (or compensates). Throws DuplicateKeyError on idempotency hit. */
-  post(tx: NewTransaction): Promise<void>;
+  /**
+   * Writes header + entries and, when given, its history entry in one atomic step:
+   * if any part fails, nothing is kept. Throws DuplicateKeyError on idempotency hit.
+   */
+  post(tx: NewTransaction, audit?: AuditEvent): Promise<void>;
   findByIdempotencyKey(orgId: Id, key: string): Promise<Id | null>;
   get(orgId: Id, id: Id): Promise<Transaction | null>;
   list(
@@ -99,7 +102,8 @@ export interface TransactionRepository {
     opts?: { accountId?: Id; from?: IsoDate; to?: IsoDate; limit?: number; includeVoid?: boolean },
   ): Promise<Transaction[]>;
   /** posted → void only. Returns false if it was already void (lost a race). */
-  markVoid(orgId: Id, id: Id): Promise<boolean>;
+  /** With `audit`, the void and its history entry are saved atomically. */
+  markVoid(orgId: Id, id: Id, audit?: AuditEvent): Promise<boolean>;
   clearReconciliation(entryIds: Id[]): Promise<void>;
   /** Signed ledger rows for report math (posted only, legacy 'closing' excluded). */
   ledgerRows(
