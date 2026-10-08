@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { listProjects, createProject } from "@/lib/taxonomy.functions";
 import { projectSummary } from "@/lib/reports.functions";
@@ -56,7 +56,7 @@ function ProjectsPage() {
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   return (
     <AppShell>

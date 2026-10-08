@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -52,7 +53,7 @@ function CloseBooksSettings() {
     queryFn: () => getAccountSetup({ data: { orgId: org!.id } }),
   });
 
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const isAdmin = org.role === "admin";
   const status = statusQuery.data;
   const accounts = accountsQuery.data ?? [];

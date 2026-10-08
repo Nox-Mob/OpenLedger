@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
@@ -51,7 +52,7 @@ function HistoryPage() {
       }),
     enabled: !!org && isAdmin,
   });
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   if (!isAdmin)
     return <p className="text-sm text-muted-foreground">Only admins can view history.</p>;
 

@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, createAccount, setOpeningBalance } from "@/lib/taxonomy.functions";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
@@ -76,7 +76,7 @@ function AccountsPage() {
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const accounts = accountsQuery.data ?? [];
   const groups = ["asset", "liability", "equity", "revenue", "expense"]

@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import {
@@ -405,7 +405,7 @@ function ImportPage() {
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const header = csvRows[0] ?? [];
   const colOptions = header.map((h, i) => ({
     i,

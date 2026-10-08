@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
@@ -35,7 +36,7 @@ function PreferencesSettings() {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<TermOverrides | null>(null);
   const [saving, setSaving] = useState(false);
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const orgLevel = org.terminology ?? "simplest";
   const orgOverrides: TermOverrides = org.termOverrides ?? {};
 

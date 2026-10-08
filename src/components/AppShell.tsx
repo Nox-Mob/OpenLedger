@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
 import { useOrgContext } from "@/hooks/use-org-context";
+import { ErrorState, LoadingState } from "@/components/PageStates";
+import { errorMessage } from "@/lib/errors";
 
 const NAV = [
   { to: "/ledger", label: "Dashboard", icon: LayoutDashboard },
@@ -38,7 +40,7 @@ const NAV = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { org, orgs, terms } = useOrgContext();
+  const { org, orgs, terms, error, retry } = useOrgContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -128,7 +130,23 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-8 py-8 outline-none">{children}</main>
+      <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-8 py-8 outline-none">
+        {error && !org ? (
+          <ErrorState
+            title="Your organizations didn't load"
+            message={errorMessage(error)}
+            onRetry={retry}
+          />
+        ) : (
+          children
+        )}
+      </main>
     </div>
   );
+}
+
+/** Shown by pages while the current organization is still loading. */
+export function OrgPending({ inShell = true }: { inShell?: boolean }) {
+  const body = <LoadingState label="Loading your organization" />;
+  return inShell ? <AppShell>{body}</AppShell> : body;
 }

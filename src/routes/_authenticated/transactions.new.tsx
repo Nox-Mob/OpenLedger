@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
@@ -200,7 +200,7 @@ function NewTransactionPage() {
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const selectCls = inputCls;
 

@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,7 @@ function AccountsSetup() {
     enabled: !!org,
   });
 
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const isAdmin = org.role === "admin";
   const existing = setup.data ?? [];
   const catalog = catalogFor(org.orgType);

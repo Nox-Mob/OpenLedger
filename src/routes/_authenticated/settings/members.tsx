@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -75,7 +76,7 @@ function MembersSettings() {
     enabled: !!org && isAdmin,
   });
 
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["org-members", org.id] });
     queryClient.invalidateQueries({ queryKey: ["org-invites", org.id] });

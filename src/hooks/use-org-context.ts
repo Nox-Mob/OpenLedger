@@ -37,6 +37,8 @@ export function useOrgContext() {
     terminology,
     userOverrides: profileQuery.data?.termOverrides ?? {},
     isLoading: orgsQuery.isLoading || profileQuery.isLoading,
+    error: orgsQuery.error,
+    retry: () => orgsQuery.refetch(),
   };
 }
 

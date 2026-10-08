@@ -1,3 +1,4 @@
+import { OrgPending } from "@/components/AppShell";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
@@ -38,7 +39,7 @@ const btn =
 function ExportsPage() {
   const { org } = useOrgContext();
   const [busy, setBusy] = useState<string | null>(null);
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const isAdmin = org.role === "admin";
 
   async function run(key: string, fn: () => Promise<void>) {

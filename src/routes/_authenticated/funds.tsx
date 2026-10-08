@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import {
   listFunds,
@@ -128,7 +128,7 @@ function FundsPage() {
   const [busy, setBusy] = useState(false);
   const [releaseKey, setReleaseKey] = useState(() => crypto.randomUUID());
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const funds = summaryQuery.data?.funds ?? [];
   const net = summaryQuery.data?.netAssets;
   const refresh = () => {

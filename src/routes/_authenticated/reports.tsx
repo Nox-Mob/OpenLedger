@@ -2,7 +2,7 @@ import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { incomeStatement, balanceSheet, trialBalance } from "@/lib/reports.functions";
 import { fiscalYearStart } from "@/lib/dates";
@@ -82,7 +82,7 @@ function ReportsPage() {
   });
 
   const [exporting, setExporting] = useState(false);
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const income = incomeQuery.data;
   const balance = balanceQuery.data;

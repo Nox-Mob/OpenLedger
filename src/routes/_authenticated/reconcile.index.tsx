@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import {
@@ -84,7 +84,7 @@ function ReconcileIndex() {
     setBatchId(s.batchId);
   }, [suggestQuery.data]);
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const accounts = (accountsQuery.data ?? []).filter(
     (a) => a.isActive && (a.type === "asset" || a.type === "liability"),
   );
