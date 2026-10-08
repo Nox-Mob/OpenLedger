@@ -57,6 +57,13 @@
       "when": 1791436368319,
       "tag": "0007_audited_write_row_count",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791436756475,
+      "tag": "0008_audited_write_allow_pledge_payments",
+      "breakpoints": true
     }
   ]
 }

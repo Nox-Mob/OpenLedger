@@ -324,16 +324,41 @@ export const saveImportProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
-    const { error } = await context.supabase.from("import_profiles").upsert(
+    // One saved layout per account+name: update it, or add it if it's new.
+    const { data: existing, error: findErr } = await context.supabase
+      .from("import_profiles")
+      .select("id")
+      .eq("org_id", data.orgId)
+      .eq("account_id", data.accountId)
+      .eq("name", data.name)
+      .maybeSingle();
+    if (findErr) throw new Error(findErr.message);
+    const id = existing?.id ?? newId();
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        existing
+          ? {
+              table: "import_profiles",
+              op: "update",
+              values: { mapping: data.mapping },
+              match: { id },
+              minRows: 1,
+            }
+          : {
+              table: "import_profiles",
+              op: "insert",
+              values: { id, account_id: data.accountId, name: data.name, mapping: data.mapping },
+            },
+      ],
       {
-        org_id: data.orgId,
-        account_id: data.accountId,
-        name: data.name,
-        mapping: data.mapping as any,
+        action: existing ? "update" : "create",
+        entity: "import_profile",
+        entityId: id,
+        after: { name: data.name },
       },
-      { onConflict: "account_id,name" },
     );
-    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -413,6 +438,7 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
           : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`,
       );
     const usageId = newId();
+    // cloud-only-write: per-user or service record, not organization books
     const { error: uErr } = await supabase.from("ai_usage").insert({
       id: usageId,
       org_id: data.orgId,

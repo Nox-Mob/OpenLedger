@@ -25,6 +25,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      - name: Direct database writes (server functions must use shared code)
+        # Tracked on its own so a new direct write shows up as a named failure.
+        # Fix by moving the write into a service or audited_write; only cloud-only
+        # records may carry a `// cloud-only-write: <reason>` comment.
+        run: |
+          bunx vitest run src/lib/direct-writes.test.ts --reporter=default --reporter=github-actions || {
+            echo "### ❌ A server function writes to the database directly. Move it into shared code (see src/lib/direct-writes.test.ts)." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
       - name: Run tests
         run: bunx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results.xml --reporter=github-actions
       - name: Report failures
