@@ -24,7 +24,10 @@ export function useCurrentOrgId(): string | null {
 }
 
 /** The organization to show: the stored choice if the user still belongs to it, else the first. */
-export function pickCurrentOrg<T extends { id: string }>(orgs: T[], storedId: string | null): T | null {
+export function pickCurrentOrg<T extends { id: string }>(
+  orgs: T[],
+  storedId: string | null,
+): T | null {
   return orgs.find((o) => o.id === storedId) ?? orgs[0] ?? null;
 }
 

@@ -7,7 +7,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
 import type { Db } from "./db";
-import { duplicateNameMessage, nameField, sameName } from "./validation";
+import { nameField } from "./validation";
+import { duplicateName } from "./domain/accounts";
+import { toColumns } from "./columns";
 
 /** Names are unique per organization, ignoring case and extra spaces. */
 async function assertNameAvailable(
@@ -18,7 +20,8 @@ async function assertNameAvailable(
 ) {
   const { data, error } = await supabase.from(table).select("name").eq("org_id", orgId);
   if (error) throw new Error(error.message);
-  if ((data ?? []).some((r) => sameName(r.name, name))) throw new Error(duplicateNameMessage(name));
+  const dup = duplicateName(name, data ?? []);
+  if (dup) throw new Error(dup);
 }
 
 const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
@@ -118,20 +121,11 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
 
 type CrudTable = "categories" | "tags" | "projects" | "funds";
 
-/** Form fields use camelCase; database columns are snake_case. */
-export function toColumns(rest: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(rest).map(([k, v]) => [k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`), v]),
-  );
-}
-
 function makeCrud(table: CrudTable, extraSchema?: z.ZodRawShape) {
   const create = createServerFn({ method: "POST" })
     .middleware([requireSupabaseAuth])
     .validator((input) =>
-      z
-        .object({ orgId: z.string().uuid(), name: nameField(), ...extraSchema })
-        .parse(input),
+      z.object({ orgId: z.string().uuid(), name: nameField(), ...extraSchema }).parse(input),
     )
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as { orgId: string; name: string } & Record<

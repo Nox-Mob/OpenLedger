@@ -78,7 +78,12 @@ export const exportTransactions = createServerFn({ method: "GET" })
       categories: Named;
       projects: Named;
       funds: Named;
-      transactions: { transaction_date: string; description: string; source: string; status: string };
+      transactions: {
+        transaction_date: string;
+        description: string;
+        source: string;
+        status: string;
+      };
     };
     return (rows as unknown as ExportRow[])
       .map((r) => ({

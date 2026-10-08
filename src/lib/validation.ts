@@ -46,12 +46,10 @@ export function checkAmount(input: string, rule: AmountRule = {}): Check<number>
   if (decimals.length > 2)
     return { ok: false, error: `${label} can't have more than two decimal places.` };
   const cents = Math.round(Number((Number(cleaned) * 100).toPrecision(15)));
-  if (!rule.allowNegative && cents < 0)
-    return { ok: false, error: `${label} can't be negative.` };
+  if (!rule.allowNegative && cents < 0) return { ok: false, error: `${label} can't be negative.` };
   if (!rule.allowZero && cents === 0)
     return { ok: false, error: `${label} must be greater than zero.` };
-  if (Math.abs(cents) > MAX_AMOUNT_CENTS)
-    return { ok: false, error: `${label} is too large.` };
+  if (Math.abs(cents) > MAX_AMOUNT_CENTS) return { ok: false, error: `${label} is too large.` };
   return { ok: true, value: cents };
 }
 

@@ -1,5 +1,8 @@
 // One way to turn any thrown value into a message people can read.
-export function errorMessage(err: unknown, fallback = "Something went wrong. Please try again."): string {
+export function errorMessage(
+  err: unknown,
+  fallback = "Something went wrong. Please try again.",
+): string {
   if (err instanceof Error && err.message) return err.message;
   if (typeof err === "string" && err) return err;
   if (err && typeof err === "object" && "message" in err) {

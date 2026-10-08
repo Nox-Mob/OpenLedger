@@ -352,7 +352,12 @@ export const saveImportProfile = createServerFn({ method: "POST" })
           : {
               table: "import_profiles",
               op: "insert",
-              values: { id, account_id: data.accountId, name: data.name, mapping: data.mapping as Json },
+              values: {
+                id,
+                account_id: data.accountId,
+                name: data.name,
+                mapping: data.mapping as Json,
+              },
             },
       ],
       {

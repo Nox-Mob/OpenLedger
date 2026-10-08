@@ -98,7 +98,15 @@ function section(
         money(r.totalCents, currency),
       ]),
       ...(rows.length + extra.length === 0
-        ? [[{ content: "Nothing recorded", styles: { textColor: MUTED, fontStyle: "italic" as const } }, ""]]
+        ? [
+            [
+              {
+                content: "Nothing recorded",
+                styles: { textColor: MUTED, fontStyle: "italic" as const },
+              },
+              "",
+            ],
+          ]
         : []),
     ],
     foot: [[totalLabel, money(total, currency)]],
