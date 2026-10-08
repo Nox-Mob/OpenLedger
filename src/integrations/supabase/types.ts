@@ -101,6 +101,7 @@ export type Database = {
           id: string
           kind: string
           org_id: string
+          recorded_change: Json | null
           user_id: string | null
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           id?: string
           kind?: string
           org_id: string
+          recorded_change?: Json | null
           user_id?: string | null
         }
         Update: {
@@ -125,6 +127,7 @@ export type Database = {
           id?: string
           kind?: string
           org_id?: string
+          recorded_change?: Json | null
           user_id?: string | null
         }
         Relationships: [
