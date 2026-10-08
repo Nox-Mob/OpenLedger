@@ -196,7 +196,7 @@ export const importBankRows = createServerFn({ method: "POST" })
         },
       );
     } catch (e) {
-      throw new Error(`Import failed, nothing was saved: ${(e as Error).message}`);
+      throw new Error(`Import failed, nothing was saved: ${(e as Error).message}`, { cause: e });
     }
 
     return { batchId, imported, duplicatesSkipped: duplicates };

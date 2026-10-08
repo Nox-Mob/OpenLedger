@@ -250,7 +250,7 @@ export async function verifyBackup(
   if (typeof m.publicKey !== "string" || !m.publicKey)
     throw new BackupRejected("The backup has no signing key.");
 
-  let ok = false;
+  let ok: boolean;
   try {
     ok = await crypto.subtle.verify(
       { name: "Ed25519" },
