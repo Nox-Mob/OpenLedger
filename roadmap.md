@@ -10,7 +10,7 @@
 - [x] 3. Remaining workflows behind shared code: every organization-data write goes through a service or audited_write; direct-writes check runs as its own CI step.
 - [x] 4. Declarative role capability table
 - [x] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
-- [x] 6a. Bun is the only package manager (package-lock.json removed)
+- [x] 6a. npm is the only package manager (bun.lock removed)
 - [x] 6b. Dependency review (docs/dependencies.md), pin core versions, clear loose-type warnings in backup code
 - [x] 7. Backup format v3 (app version, attachments slot; v2 still restores)
 - [x] 8. docs/architecture.md

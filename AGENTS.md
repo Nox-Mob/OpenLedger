@@ -42,7 +42,7 @@
 - Members: organizations.created_by is the owner; invite links store only a SHA-256 hash of the token and are claimed atomically before the role is granted.
 - Budgets/exports/history: cloud-only server functions for now (no port yet); budgets table keeps one row per account+period with a stable app-generated ID (update, never replace), and every export escapes formula-looking text via src/lib/export.ts.
 - Org delete relies on deferrable "no action" FKs and a balance trigger that skips deleted transactions; keep new cascading FKs deferrable.
-- Package manager: Bun only (bun.lock); no package-lock.json, so every install resolves the same tree.
+- Package manager: npm only (package-lock.json, installed with npm ci); no bun.lock, so every install resolves the same tree.
 - Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
