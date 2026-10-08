@@ -130,6 +130,27 @@ describe.each(adapters)("%s adapter", (name, make) => {
     expect((await repos.transactions.get(ORG, id))?.status).toBe("posted");
   });
 
+  it("settings changes and their history entry are saved together", async () => {
+    const ev = (action: string) => ({
+      orgId: ORG,
+      userId: USER,
+      action,
+      entity: "organization",
+      entityId: ORG,
+    });
+    await repos.orgs.updateSettings(ORG, { name: "Renamed" }, ev("update"));
+    await repos.orgs.setBooksLockedThrough(ORG, "2026-01-31", ev("lock_books"));
+    expect(
+      (await repos.audit.listFor(ORG, "organization", ORG)).map((h) => h.action).sort(),
+    ).toEqual(["lock_books", "update"]);
+    await breakHistory();
+    await expect(repos.orgs.updateSettings(ORG, { name: "Lost" }, ev("update"))).rejects.toThrow();
+    await expect(repos.orgs.setBooksLockedThrough(ORG, null, ev("unlock_books"))).rejects.toThrow();
+    const org = await repos.orgs.get(ORG);
+    expect(org?.name).toBe("Renamed");
+    expect(org?.booksLockedThrough).toBe("2026-01-31");
+  });
+
   it("idempotency key returns the original", async () => {
     const a = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));
     const b = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));

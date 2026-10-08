@@ -32,3 +32,7 @@ Ports (src/lib/ports)  ->  adapters: supabase | sqlite | memory
 ## Backups
 
 - Signed manifest over chained per-row hashes; restore always creates a new organization and re-runs domain checks. See `src/lib/domain/backup.ts`.
+
+## Changes and history are saved together
+
+Every data change and its history entry are written in one database transaction. Postings and voids use `post_transaction_atomic` / `void_transaction_atomic`. Other changes use `audited_write(org, ops, audit)`, called through `src/lib/audited-write.ts` or through port methods that take an optional `audit` argument (memory and SQLite adapters wrap the same change in their own transaction). `audited_write` runs as the caller, so row level security still applies; it writes history through a helper that refuses to run outside it.

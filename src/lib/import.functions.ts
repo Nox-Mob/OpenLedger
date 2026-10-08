@@ -1,7 +1,7 @@
 import { newId } from "./domain/ledger";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { postBankRow } from "./services/ledger";
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -109,23 +109,6 @@ export const importBankRows = createServerFn({ method: "POST" })
       }
     }
     const batchId = newId();
-    const { error: bErr } = await supabase.from("import_batches").insert({
-      id: batchId,
-      org_id: data.orgId,
-      account_id: data.accountId,
-      file_name: data.fileName,
-      format: data.format,
-      statement_start: data.statementStart ?? null,
-      statement_end: data.statementEnd ?? null,
-      beginning_balance_cents: data.beginningBalanceCents ?? null,
-      ending_balance_cents: data.endingBalanceCents ?? null,
-      balance_mismatch_cents: mismatch,
-      rows_total: data.rows.length + data.errorCount,
-      rows_error: data.errorCount,
-      created_by: userId,
-    });
-    if (bErr) throw new Error(bErr.message);
-
     const seen = new Set<string>();
     const records = [];
     for (const [i, row] of data.rows.entries()) {
@@ -133,7 +116,7 @@ export const importBankRows = createServerFn({ method: "POST" })
       if (seen.has(fp)) continue;
       seen.add(fp);
       records.push({
-        org_id: data.orgId,
+        id: newId(),
         account_id: data.accountId,
         bank_date: row.date,
         description: row.description,
@@ -146,35 +129,75 @@ export const importBankRows = createServerFn({ method: "POST" })
       });
     }
 
-    const { data: inserted, error } = await supabase
-      .from("bank_transactions")
-      .upsert(records, { onConflict: "org_id,account_id,fingerprint", ignoreDuplicates: true })
-      .select("id");
-    if (error) {
-      await supabase.from("import_batches").delete().eq("id", batchId);
-      throw new Error(`Import failed, nothing was saved: ${error.message}`);
+    // Count rows already on file so the batch totals and history are written in the same
+    // transaction as the rows. If another import races us, minRows fails and nothing is kept.
+    const existing = new Set<string>();
+    const fps = records.map((r) => r.fingerprint);
+    for (let i = 0; i < fps.length; i += 200) {
+      const { data: found, error: fErr } = await supabase
+        .from("bank_transactions")
+        .select("fingerprint")
+        .eq("org_id", data.orgId)
+        .eq("account_id", data.accountId)
+        .in("fingerprint", fps.slice(i, i + 200));
+      if (fErr) throw new Error(fErr.message);
+      for (const f of found ?? []) existing.add(f.fingerprint);
     }
-    const imported = inserted?.length ?? 0;
+    const fresh = records.filter((r) => !existing.has(r.fingerprint));
+    const imported = fresh.length;
     const duplicates = data.rows.length - imported;
-    await supabase
-      .from("import_batches")
-      .update({ rows_imported: imported, rows_duplicate: duplicates })
-      .eq("id", batchId);
 
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "import",
-      entity: "import_batch",
-      entity_id: batchId,
-      after: {
-        file: data.fileName,
-        format: data.format,
-        imported,
-        duplicates,
-        errors: data.errorCount,
-      },
-    });
+    try {
+      await auditedWrite(
+        supabase,
+        data.orgId,
+        [
+          {
+            table: "import_batches",
+            op: "insert",
+            values: {
+              id: batchId,
+              account_id: data.accountId,
+              file_name: data.fileName,
+              format: data.format,
+              statement_start: data.statementStart ?? null,
+              statement_end: data.statementEnd ?? null,
+              beginning_balance_cents: data.beginningBalanceCents ?? null,
+              ending_balance_cents: data.endingBalanceCents ?? null,
+              balance_mismatch_cents: mismatch,
+              rows_total: data.rows.length + data.errorCount,
+              rows_error: data.errorCount,
+              rows_imported: imported,
+              rows_duplicate: duplicates,
+              created_by: userId,
+            },
+          },
+          {
+            table: "bank_transactions",
+            op: "insert",
+            values: fresh,
+            conflict: "nothing",
+            minRows: imported,
+            minRowsMessage: "Another import added some of these rows at the same time. Try again.",
+          },
+        ],
+        {
+          action: "import",
+          entity: "import_batch",
+          entityId: batchId,
+          after: {
+            file: data.fileName,
+            format: data.format,
+            imported,
+            duplicates,
+            errors: data.errorCount,
+          },
+          kind: "system",
+        },
+      );
+    } catch (e) {
+      throw new Error(`Import failed, nothing was saved: ${(e as Error).message}`);
+    }
 
     return { batchId, imported, duplicatesSkipped: duplicates };
   });
@@ -228,29 +251,42 @@ export const undoImportBatch = createServerFn({ method: "POST" })
       throw new Error(
         "Some rows from this file are already in the ledger. Void those transactions first.",
       );
-    // Users have no DELETE on bank evidence; the server removes unposted rows after assertCan.
+    // Users have no DELETE on bank evidence; the server removes unposted rows after assertCan,
+    // and marks the batch undone with its history entry in the same transaction.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: removed, error } = await supabaseAdmin
+    const { count } = await supabase
       .from("bank_transactions")
-      .delete()
-      .is("transaction_id", null)
+      .select("id", { count: "exact", head: true })
       .eq("batch_id", data.batchId)
       .eq("org_id", data.orgId)
-      .select("id");
-    if (error) throw new Error(error.message);
-    await supabase
-      .from("import_batches")
-      .update({ status: "undone" })
-      .eq("id", data.batchId)
-      .eq("org_id", data.orgId);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "undo_import",
-      entity: "import_batch",
-      entity_id: data.batchId,
-      after: { removed: removed?.length ?? 0 },
-    });
+      .is("transaction_id", null);
+    const [removedRes] = await auditedWrite(
+      supabaseAdmin,
+      data.orgId,
+      [
+        {
+          table: "bank_transactions",
+          op: "delete",
+          match: { batch_id: data.batchId, transaction_id: null },
+        },
+        {
+          table: "import_batches",
+          op: "update",
+          values: { status: "undone" },
+          match: { id: data.batchId },
+          minRows: 1,
+        },
+      ],
+      {
+        action: "undo_import",
+        entity: "import_batch",
+        entityId: data.batchId,
+        after: { removed: count ?? 0 },
+        kind: "system",
+      },
+      userId,
+    );
+    const removed = { length: removedRes?.count ?? 0 };
     return { removed: removed?.length ?? 0 };
   });
 

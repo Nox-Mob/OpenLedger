@@ -72,6 +72,13 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
   // Monotonic fake clock so "newest first" ordering is deterministic in tests.
   const pushAudit = (e: AuditEvent) =>
     s.audit.push({ ...e, at: new Date(Date.parse(NOW) + tick++).toISOString() });
+  /** Fail before mutating when history is broken, so a change never exists without it. */
+  const guardAudit = (audit?: AuditEvent) => {
+    if (audit && s.failAudit) throw new Error("history unavailable");
+  };
+  const afterAudit = (audit?: AuditEvent) => {
+    if (audit) pushAudit(audit);
+  };
   return {
     store: s,
     orgs: {
@@ -88,13 +95,17 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
         s.orgs.set(org.id, { ...org, createdAt: NOW });
         s.roles.push({ userId: org.createdBy, orgId: org.id, role: "admin" });
       },
-      async updateSettings(id, patch) {
+      async updateSettings(id, patch, audit) {
+        guardAudit(audit);
         const o = s.orgs.get(id);
         if (o) s.orgs.set(id, { ...o, ...patch });
+        afterAudit(audit);
       },
-      async setBooksLockedThrough(id, date) {
+      async setBooksLockedThrough(id, date, audit) {
+        guardAudit(audit);
         const o = s.orgs.get(id);
         if (o) s.orgs.set(id, { ...o, booksLockedThrough: date });
+        afterAudit(audit);
       },
       async roleOf(userId, orgId) {
         return s.roles.find((r) => r.userId === userId && r.orgId === orgId)?.role ?? null;
@@ -263,11 +274,13 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           (b) => b.orgId === orgId && !b.transactionId && (!accountId || b.accountId === accountId),
         );
       },
-      async claim(orgId, id, transactionId) {
+      async claim(orgId, id, transactionId, audit) {
         const b = s.bank.get(id);
         if (!b || b.orgId !== orgId || b.transactionId) return false;
+        guardAudit(audit);
         b.transactionId = transactionId;
         b.needsReview = false;
+        afterAudit(audit);
         return true;
       },
       async unlinkTransaction(orgId, transactionId) {
@@ -301,7 +314,9 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
       },
     },
     reconciliations: {
-      async start(r) {
+      async start(r, audit) {
+        guardAudit(audit);
+        afterAudit(audit);
         s.reconciliations.set(r.id, {
           id: r.id,
           orgId: r.orgId,
@@ -349,9 +364,11 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           (r) => r.orgId === orgId && (!accountId || r.accountId === accountId),
         );
       },
-      async setTicked(rid, ids, ticked) {
+      async setTicked(rid, ids, ticked, audit) {
         const r = s.reconciliations.get(rid);
         if (!r) return;
+        guardAudit(audit);
+        afterAudit(audit);
         for (const e of allEntries()) {
           if (!ids.includes(e.id) || e.accountId !== r.accountId) continue;
           if (ticked && e.reconciliationId === null) e.reconciliationId = rid;
@@ -363,19 +380,25 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           .filter((e) => e.reconciliationId === rid)
           .reduce((a, e) => a + e.amountCents, 0);
       },
-      async finish(orgId, id, userId) {
+      async finish(orgId, id, userId, audit) {
+        guardAudit(audit);
+        afterAudit(audit);
         const r = s.reconciliations.get(id);
         if (r?.orgId === orgId)
           Object.assign(r, { status: "completed", completedBy: userId, completedAt: NOW });
       },
-      async reopen(orgId, id) {
+      async reopen(orgId, id, audit) {
+        guardAudit(audit);
+        afterAudit(audit);
         const r = s.reconciliations.get(id);
         if (r?.orgId === orgId)
           Object.assign(r, { status: "in_progress", completedBy: null, completedAt: null });
       },
-      async discard(orgId, id) {
+      async discard(orgId, id, audit) {
         const r = s.reconciliations.get(id);
         if (r?.orgId !== orgId || r.status !== "in_progress") return;
+        guardAudit(audit);
+        afterAudit(audit);
         for (const e of allEntries()) if (e.reconciliationId === id) e.reconciliationId = null;
         s.reconciliations.delete(id);
       },

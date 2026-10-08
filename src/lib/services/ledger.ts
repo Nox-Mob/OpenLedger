@@ -199,12 +199,7 @@ export async function postBankRow(
   });
   if (res.duplicate) throw new Error("Already posted to the ledger");
 
-  if (!(await repos.bank.claim(input.orgId, bank.id, res.id))) {
-    // Someone else linked it first: undo our copy so the row is posted once.
-    await repos.transactions.markVoid(input.orgId, res.id);
-    throw new Error("Already posted to the ledger");
-  }
-  await repos.audit.append({
+  const linked = await repos.bank.claim(input.orgId, bank.id, res.id, {
     orgId: input.orgId,
     userId: input.userId,
     action: "post_from_bank",
@@ -212,5 +207,10 @@ export async function postBankRow(
     entityId: res.id,
     after: { bank_transaction_id: bank.id },
   });
+  if (!linked) {
+    // Someone else linked it first: undo our copy so the row is posted once.
+    await repos.transactions.markVoid(input.orgId, res.id);
+    throw new Error("Already posted to the ledger");
+  }
   return { id: res.id };
 }

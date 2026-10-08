@@ -4,7 +4,7 @@
 
 - [x] History save failures now fail the request instead of reporting success
 - [x] 1a. Postings and voids saved atomically with their history (all storage options)
-- [ ] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports) saved atomically
+- [x] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports, accounts, pledge status) saved atomically via audited_write
 - [x] 2a. History kinds column (change, ledger, system) with backfill
 - [x] 2b. History page filter by kind
 - [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions (ratchet test added; migration of the listed files still open)

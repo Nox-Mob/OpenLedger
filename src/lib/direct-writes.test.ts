@@ -6,12 +6,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ALLOWED: Record<string, number> = {
-  "budgets.functions.ts": 3,
-  "funds.functions.ts": 4,
-  "import.functions.ts": 8,
+  "funds.functions.ts": 3,
+  "import.functions.ts": 2,
   "legal.functions.ts": 1,
-  "members.functions.ts": 8,
-  "org.functions.ts": 8,
+  "members.functions.ts": 2,
+  "org.functions.ts": 2,
   "taxonomy.functions.ts": 2,
 };
 

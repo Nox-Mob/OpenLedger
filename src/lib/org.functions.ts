@@ -1,4 +1,4 @@
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 import { isValidTimeZone } from "./dates";
 import { normalizeTerminology, cleanOverrides } from "./terminology";
 const overridesSchema = z
@@ -155,22 +155,27 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .eq("org_id", data.orgId)
       .maybeSingle();
 
-    const { error } = await supabase
-      .from("user_roles")
-      .update({ role: data.role })
-      .eq("user_id", data.userId)
-      .eq("org_id", data.orgId);
-    if (error) throw new Error(error.message);
-
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "update",
-      entity: "user_role",
-      entity_id: data.userId,
-      before: before ?? null,
-      after: { role: data.role },
-    });
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [
+        {
+          table: "user_roles",
+          op: "update",
+          values: { role: data.role },
+          match: { user_id: data.userId },
+          minRows: 1,
+        },
+      ],
+      {
+        action: "update",
+        entity: "user_role",
+        entityId: data.userId,
+        before: before ?? null,
+        after: { role: data.role },
+        kind: "system",
+      },
+    );
 
     return { ok: true };
   });
@@ -199,7 +204,7 @@ export const createOrganization = createServerFn({ method: "POST" })
     // Generate the id here: reading the row back (insert().select()) would be
     // blocked by RLS because the user isn't a member until user_roles exists.
     const org = { id: newId() };
-    const { error: orgError } = await supabase.from("organizations").insert({
+    const orgRow = {
       id: org.id,
       name: data.name,
       org_type: data.orgType,
@@ -208,8 +213,7 @@ export const createOrganization = createServerFn({ method: "POST" })
       ...(data.fiscalYearStartMonth ? { fiscal_year_start_month: data.fiscalYearStartMonth } : {}),
       ...(data.terminology ? { terminology: data.terminology } : {}),
       ...(data.timezone ? { timezone: data.timezone } : {}),
-    });
-    if (orgError) throw new Error(orgError.message);
+    };
 
     // The creator's admin row is added by the organizations_add_creator DB trigger.
 
@@ -223,19 +227,23 @@ export const createOrganization = createServerFn({ method: "POST" })
         subtype: c.subtype ?? null,
         org_id: org.id,
       }));
-    const { error: accError } = await supabase.from("accounts").insert(accounts);
-    if (accError) throw new Error(accError.message);
-
     await supabase.from("profiles").upsert({ id: userId });
 
-    await writeAudit({
-      org_id: org.id,
-      user_id: userId,
-      action: "create",
-      entity: "organization",
-      entity_id: org.id,
-      after: { name: data.name, org_type: data.orgType },
-    });
+    // Organization, starter accounts and history are saved together.
+    await auditedWrite(
+      supabase,
+      org.id,
+      [
+        { table: "organizations", op: "insert", values: orgRow },
+        { table: "accounts", op: "insert", values: accounts },
+      ],
+      {
+        action: "create",
+        entity: "organization",
+        entityId: org.id,
+        after: { name: data.name, org_type: data.orgType },
+      },
+    );
 
     return { id: org.id as string };
   });
@@ -309,64 +317,68 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     if (data.enabled) {
       if (target) {
         if (target.is_active) return { ok: true };
-        const { error } = await supabase
-          .from("accounts")
-          .update({ is_active: true })
-          .eq("id", target.id)
-          .eq("org_id", data.orgId);
-        if (error) throw new Error(error.message);
-        await writeAudit({
-          org_id: data.orgId,
-          user_id: userId,
-          action: "reactivate",
-          entity: "account",
-          entity_id: target.id,
-          before: { is_active: false },
-          after: { is_active: true },
-        });
+        await auditedWrite(
+          supabase,
+          data.orgId,
+          [
+            {
+              table: "accounts",
+              op: "update",
+              values: { is_active: true },
+              match: { id: target.id },
+            },
+          ],
+          {
+            action: "reactivate",
+            entity: "account",
+            entityId: target.id,
+            before: { is_active: false },
+            after: { is_active: true },
+          },
+        );
         return { ok: true };
       }
       if (!item) throw new Error("Unknown account.");
-      const { data: created, error } = await supabase
-        .from("accounts")
-        .insert({
-          id: newId(),
-          org_id: data.orgId,
-          name: item.name,
-          type: item.type,
-          subtype: item.subtype ?? null,
-        })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      await writeAudit({
-        org_id: data.orgId,
-        user_id: userId,
-        action: "create",
-        entity: "account",
-        entity_id: created.id,
-        after: { name: item.name, type: item.type },
-      });
+      const accountId = newId();
+      await auditedWrite(
+        supabase,
+        data.orgId,
+        [
+          {
+            table: "accounts",
+            op: "insert",
+            values: {
+              id: accountId,
+              name: item.name,
+              type: item.type,
+              subtype: item.subtype ?? null,
+            },
+          },
+        ],
+        {
+          action: "create",
+          entity: "account",
+          entityId: accountId,
+          after: { name: item.name, type: item.type },
+        },
+      );
       return { ok: true };
     }
 
     if (!target) return { ok: true };
     if (item?.required) throw new Error(`${item.name} is required and can't be removed.`);
     if (!target.is_active) return { ok: true };
-    const { error } = await supabase
-      .from("accounts")
-      .update({ is_active: false })
-      .eq("id", target.id)
-      .eq("org_id", data.orgId);
-    if (error) throw new Error(error.message);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "archive",
-      entity: "account",
-      entity_id: target.id,
-      before: { name: target.name, type: target.type, is_active: true },
-      after: { is_active: false },
-    });
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [{ table: "accounts", op: "update", values: { is_active: false }, match: { id: target.id } }],
+      {
+        action: "archive",
+        entity: "account",
+        entityId: target.id,
+        before: { name: target.name, type: target.type, is_active: true },
+        after: { is_active: false },
+      },
+    );
     return { ok: true };
   });

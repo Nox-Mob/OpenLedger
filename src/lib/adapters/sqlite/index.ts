@@ -182,6 +182,22 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     }));
   }
 
+  /** Run a change and its history entry in one SQLite transaction. */
+  async function audited<T>(audit: AuditEvent | undefined, fn: () => Promise<T>): Promise<T> {
+    if (!audit) return fn();
+    await db.execute("BEGIN");
+    try {
+      const out = await fn();
+      // `false` means nothing changed (e.g. already claimed), so no history entry.
+      if (out !== false) await insertAudit(audit);
+      await db.execute("COMMIT");
+      return out;
+    } catch (e) {
+      await db.execute("ROLLBACK");
+      throw e;
+    }
+  }
+
   async function insertAudit(e: AuditEvent) {
     await db.execute(
       "INSERT INTO audit_log (org_id, user_id, action, entity, entity_id, before, after, created_at) VALUES (?,?,?,?,?,?,?,?)",
@@ -241,32 +257,40 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           o.id,
         ]);
       },
-      async updateSettings(id, p) {
-        const map: [keyof typeof p, string, (v: any) => SqlValue][] = [
-          ["name", "name", (v) => v],
-          ["orgType", "org_type", (v) => v],
-          ["currency", "currency", (v) => v],
-          ["fiscalYearStartMonth", "fiscal_year_start_month", (v) => v],
-          ["timezone", "timezone", (v) => v],
-          ["terminology", "terminology", (v) => v],
-          ["termOverrides", "term_overrides", (v) => JSON.stringify(v)],
-          ["aiPdfEnabled", "ai_pdf_enabled", (v) => (v ? 1 : 0)],
-        ];
-        const sets: string[] = [];
-        const vals: SqlValue[] = [];
-        for (const [k, col, f] of map)
-          if (p[k] !== undefined) {
-            sets.push(`${col} = ?`);
-            vals.push(f(p[k]));
-          }
-        if (!sets.length) return;
-        await db.execute(`UPDATE organizations SET ${sets.join(", ")} WHERE id = ?`, [...vals, id]);
+      async updateSettings(id, p, audit) {
+        await audited(audit, async () => {
+          const map: [keyof typeof p, string, (v: any) => SqlValue][] = [
+            ["name", "name", (v) => v],
+            ["orgType", "org_type", (v) => v],
+            ["currency", "currency", (v) => v],
+            ["fiscalYearStartMonth", "fiscal_year_start_month", (v) => v],
+            ["timezone", "timezone", (v) => v],
+            ["terminology", "terminology", (v) => v],
+            ["termOverrides", "term_overrides", (v) => JSON.stringify(v)],
+            ["aiPdfEnabled", "ai_pdf_enabled", (v) => (v ? 1 : 0)],
+          ];
+          const sets: string[] = [];
+          const vals: SqlValue[] = [];
+          for (const [k, col, f] of map)
+            if (p[k] !== undefined) {
+              sets.push(`${col} = ?`);
+              vals.push(f(p[k]));
+            }
+          if (!sets.length) return false;
+          await db.execute(`UPDATE organizations SET ${sets.join(", ")} WHERE id = ?`, [
+            ...vals,
+            id,
+          ]);
+          return true;
+        });
       },
-      async setBooksLockedThrough(id, date) {
-        await db.execute("UPDATE organizations SET books_locked_through = ? WHERE id = ?", [
-          date,
-          id,
-        ]);
+      async setBooksLockedThrough(id, date, audit) {
+        return audited(audit, async () => {
+          await db.execute("UPDATE organizations SET books_locked_through = ? WHERE id = ?", [
+            date,
+            id,
+          ]);
+        });
       },
       async roleOf(userId, orgId) {
         const [r] = await db.select<{ role: Role }>(
@@ -523,17 +547,19 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
         return rows.map(toBank);
       },
-      async claim(orgId, id, transactionId) {
-        // Link must match amount/account (Postgres: guard_bank_refs).
-        const r = await db.execute(
-          `UPDATE bank_transactions SET transaction_id = ?, needs_review = 0
+      async claim(orgId, id, transactionId, audit) {
+        return audited(audit, async () => {
+          // Link must match amount/account (Postgres: guard_bank_refs).
+          const r = await db.execute(
+            `UPDATE bank_transactions SET transaction_id = ?, needs_review = 0
            WHERE org_id = ? AND id = ? AND transaction_id IS NULL
              AND EXISTS (SELECT 1 FROM entries e WHERE e.transaction_id = ?
                          AND e.account_id = bank_transactions.account_id
                          AND e.amount_cents = bank_transactions.amount_cents)`,
-          [transactionId, orgId, id, transactionId],
-        );
-        return r.rowsAffected > 0;
+            [transactionId, orgId, id, transactionId],
+          );
+          return r.rowsAffected > 0;
+        });
       },
       async unlinkTransaction(orgId, transactionId) {
         const r = await db.execute(
@@ -569,24 +595,26 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     },
 
     reconciliations: {
-      async start(r) {
-        await db.execute(
-          `INSERT INTO reconciliations (id, org_id, account_id, period_start, period_end, beginning_balance_cents,
+      async start(r, audit) {
+        return audited(audit, async () => {
+          await db.execute(
+            `INSERT INTO reconciliations (id, org_id, account_id, period_start, period_end, beginning_balance_cents,
            ending_balance_cents, mode, status, batch_id, created_by, created_at) VALUES (?,?,?,?,?,?,?,?,'in_progress',?,?,?)`,
-          [
-            r.id,
-            r.orgId,
-            r.accountId,
-            r.periodStart,
-            r.periodEnd,
-            r.beginningBalanceCents,
-            r.endingBalanceCents,
-            r.mode,
-            r.batchId,
-            r.createdBy,
-            now(),
-          ],
-        );
+            [
+              r.id,
+              r.orgId,
+              r.accountId,
+              r.periodStart,
+              r.periodEnd,
+              r.beginningBalanceCents,
+              r.endingBalanceCents,
+              r.mode,
+              r.batchId,
+              r.createdBy,
+              now(),
+            ],
+          );
+        });
       },
       async locate(id) {
         const [r] = await db.select("SELECT * FROM reconciliations WHERE id = ?", [id]);
@@ -626,14 +654,17 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
         return rows.map(toRecon);
       },
-      async setTicked(rid, ids, ticked) {
-        if (!ids.length) return;
-        const guard = ticked ? "reconciliation_id IS NULL" : "reconciliation_id = ?";
-        await db.execute(
-          `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)}) AND ${guard}
+      async setTicked(rid, ids, ticked, audit) {
+        await audited(audit, async () => {
+          if (!ids.length) return false;
+          const guard = ticked ? "reconciliation_id IS NULL" : "reconciliation_id = ?";
+          await db.execute(
+            `UPDATE entries SET reconciliation_id = ? WHERE id IN (${qs(ids.length)}) AND ${guard}
              AND account_id = (SELECT account_id FROM reconciliations WHERE id = ?)`,
-          ticked ? [rid, ...ids, rid] : [null, ...ids, rid, rid],
-        );
+            ticked ? [rid, ...ids, rid] : [null, ...ids, rid, rid],
+          );
+          return true;
+        });
       },
       async clearedTotalCents(rid) {
         const [r] = await db.select<{ s: number }>(
@@ -642,29 +673,36 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
         );
         return Number(r?.s ?? 0);
       },
-      async finish(orgId, id, userId) {
-        await db.execute(
-          "UPDATE reconciliations SET status = 'completed', completed_by = ?, completed_at = ? WHERE org_id = ? AND id = ?",
-          [userId, now(), orgId, id],
-        );
+      async finish(orgId, id, userId, audit) {
+        return audited(audit, async () => {
+          await db.execute(
+            "UPDATE reconciliations SET status = 'completed', completed_by = ?, completed_at = ? WHERE org_id = ? AND id = ?",
+            [userId, now(), orgId, id],
+          );
+        });
       },
-      async reopen(orgId, id) {
-        await db.execute(
-          "UPDATE reconciliations SET status = 'in_progress', completed_by = NULL, completed_at = NULL WHERE org_id = ? AND id = ?",
-          [orgId, id],
-        );
+      async reopen(orgId, id, audit) {
+        return audited(audit, async () => {
+          await db.execute(
+            "UPDATE reconciliations SET status = 'in_progress', completed_by = NULL, completed_at = NULL WHERE org_id = ? AND id = ?",
+            [orgId, id],
+          );
+        });
       },
-      async discard(orgId, id) {
-        const [r] = await db.select<{ status: string }>(
-          "SELECT status FROM reconciliations WHERE org_id = ? AND id = ?",
-          [orgId, id],
-        );
-        if (r?.status !== "in_progress") return;
-        await db.execute(
-          "UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?",
-          [id],
-        );
-        await db.execute("DELETE FROM reconciliations WHERE id = ?", [id]);
+      async discard(orgId, id, audit) {
+        await audited(audit, async () => {
+          const [r] = await db.select<{ status: string }>(
+            "SELECT status FROM reconciliations WHERE org_id = ? AND id = ?",
+            [orgId, id],
+          );
+          if (r?.status !== "in_progress") return false;
+          await db.execute(
+            "UPDATE entries SET reconciliation_id = NULL WHERE reconciliation_id = ?",
+            [id],
+          );
+          await db.execute("DELETE FROM reconciliations WHERE id = ?", [id]);
+          return true;
+        });
       },
     },
 

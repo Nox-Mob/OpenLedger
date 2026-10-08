@@ -7,7 +7,7 @@ import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { pledgeOutstanding, type PledgeStatus } from "./domain/funds";
 import { fundSummary, postPledge, releaseFund, settlePledge } from "./services/funds";
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -287,16 +287,18 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
     const remaining = pledgeOutstanding(Number(p.amount_cents), settled + data.amountCents);
     if (remaining === 0) {
       const status = data.kind === "write_off" ? "written_off" : "paid";
-      await supabase.from("pledges").update({ status }).eq("id", p.id);
-      await writeAudit({
-        org_id: data.orgId,
-        user_id: userId,
-        action: "update",
-        entity: "pledge",
-        entity_id: p.id,
-        before: { status: p.status },
-        after: { status },
-      });
+      await auditedWrite(
+        supabase,
+        data.orgId,
+        [{ table: "pledges", op: "update", values: { status }, match: { id: p.id } }],
+        {
+          action: "update",
+          entity: "pledge",
+          entityId: p.id,
+          before: { status: p.status },
+          after: { status },
+        },
+      );
     }
     return { ok: true };
   });
