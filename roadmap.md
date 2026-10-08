@@ -2,14 +2,14 @@
 
 ## v0.0.5 - Close the gaps and tidy up (in progress)
 
-- [ ] 1. Year-end close and book lock saved in one step
-- [ ] 2. Pledge payment and pledge status saved in one step
-- [ ] 3. Server-written history descriptions
-- [ ] 4. Remove unused drizzle-kit
-- [ ] 5. recharts 2 to 3
-- [ ] 6. eslint 9 to 10
-- [ ] 7. Loose types to zero warnings
-- [ ] 8. Tests for each item
+- [x] 1. Year-end close and book lock saved in one step
+- [x] 2. Pledge payment and pledge status saved in one step (already true); retries now finish a half-saved pledge or payment
+- [x] 3. History entries carry the change recorded by the database (recorded_change)
+- [x] 4. drizzle-kit kept: the database-change tool uses it (documented)
+- [x] 5. recharts 2 to 3
+- [x] 6. eslint 9 to 10 (classic hook rules)
+- [ ] 7. Loose types to zero warnings (194 left) and turn on React Compiler lint rules (16 findings)
+- [x] 8. Tests: year-close rollback (all adapters), database checks for recorded change and year close
 
 ## v0.0.6 - Safety and everyday use (planned)
 

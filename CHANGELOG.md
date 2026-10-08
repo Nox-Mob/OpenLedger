@@ -4,6 +4,16 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+### Changed
+
+- Year-end close now saves the close, the book lock and the history entry in one step. If any part fails, nothing is kept.
+- Every history entry now also stores the exact change the database applied, shown on the History page as "Saved change".
+- Charts library upgraded to version 3 and the code checker to version 10.
+
+### Fixed
+
+- Retrying a pledge or pledge payment after an interrupted save now finishes recording it instead of skipping it.
+
 ## [0.0.4] - 2026-10-07
 
 ### Added
