@@ -92,9 +92,14 @@ function AccountsSetup() {
 
   async function remove(row: ChecklistRow) {
     if (!org) return;
-    const acc = row.catalog ? existing.find((a) => row.catalog && matchesCatalog(a, row.catalog)) : existing.find((a) => a.id === row.id);
+    const acc = row.catalog
+      ? existing.find((a) => row.catalog && matchesCatalog(a, row.catalog))
+      : existing.find((a) => a.id === row.id);
     if (!acc) return;
-    if (!window.confirm(`Delete ${row.name} for good? It was never used, so no records are affected.`)) return;
+    if (
+      !window.confirm(`Delete ${row.name} for good? It was never used, so no records are affected.`)
+    )
+      return;
     setBusy(row.id);
     try {
       await deleteUnusedAccount({ data: { orgId: org.id, accountId: acc.id } });
