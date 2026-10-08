@@ -5,6 +5,7 @@
 OpenLedgerApp is open-source double-entry recordkeeping for small businesses, freelancers, and nonprofits. The website explains the need for transparent, approachable accounting without claiming to replace a professional accountant or mature full-service accounting suite.
 
 The public website must explain:
+
 - **Why:** small teams need understandable books and control over their records without enterprise complexity.
 - **What it is not:** professional financial/tax/legal advice, automated tax filing, payroll, a bank, or full nonprofit fund accounting. Current funds are basic tags.
 - **Current state:** usable pre-1.0 web software under active development, not a finished desktop product. Users must review results and maintain backups.
@@ -15,11 +16,11 @@ Keep the existing app available to account holders; the public home does not rep
 
 ## Eventual three-edition model
 
-| Edition | Intended audience | Direction | Availability |
-| --- | --- | --- | --- |
-| Standalone desktop | Freelancers and solo operators | Free; local to the computer running it; offline | Planned, no installer yet |
-| Self-hosted community | Individuals and teams controlling infrastructure | Open-source web app on their own server | Development source available |
-| Managed cloud | Teams preferring not to operate a server | Hosted service; pricing to be decided | Current web app is developmental, not a finalized commercial offering |
+| Edition               | Intended audience                                | Direction                                       | Availability                                                          |
+| --------------------- | ------------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------- |
+| Standalone desktop    | Freelancers and solo operators                   | Free; local to the computer running it; offline | Planned, no installer yet                                             |
+| Self-hosted community | Individuals and teams controlling infrastructure | Open-source web app on their own server         | Development source available                                          |
+| Managed cloud         | Teams preferring not to operate a server         | Hosted service; pricing to be decided           | Current web app is developmental, not a finalized commercial offering |
 
 Optional donations may support the project in the future; there is no donation checkout or promised price today.
 
