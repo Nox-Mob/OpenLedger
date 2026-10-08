@@ -4,9 +4,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
-- Switched the package manager from Bun to npm: `package-lock.json` is the only lock file, and every automated check installs with `npm ci`.
-- Fixed every `npm audit` warning without downgrading anything: brace-expansion 1.1.21 and 5.0.12, uuid 11.1.1 inside the Excel export library, and a current esbuild inside the database config tool.
-- Added more automated tests: the audited-write helper, the audited_write and audit_append_in_write database checks, migration safety script, app version against the changelog, and roll-back checks that every statement-check step, every bank-row post, and every reconciliation finish stays unchanged if its history cannot be saved.
+## [0.0.4] - 2026-10-07
 
 ### Added
 
@@ -15,6 +13,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Permissions live in one fixed table, with a test that pins every role and action.
 - Full-year business and nonprofit test scenarios check reports against fixed expected totals.
 - Core libraries are pinned to exact versions; see docs/dependencies.md.
+- More automated tests: the audited-write helper, database checks for audited writes and their history, the migration safety script, app version against the changelog, and roll-back checks for every statement-check step, bank-row post and reconciliation finish.
 
 ### Changed
 
@@ -24,8 +23,13 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - A new automatic check stops any feature from saving to the database without going through the shared code. It runs on every change.
 - Settings, account setup, members and invites, budgets, statement checks, imports and pledge status changes are now saved together with their history entry. If either fails, nothing is kept.
 - History entries are now sorted into changes, money and system events.
-- Bun is now the only supported package manager.
+- npm (version 11 or newer) is now the only supported package manager; `package-lock.json` is the only lock file and automated checks install with `npm ci` on Node 24.
 - Added an architecture overview in docs/architecture.md.
+
+### Fixed
+
+- Every `npm audit` warning is resolved without downgrades (brace-expansion, uuid inside the Excel export library, esbuild inside the database config tool).
+- A database safety check no longer reports a false failure when a fund and its history save correctly.
 
 ## [0.0.3] - 2026-10-07
 
