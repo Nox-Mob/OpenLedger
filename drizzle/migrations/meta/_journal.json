@@ -36,6 +36,13 @@
       "when": 1791435048742,
       "tag": "0004_atomic_ledger_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791435912288,
+      "tag": "0005_atomic_audited_writes",
+      "breakpoints": true
     }
   ]
 }
