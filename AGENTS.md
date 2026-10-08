@@ -17,7 +17,7 @@
 - DB-enforced immutability: transactions only posted→void; entries only reconciliation_id; bank rows are evidence (FITID/hash+row_seq; link must match amount/account).
 - Void: idempotent, blocked by completed reconciliation, unticks/unlinks in-progress evidence.
 - Reconciliation finish needs difference=0 (DB trigger); completed ones lock entries.
-- Audit rows only via writeAudit() (throws on failure) or the atomic ledger RPCs post_transaction_atomic/void_transaction_atomic (TransactionRepository.post/markVoid with an audit arg), so a posting never exists without its history; no user INSERT.
+- Audit rows: every change goes with its history in one DB transaction: ledger RPCs post_transaction_atomic/void_transaction_atomic, and audited_write (src/lib/audited-write.ts; ports take an optional audit arg) for everything else. writeAudit() is only for event-only history with no data change (e.g. backup export). Users have no INSERT on audit_log; the definer helper only works inside audited_write.
 - Org data: requireSupabaseAuth + assertCan + member RLS; settings/accounts admin-only.
 - Terminology is presentation-only; reports/PDFs use org level only.
 - Accounts: catalog-based, archive never delete.
