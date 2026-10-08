@@ -92,23 +92,12 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-/** One series entry Recharts hands to custom tooltip and legend content. */
-type ChartPayloadItem = {
-  type?: string;
-  name?: string | number;
-  dataKey?: string | number | ((obj: unknown) => unknown);
-  value?: string | number | readonly (string | number)[];
-  color?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the chart's own data row
-  payload?: any;
-};
-
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, "payload" | "label"> &
     React.ComponentProps<"div"> & {
       // Recharts 3 passes these to custom tooltip content but no longer types them on Tooltip.
-      payload?: ChartPayloadItem[];
+      payload?: RechartsPrimitive.TooltipPayload;
       label?: React.ReactNode;
       hideLabel?: boolean;
       hideIndicator?: boolean;
@@ -258,7 +247,7 @@ const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
     Pick<RechartsPrimitive.LegendProps, "verticalAlign"> & {
-      payload?: ChartPayloadItem[];
+      payload?: readonly RechartsPrimitive.LegendPayload[];
       hideIcon?: boolean;
       nameKey?: string;
     }
