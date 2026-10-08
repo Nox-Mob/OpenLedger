@@ -1,6 +1,6 @@
 # OpenLedgerApp — Roadmap
 
-## v0.0.4 - Stability and foundations (in progress)
+## v0.0.4 - Stability and foundations (released 2026-10-07)
 
 - [x] History save failures now fail the request instead of reporting success
 - [x] 1a. Postings and voids saved atomically with their history (all storage options)
