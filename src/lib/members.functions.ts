@@ -13,7 +13,7 @@ import {
   inviteStatus,
   type MemberRef,
 } from "./domain/members";
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 
 const uuid = z.string().uuid();
 
@@ -97,23 +97,24 @@ export const createInvite = createServerFn({ method: "POST" })
     const token = randomToken();
     const id = newId();
     const expiresAt = new Date(Date.now() + data.days * 86400000).toISOString();
-    const { error } = await context.supabase.from("org_invites").insert({
-      id,
-      org_id: data.orgId,
-      token_hash: await sha256(token),
-      role: data.role,
-      created_by: context.userId,
-      expires_at: expiresAt,
-    });
-    if (error) throw new Error(error.message);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: context.userId,
-      action: "create",
-      entity: "invite",
-      entity_id: id,
-      after: { role: data.role, expiresAt },
-    });
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "org_invites",
+          op: "insert",
+          values: {
+            id,
+            token_hash: await sha256(token),
+            role: data.role,
+            created_by: context.userId,
+            expires_at: expiresAt,
+          },
+        },
+      ],
+      { action: "create", entity: "invite", entityId: id, after: { role: data.role, expiresAt }, kind: "system" },
+    );
     // The raw token is returned once and never stored.
     return { id, token, expiresAt };
   });
@@ -123,20 +124,19 @@ export const revokeInvite = createServerFn({ method: "POST" })
   .validator((input) => z.object({ orgId: uuid, inviteId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "manage_members");
-    const { error } = await context.supabase
-      .from("org_invites")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", data.inviteId)
-      .eq("org_id", data.orgId)
-      .is("used_at", null);
-    if (error) throw new Error(error.message);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: context.userId,
-      action: "revoke",
-      entity: "invite",
-      entity_id: data.inviteId,
-    });
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "org_invites",
+          op: "update",
+          values: { revoked_at: new Date().toISOString() },
+          match: { id: data.inviteId, used_at: null },
+        },
+      ],
+      { action: "revoke", entity: "invite", entityId: data.inviteId, kind: "system" },
+    );
     return { ok: true };
   });
 
@@ -169,31 +169,34 @@ export const acceptInvite = createServerFn({ method: "POST" })
     if (existing) return { orgId: invite.org_id, orgName, alreadyMember: true };
 
     // Claim the invite first so a link can never be used twice, even concurrently.
-    const { data: claimed, error: claimErr } = await supabaseAdmin
-      .from("org_invites")
-      .update({ used_at: new Date().toISOString(), used_by: context.userId })
-      .eq("id", invite.id)
-      .is("used_at", null)
-      .is("revoked_at", null)
-      .select("id");
-    if (claimErr) throw new Error(claimErr.message);
-    if (!claimed?.length) throw new Error("This invite link was already used.");
-
-    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
-      id: newId(),
-      org_id: invite.org_id,
-      user_id: context.userId,
-      role: invite.role,
-    });
-    if (roleErr) throw new Error(roleErr.message);
-    await writeAudit({
-      org_id: invite.org_id,
-      user_id: context.userId,
-      action: "join",
-      entity: "user_role",
-      entity_id: context.userId,
-      after: { role: invite.role, inviteId: invite.id },
-    });
+    // Claim, role grant and history are one transaction: all happen or none do.
+    await auditedWrite(
+      supabaseAdmin,
+      invite.org_id,
+      [
+        {
+          table: "org_invites",
+          op: "update",
+          values: { used_at: new Date().toISOString(), used_by: context.userId },
+          match: { id: invite.id, used_at: null, revoked_at: null },
+          minRows: 1,
+          minRowsMessage: "This invite link was already used.",
+        },
+        {
+          table: "user_roles",
+          op: "insert",
+          values: { id: newId(), user_id: context.userId, role: invite.role },
+        },
+      ],
+      {
+        action: "join",
+        entity: "user_role",
+        entityId: context.userId,
+        after: { role: invite.role, inviteId: invite.id },
+        kind: "system",
+      },
+      context.userId,
+    );
     return { orgId: invite.org_id, orgName, alreadyMember: false };
   });
 
@@ -212,20 +215,19 @@ export const removeMember = createServerFn({ method: "POST" })
     ]);
     assertCanRemove(members, data.userId, org.created_by);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .delete()
-      .eq("org_id", data.orgId)
-      .eq("user_id", data.userId);
-    if (error) throw new Error(error.message);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: leaving ? "leave" : "remove",
-      entity: "user_role",
-      entity_id: data.userId,
-      before: { role: members.find((m) => m.userId === data.userId)?.role },
-    });
+    await auditedWrite(
+      supabaseAdmin,
+      data.orgId,
+      [{ table: "user_roles", op: "delete", match: { user_id: data.userId } }],
+      {
+        action: leaving ? "leave" : "remove",
+        entity: "user_role",
+        entityId: data.userId,
+        before: { role: members.find((m) => m.userId === data.userId)?.role },
+        kind: "system",
+      },
+      userId,
+    );
     return { ok: true };
   });
 
@@ -240,21 +242,28 @@ export const transferOwnership = createServerFn({ method: "POST" })
     ]);
     assertCanTransfer(members, userId, org.created_by, data.toUserId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("organizations")
-      .update({ created_by: data.toUserId })
-      .eq("id", data.orgId)
-      .eq("created_by", userId);
-    if (error) throw new Error(error.message);
-    await writeAudit({
-      org_id: data.orgId,
-      user_id: userId,
-      action: "transfer_ownership",
-      entity: "organization",
-      entity_id: data.orgId,
-      before: { owner: userId },
-      after: { owner: data.toUserId },
-    });
+    await auditedWrite(
+      supabaseAdmin,
+      data.orgId,
+      [
+        {
+          table: "organizations",
+          op: "update",
+          values: { created_by: data.toUserId },
+          match: { created_by: userId },
+          minRows: 1,
+        },
+      ],
+      {
+        action: "transfer_ownership",
+        entity: "organization",
+        entityId: data.orgId,
+        before: { owner: userId },
+        after: { owner: data.toUserId },
+        kind: "system",
+      },
+      userId,
+    );
     return { ok: true };
   });
 
