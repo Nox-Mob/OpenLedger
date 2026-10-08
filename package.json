@@ -117,5 +117,9 @@
   },
   "allowScripts": {
     "core-js@3.50.0": true
+  },
+  "engines": {
+    "node": ">=22.22.2",
+    "npm": ">=11"
   }
 }

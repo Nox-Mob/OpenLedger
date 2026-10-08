@@ -20,4 +20,5 @@ npm is the only package manager (`package-lock.json`). Core libraries that touch
 
 Rules: add a package only when the shared domain or a port can't do it; record it here; never commit registry cache URLs in `package-lock.json` (registry.npmjs.org only).
 
-Audit overrides (package.json): `brace-expansion@1` → 1.1.21, `brace-expansion@5` → 5.0.12, `exceljs > uuid` → 11.1.1, `@esbuild-kit/core-utils > esbuild` → 0.25.12. Never run `npm audit fix --force`; it downgrades exceljs to 3.4.0.
+Audit overrides (package.json): `brace-expansion@1` → 1.1.21, `brace-expansion@5` → 5.0.12, `uuid` → 11.1.1 (only exceljs uses it), `@esbuild-kit/core-utils > esbuild` → 0.25.12. Never run `npm audit fix --force`; it downgrades exceljs to 3.4.0.
+npm 11 or newer is required: npm 10 rejects this lock file in `npm ci`. CI uses Node 24. Install scripts: approve only `esbuild` (it fetches its own build tool); core-js only prints a donation message.
