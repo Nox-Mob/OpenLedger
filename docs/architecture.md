@@ -28,18 +28,18 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 
 ## Status by area
 
-| Area | Status |
-| --- | --- |
-| Double-entry posting, void, immutability | Implemented and tested (domain, contract tests, database checks) |
+| Area                                                 | Status                                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Double-entry posting, void, immutability             | Implemented and tested (domain, contract tests, database checks)                                       |
 | Change and history saved in one database transaction | Implemented and tested for postings, voids, statement checks, year-end close and audited_write changes |
-| Tenant isolation (RLS) | Implemented and tested (database checks run in CI) |
-| Permissions table | Implemented and tested (every cell pinned) |
-| Signed backups and restore into a new organization | Implemented and tested (memory adapter roundtrip, tamper rejection) |
-| Budgets, exports, history viewer | Implemented, cloud-only (no port yet) |
-| SQLite adapter | Implemented, partly verified (sql.js only, not a native desktop driver) |
-| Desktop edition (Tauri), offline use | Planned, unscheduled. Do not advertise. |
-| Desktop and cloud sync | Not supported |
-| Multi-currency, payroll, invoicing, bank feeds | Not supported |
+| Tenant isolation (RLS)                               | Implemented and tested (database checks run in CI)                                                     |
+| Permissions table                                    | Implemented and tested (every cell pinned)                                                             |
+| Signed backups and restore into a new organization   | Implemented and tested (memory adapter roundtrip, tamper rejection)                                    |
+| Budgets, exports, history viewer                     | Implemented, cloud-only (no port yet)                                                                  |
+| SQLite adapter                                       | Implemented, partly verified (sql.js only, not a native desktop driver)                                |
+| Desktop edition (Tauri), offline use                 | Planned, unscheduled. Do not advertise.                                                                |
+| Desktop and cloud sync                               | Not supported                                                                                          |
+| Multi-currency, payroll, invoicing, bank feeds       | Not supported                                                                                          |
 
 ## Where rules live
 

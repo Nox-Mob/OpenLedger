@@ -28,6 +28,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: .env holds public keys only
+        # .env is tracked on purpose (Lovable needs it). It may only contain publishable values.
+        run: node scripts/ci/check-env.mjs
       - name: Direct database writes (server functions must use shared code)
         # Tracked on its own so a new direct write shows up as a named failure.
         # Fix by moving the write into a service or audited_write; only cloud-only
@@ -163,3 +166,10 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"; head -40 audit.log >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
           exit $code
+      - name: Full audit including developer tools (report only)
+        continue-on-error: true
+        run: |
+          npm audit 2>&1 | tee audit-dev.log || {
+            echo "### ⚠️ Developer-tool vulnerabilities (not blocking)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"; head -40 audit-dev.log >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+          }
