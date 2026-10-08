@@ -28,7 +28,8 @@ describe("check-migrations", () => {
     expect(run({ "20260101000000_f.sql": fn("DELETE FROM public.x WHERE id = 1;") }).ok).toBe(true);
   });
   it("passes a named dollar-quoted body", () => {
-    const sql = "CREATE FUNCTION f() RETURNS void AS $fn$ BEGIN DELETE FROM x; END $fn$ LANGUAGE plpgsql;";
+    const sql =
+      "CREATE FUNCTION f() RETURNS void AS $fn$ BEGIN DELETE FROM x; END $fn$ LANGUAGE plpgsql;";
     expect(run({ "20260101000000_f.sql": sql }).ok).toBe(true);
   });
   it("fails a top-level DELETE FROM", () => {

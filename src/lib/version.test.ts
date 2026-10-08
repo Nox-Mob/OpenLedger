@@ -12,8 +12,14 @@ describe("app version", () => {
     expect(pkg.version).toBe(APP_VERSION);
   });
   it("is newer than every released changelog version", () => {
-    const released = [...readFileSync("CHANGELOG.md", "utf8").matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)];
-    const num = (v: string) => v.split(".").map(Number).reduce((a, b) => a * 1000 + b, 0);
+    const released = [
+      ...readFileSync("CHANGELOG.md", "utf8").matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm),
+    ];
+    const num = (v: string) =>
+      v
+        .split(".")
+        .map(Number)
+        .reduce((a, b) => a * 1000 + b, 0);
     for (const [, v] of released) expect(num(APP_VERSION)).toBeGreaterThanOrEqual(num(v!));
   });
 });
