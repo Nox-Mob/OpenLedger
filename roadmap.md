@@ -1,6 +1,6 @@
 # OpenLedgerApp — Roadmap
 
-## v0.0.5 - Close the gaps and tidy up (in progress)
+## v0.0.5 - Close the gaps and tidy up (released 2026-10-08)
 
 - [x] 1. Year-end close and book lock saved in one step
 - [x] 2. Pledge payment and pledge status saved in one step (already true); retries now finish a half-saved pledge or payment
