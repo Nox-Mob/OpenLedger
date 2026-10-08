@@ -87,9 +87,10 @@ BEGIN
       'values', jsonb_build_object('id', fund1, 'name', 'Building', 'is_restricted', true))),
     jsonb_build_array(jsonb_build_object('id', gen_random_uuid(), 'action','create',
       'entity','fund','entity_id', fund1)));
-  SELECT count(*) INTO n FROM public.funds WHERE id = fund1; r := r || 'fund_insert=' || n || '; ';
+  SELECT count(*) INTO n FROM public.funds WHERE id = fund1;
+  r := r || 'fund_insert=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL(' || n || ')' END || '; ';
   SELECT count(*) INTO n FROM public.audit_log WHERE org_id = org AND entity = 'fund';
-  r := r || 'fund_history=' || n || '; ';
+  r := r || 'fund_history=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL(' || n || ')' END || '; ';
 
   -- 7. Someone else can't write to this org even if they know its id.
   PERFORM set_config('request.jwt.claims',
