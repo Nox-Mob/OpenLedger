@@ -436,6 +436,79 @@ describe.each(adapters)("%s adapter", (name, make) => {
     ).rejects.toThrow(/only has/);
   });
 
+  it("rolls back a reconciliation finish when history fails", async () => {
+    const input = {
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 0,
+      mode: "simple" as const,
+      batchId: null,
+      userId: USER,
+    };
+    const { id } = await recon.startReconciliation(repos, input);
+    const r = (await repos.reconciliations.locate(id))!;
+    await breakHistory();
+    await expect(recon.completeReconciliation(repos, r, USER)).rejects.toThrow();
+    expect((await repos.reconciliations.locate(id))?.status).toBe("in_progress");
+  });
+
+  it("start, tick and discard leave no change when history fails", async () => {
+    await postTransaction(repos, sale({ transactionDate: "2026-02-02" }));
+    const input = {
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 1000,
+      mode: "simple" as const,
+      batchId: null,
+      userId: USER,
+    };
+    const { id } = await recon.startReconciliation(repos, input);
+    const r = (await repos.reconciliations.locate(id))!;
+    const entry = (await recon.getReconciliation(repos, r)).entries[0]!;
+    await breakHistory();
+    await expect(recon.setCleared(repos, r, [entry.id], true, USER)).rejects.toThrow();
+    expect(await repos.reconciliations.clearedTotalCents(id)).toBe(0);
+    await expect(recon.discardReconciliation(repos, r, USER)).rejects.toThrow();
+    expect(await repos.reconciliations.locate(id)).not.toBeNull();
+    await expect(
+      recon.startReconciliation(repos, { ...input, accountId: EQUITY }),
+    ).rejects.toThrow();
+    expect(await repos.reconciliations.list(ORG, EQUITY)).toEqual([]);
+  });
+
+  it("posting a bank row keeps it unmatched when history fails", async () => {
+    const row = {
+      id: "30000000-0000-4000-8000-0000000000b1",
+      orgId: ORG,
+      accountId: CASH,
+      bankDate: "2026-02-03",
+      description: "Deposit",
+      amountCents: 2500,
+      externalId: "FITB",
+      fingerprint: "fb",
+      rowSeq: 1,
+      batchId: null,
+    };
+    await repos.bank.insertMany([row]);
+    await breakHistory();
+    await expect(
+      postBankRow(repos, {
+        orgId: ORG,
+        userId: USER,
+        bankTransactionId: row.id,
+        offsetAccountId: SALES,
+      }),
+    ).rejects.toThrow();
+    expect((await repos.bank.get(ORG, row.id))?.transactionId ?? null).toBeNull();
+    expect(await repos.transactions.list(ORG)).toEqual([]);
+  });
+
   if (name === "sqlite") {
     it("database guards block edits, deletes, un-void and unbalanced writes", async () => {
       const { id } = await postTransaction(repos, sale());
