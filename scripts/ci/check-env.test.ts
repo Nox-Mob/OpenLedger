@@ -7,7 +7,9 @@ const jwt = (role: string) =>
 
 describe(".env public-keys-only check", () => {
   it("accepts publishable values", () => {
-    expect(privateKeyFindings("VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_abc\n# note")).toEqual([]);
+    expect(privateKeyFindings("VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_abc\n# note")).toEqual(
+      [],
+    );
     expect(privateKeyFindings(`SUPABASE_ANON=${jwt("anon")}`)).toEqual([]);
   });
   it("rejects a service role name, secret key or service role token", () => {

@@ -1,5 +1,14 @@
 # OpenLedgerApp — Roadmap
 
+## Road to v1.0 (plan approved 2026-10-08)
+
+- v0.0.6 Safety and controls: [x] .env public-keys-only CI check, [x] report-only full dependency audit, [x] architecture doc refresh, [ ] rollback tests for member removal, ownership transfer, org delete, invite claim, settings, [ ] structural direct-write rule, [ ] MFA, [ ] delete my account, [ ] session safety, [ ] manual a11y walk-through
+- v0.0.7 Reports people can trust: general ledger, account activity, statement check report, drill-down, cash basis labels, fund reports, concurrency tests, 10k to 50k performance
+- v0.0.8 Periods and roles: month close and audited reopen, treasurer role, plain-language errors
+- v0.0.9 Everyday use: templates and recurring drafts, search, fund/project budgets, board package, first-run checklist, diagnostics page
+- v0.1 to v0.9 Hardening: installer, upgrade tests, cross-version restore, user testing, disclosure policy
+- v1.0 gates: accounting correctness, security tests, real-statement import, backup recovery, install and upgrade, non-accountant usability, support and disclosure pages. Desktop is a separate track.
+
 ## v0.0.4 - Stability and foundations (released 2026-10-07)
 
 - [x] History save failures now fail the request instead of reporting success
