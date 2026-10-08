@@ -244,7 +244,9 @@ export async function verifyBackup(
   if (m.version >= 3 && (!Array.isArray(m.attachments) || typeof m.appVersion !== "string"))
     throw new BackupRejected("The backup manifest is incomplete.");
   if (m.attachments && m.attachments.length > 0)
-    throw new BackupRejected("This backup contains attachments, which this version can't restore yet.");
+    throw new BackupRejected(
+      "This backup contains attachments, which this version can't restore yet.",
+    );
   if (typeof m.publicKey !== "string" || !m.publicKey)
     throw new BackupRejected("The backup has no signing key.");
 

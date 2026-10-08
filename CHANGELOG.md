@@ -4,6 +4,12 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+- History page can be filtered by type: money, setup and settings, or system.
+- Backups now record the app version and include a reserved slot for future attachments (format v3). Older v2 backups still restore.
+- Permissions live in one fixed table, with a test that pins every role and action.
+- Full-year business and nonprofit test scenarios check reports against fixed expected totals.
+- Core libraries are pinned to exact versions; see docs/dependencies.md.
+
 ### Changed
 
 - If a change can't be recorded in history, the request now fails with an error instead of reporting success.
