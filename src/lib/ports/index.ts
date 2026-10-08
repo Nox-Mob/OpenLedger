@@ -191,7 +191,11 @@ export interface PeriodCloseRepository {
    * Records the close and locks the books through `lockThrough` with its history entry,
    * all in one step. Throws DuplicateKeyError if that fiscal year is already closed.
    */
-  closeAndLock(c: Omit<PeriodClose, "createdAt">, lockThrough: IsoDate, audit: AuditEvent): Promise<void>;
+  closeAndLock(
+    c: Omit<PeriodClose, "createdAt">,
+    lockThrough: IsoDate,
+    audit: AuditEvent,
+  ): Promise<void>;
 }
 
 export interface ProjectRepository {
