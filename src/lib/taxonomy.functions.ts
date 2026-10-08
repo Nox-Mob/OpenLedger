@@ -70,7 +70,12 @@ export const createAccount = createServerFn({ method: "POST" })
           values: { id, name: data.name, type: data.type, subtype: data.subtype ?? null },
         },
       ],
-      { action: "create", entity: "account", entityId: id, after: { name: data.name, type: data.type } },
+      {
+        action: "create",
+        entity: "account",
+        entityId: id,
+        after: { name: data.name, type: data.type },
+      },
     );
     return { ok: true };
   });
@@ -128,7 +133,12 @@ function makeCrud(
         context.supabase,
         orgId,
         [{ table, op: "insert", values: { id, name, ...rest } }],
-        { action: "create", entity: table.replace(/s$/, "").replace(/ie$/, "y"), entityId: id, after: { name } },
+        {
+          action: "create",
+          entity: table.replace(/s$/, "").replace(/ie$/, "y"),
+          entityId: id,
+          after: { name },
+        },
       );
       return { ok: true };
     });

@@ -33,6 +33,7 @@ export const acceptCurrentLegalDocuments = createServerFn({ method: "POST" })
     ];
     const { error } = await context.supabase
       .from("legal_acceptances")
+      // cloud-only-write: per-user or service record, not organization books
       .upsert(rows, { onConflict: "user_id,document_type,version", ignoreDuplicates: true });
     if (error) throw new Error(error.message);
     return { ok: true };

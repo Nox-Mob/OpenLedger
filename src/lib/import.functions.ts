@@ -438,6 +438,7 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
           : `You've read ${PDF_LIMITS.perMonth} PDFs in the last 30 days.`,
       );
     const usageId = newId();
+    // cloud-only-write: per-user or service record, not organization books
     const { error: uErr } = await supabase.from("ai_usage").insert({
       id: usageId,
       org_id: data.orgId,

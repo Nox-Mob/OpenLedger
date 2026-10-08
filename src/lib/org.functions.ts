@@ -61,6 +61,7 @@ export const setMyTermOverrides = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("profiles")
+      // cloud-only-write: per-user or service record, not organization books
       .upsert({ id: context.userId, term_overrides: data.termOverrides as any });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -227,6 +228,7 @@ export const createOrganization = createServerFn({ method: "POST" })
         subtype: c.subtype ?? null,
         org_id: org.id,
       }));
+    // cloud-only-write: per-user or service record, not organization books
     await supabase.from("profiles").upsert({ id: userId });
 
     // Organization, starter accounts and history are saved together.

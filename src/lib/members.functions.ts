@@ -281,6 +281,7 @@ export const deleteOrganization = createServerFn({ method: "POST" })
     assertCanDeleteOrg(context.userId, org.created_by, org.name, data.confirmName);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Keep a record outside the org (its own audit rows go with it).
+    // cloud-only-write: per-user or service record, not organization books
     const { error: logErr } = await supabaseAdmin.from("deleted_organizations").insert({
       id: newId(),
       org_id: org.id,
@@ -288,6 +289,7 @@ export const deleteOrganization = createServerFn({ method: "POST" })
       deleted_by: context.userId,
     });
     if (logErr) throw new Error(logErr.message);
+    // cloud-only-write: per-user or service record, not organization books
     const { error } = await supabaseAdmin.from("organizations").delete().eq("id", org.id);
     if (error) throw new Error(error.message);
     return { ok: true };
