@@ -324,16 +324,35 @@ export const saveImportProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
-    const { error } = await context.supabase.from("import_profiles").upsert(
-      {
-        org_id: data.orgId,
-        account_id: data.accountId,
-        name: data.name,
-        mapping: data.mapping as any,
-      },
-      { onConflict: "account_id,name" },
+    // One saved layout per account+name: update it, or add it if it's new.
+    const values = { name: data.name, mapping: data.mapping };
+    const [updated] = await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "import_profiles",
+          op: "update",
+          values: { mapping: data.mapping },
+          match: { account_id: data.accountId, name: data.name },
+        },
+      ],
+      { action: "update", entity: "import_profile", after: values },
     );
-    if (error) throw new Error(error.message);
+    if (!updated?.count) {
+      await auditedWrite(
+        context.supabase,
+        data.orgId,
+        [
+          {
+            table: "import_profiles",
+            op: "insert",
+            values: { id: newId(), account_id: data.accountId, ...values },
+          },
+        ],
+        { action: "create", entity: "import_profile", after: values },
+      );
+    }
     return { ok: true };
   });
 
