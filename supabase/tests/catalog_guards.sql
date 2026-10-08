@@ -76,5 +76,13 @@ BEGIN
   GET DIAGNOSTICS n = ROW_COUNT;
   r := r || 'unused_account_delete=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL' END || '; ';
 
+  -- 7. Deleting the whole organization still works (the guard steps aside).
+  BEGIN
+    DELETE FROM public.organizations WHERE id = org;
+    SELECT count(*) INTO n FROM public.accounts WHERE org_id = org;
+    r := r || 'org_delete_still_works=' || CASE WHEN n = 0 THEN 'PASS' ELSE 'FAIL' END || '; ';
+  EXCEPTION WHEN others THEN r := r || 'org_delete_still_works=FAIL; ';
+  END;
+
   RAISE EXCEPTION 'RESULT %', r;
 END $$;
