@@ -50,12 +50,25 @@ export const setFundRestricted = createServerFn({ method: "POST" })
     if ((count ?? 0) > 0) {
       throw new Error("A fund with transactions cannot change restriction. Create a new fund.");
     }
-    const { error } = await context.supabase
-      .from("funds")
-      .update({ is_restricted: data.isRestricted })
-      .eq("id", data.fundId)
-      .eq("org_id", data.orgId);
-    if (error) throw new Error(error.message);
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "funds",
+          op: "update",
+          values: { is_restricted: data.isRestricted },
+          match: { id: data.fundId },
+          minRows: 1,
+        },
+      ],
+      {
+        action: "update",
+        entity: "fund",
+        entityId: data.fundId,
+        after: { isRestricted: data.isRestricted },
+      },
+    );
     return { ok: true };
   });
 
