@@ -6,6 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { writeAudit } from "@/lib/audit";
 import type {
   Account,
+  AuditEvent,
   BankTransaction,
   Entry,
   Organization,
@@ -16,6 +17,7 @@ import type {
   Transaction,
 } from "@/lib/domain/models";
 import { DuplicateKeyError, type Repositories } from "@/lib/ports";
+import { newId } from "@/lib/domain/ledger";
 
 type Db = SupabaseClient<Database>;
 
