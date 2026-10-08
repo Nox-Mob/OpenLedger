@@ -111,6 +111,46 @@ describe.each(adapters)("%s adapter", (name, make) => {
     ]);
   });
 
+  const breakHistory = async () => {
+    if (name === "memory") (repos as any).store.failAudit = true;
+    else await sqliteDriver.execute("ALTER TABLE audit_log RENAME TO audit_log_gone");
+  };
+
+  it("a posting and its history entry are saved together", async () => {
+    const { id } = await postTransaction(repos, sale());
+    expect((await repos.audit.listFor(ORG, "transaction", id)).map((h) => h.action)).toEqual([
+      "create",
+    ]);
+    await breakHistory();
+    await expect(postTransaction(repos, sale({ description: "Lost" }))).rejects.toThrow();
+    expect(await repos.transactions.list(ORG)).toHaveLength(1);
+    await expect(
+      voidTransaction(repos, { orgId: ORG, userId: USER, transactionId: id }),
+    ).rejects.toThrow();
+    expect((await repos.transactions.get(ORG, id))?.status).toBe("posted");
+  });
+
+  it("settings changes and their history entry are saved together", async () => {
+    const ev = (action: string) => ({
+      orgId: ORG,
+      userId: USER,
+      action,
+      entity: "organization",
+      entityId: ORG,
+    });
+    await repos.orgs.updateSettings(ORG, { name: "Renamed" }, ev("update"));
+    await repos.orgs.setBooksLockedThrough(ORG, "2026-01-31", ev("lock_books"));
+    expect(
+      (await repos.audit.listFor(ORG, "organization", ORG)).map((h) => h.action).sort(),
+    ).toEqual(["lock_books", "update"]);
+    await breakHistory();
+    await expect(repos.orgs.updateSettings(ORG, { name: "Lost" }, ev("update"))).rejects.toThrow();
+    await expect(repos.orgs.setBooksLockedThrough(ORG, null, ev("unlock_books"))).rejects.toThrow();
+    const org = await repos.orgs.get(ORG);
+    expect(org?.name).toBe("Renamed");
+    expect(org?.booksLockedThrough).toBe("2026-01-31");
+  });
+
   it("idempotency key returns the original", async () => {
     const a = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));
     const b = await postTransaction(repos, sale({ idempotencyKey: "form-abcdef" }));
@@ -394,6 +434,79 @@ describe.each(adapters)("%s adapter", (name, make) => {
     await expect(
       fundsSvc.releaseFund(repos, { ...input, amountCents: 3001, idempotencyKey: "release:2" }),
     ).rejects.toThrow(/only has/);
+  });
+
+  it("rolls back a reconciliation finish when history fails", async () => {
+    const input = {
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 0,
+      mode: "simple" as const,
+      batchId: null,
+      userId: USER,
+    };
+    const { id } = await recon.startReconciliation(repos, input);
+    const r = (await repos.reconciliations.locate(id))!;
+    await breakHistory();
+    await expect(recon.completeReconciliation(repos, r, USER)).rejects.toThrow();
+    expect((await repos.reconciliations.locate(id))?.status).toBe("in_progress");
+  });
+
+  it("start, tick and discard leave no change when history fails", async () => {
+    await postTransaction(repos, sale({ transactionDate: "2026-02-02" }));
+    const input = {
+      orgId: ORG,
+      accountId: CASH,
+      periodStart: "2026-02-01",
+      periodEnd: "2026-02-28",
+      beginningBalanceCents: 0,
+      endingBalanceCents: 1000,
+      mode: "simple" as const,
+      batchId: null,
+      userId: USER,
+    };
+    const { id } = await recon.startReconciliation(repos, input);
+    const r = (await repos.reconciliations.locate(id))!;
+    const entry = (await recon.getReconciliation(repos, r)).entries[0]!;
+    await breakHistory();
+    await expect(recon.setCleared(repos, r, [entry.id], true, USER)).rejects.toThrow();
+    expect(await repos.reconciliations.clearedTotalCents(id)).toBe(0);
+    await expect(recon.discardReconciliation(repos, r, USER)).rejects.toThrow();
+    expect(await repos.reconciliations.locate(id)).not.toBeNull();
+    await expect(
+      recon.startReconciliation(repos, { ...input, accountId: EQUITY }),
+    ).rejects.toThrow();
+    expect(await repos.reconciliations.list(ORG, EQUITY)).toEqual([]);
+  });
+
+  it("posting a bank row keeps it unmatched when history fails", async () => {
+    const row = {
+      id: "30000000-0000-4000-8000-0000000000b1",
+      orgId: ORG,
+      accountId: CASH,
+      bankDate: "2026-02-03",
+      description: "Deposit",
+      amountCents: 2500,
+      externalId: "FITB",
+      fingerprint: "fb",
+      rowSeq: 1,
+      batchId: null,
+    };
+    await repos.bank.insertMany([row]);
+    await breakHistory();
+    await expect(
+      postBankRow(repos, {
+        orgId: ORG,
+        userId: USER,
+        bankTransactionId: row.id,
+        offsetAccountId: SALES,
+      }),
+    ).rejects.toThrow();
+    expect((await repos.bank.get(ORG, row.id))?.transactionId ?? null).toBeNull();
+    expect(await repos.transactions.list(ORG)).toEqual([]);
   });
 
   if (name === "sqlite") {

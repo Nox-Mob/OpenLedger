@@ -4,8 +4,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { writeAudit } from "@/lib/audit";
+import { auditedWrite, type WriteOp } from "@/lib/audited-write";
 import type {
   Account,
+  AuditEvent,
   BankTransaction,
   Entry,
   Organization,
@@ -16,8 +18,29 @@ import type {
   Transaction,
 } from "@/lib/domain/models";
 import { DuplicateKeyError, type Repositories } from "@/lib/ports";
+import { newId } from "@/lib/domain/ledger";
 
 type Db = SupabaseClient<Database>;
+
+function auditJson(e: AuditEvent) {
+  return {
+    id: newId(),
+    action: e.action,
+    entity: e.entity,
+    entity_id: e.entityId ?? null,
+    before: e.before ?? null,
+    after: e.after ?? null,
+  };
+}
+
+const entryOf = (e: AuditEvent) => ({
+  action: e.action,
+  entity: e.entity,
+  entityId: e.entityId ?? null,
+  before: e.before,
+  after: e.after,
+  kind: e.entity === "transaction" ? ("ledger" as const) : ("change" as const),
+});
 
 function fail(error: { message: string; code?: string } | null): void {
   if (!error) return;
@@ -168,7 +191,7 @@ export function createSupabaseRepositories(db: Db): Repositories {
         });
         fail(error);
       },
-      async updateSettings(orgId, p) {
+      async updateSettings(orgId, p, audit) {
         const row: any = {};
         if (p.name !== undefined) row.name = p.name;
         if (p.orgType !== undefined) row.org_type = p.orgType;
@@ -178,10 +201,24 @@ export function createSupabaseRepositories(db: Db): Repositories {
         if (p.terminology !== undefined) row.terminology = p.terminology;
         if (p.termOverrides !== undefined) row.term_overrides = p.termOverrides;
         if (p.aiPdfEnabled !== undefined) row.ai_pdf_enabled = p.aiPdfEnabled;
+        if (audit) {
+          if (!Object.keys(row).length) return;
+          await auditedWrite(sb, orgId, [{ table: "organizations", op: "update", values: row }], entryOf(audit));
+          return;
+        }
         const { error } = await sb.from("organizations").update(row).eq("id", orgId);
         fail(error);
       },
-      async setBooksLockedThrough(orgId, date) {
+      async setBooksLockedThrough(orgId, date, audit) {
+        if (audit) {
+          await auditedWrite(
+            sb,
+            orgId,
+            [{ table: "organizations", op: "update", values: { books_locked_through: date } }],
+            entryOf(audit),
+          );
+          return;
+        }
         const { error } = await sb
           .from("organizations")
           .update({ books_locked_through: date })
@@ -265,22 +302,20 @@ export function createSupabaseRepositories(db: Db): Repositories {
     },
 
     transactions: {
-      async post(tx) {
-        const { error: txError } = await sb.from("transactions").insert({
-          id: tx.id,
-          org_id: tx.orgId,
-          transaction_date: tx.transactionDate,
-          posted_date: tx.postedDate,
-          description: tx.description,
-          source: tx.source,
-          created_by: tx.createdBy,
-          idempotency_key: tx.idempotencyKey,
-        });
-        fail(txError);
-        const { error: eError } = await sb.from("entries").insert(
-          tx.entries.map((e) => ({
+      async post(tx, audit) {
+        // One database function writes the header, lines, tags and history entry together.
+        const { error } = await (sb as any).rpc("post_transaction_atomic", {
+          p_tx: {
+            id: tx.id,
+            org_id: tx.orgId,
+            transaction_date: tx.transactionDate,
+            posted_date: tx.postedDate,
+            description: tx.description,
+            source: tx.source,
+            idempotency_key: tx.idempotencyKey,
+          },
+          p_entries: tx.entries.map((e) => ({
             id: e.id,
-            transaction_id: tx.id,
             account_id: e.accountId,
             amount_cents: e.amountCents,
             category_id: e.categoryId ?? null,
@@ -288,17 +323,10 @@ export function createSupabaseRepositories(db: Db): Repositories {
             fund_id: e.fundId ?? null,
             memo: e.memo ?? null,
           })),
-        );
-        if (eError) {
-          // Compensate: the header has no entries yet, so the delete guard allows it.
-          await sb.from("transactions").delete().eq("id", tx.id);
-          fail(eError);
-        }
-        if (tx.tagIds?.length) {
-          await sb
-            .from("transaction_tags")
-            .insert(tx.tagIds.map((tagId) => ({ transaction_id: tx.id, tag_id: tagId })));
-        }
+          p_tags: tx.tagIds ?? [],
+          p_audit: audit ? auditJson(audit) : null,
+        });
+        fail(error);
       },
       async findByIdempotencyKey(orgId, key) {
         const { data, error } = await sb
@@ -338,16 +366,14 @@ export function createSupabaseRepositories(db: Db): Repositories {
           rows = rows.filter((t) => t.entries.some((e) => e.accountId === opts.accountId));
         return rows;
       },
-      async markVoid(orgId, id) {
-        const { data, error } = await sb
-          .from("transactions")
-          .update({ status: "void" })
-          .eq("org_id", orgId)
-          .eq("id", id)
-          .eq("status", "posted")
-          .select("id");
+      async markVoid(orgId, id, audit) {
+        const { data, error } = await (sb as any).rpc("void_transaction_atomic", {
+          p_org: orgId,
+          p_id: id,
+          p_audit: audit ? auditJson(audit) : null,
+        });
         fail(error);
-        return (data ?? []).length > 0;
+        return data === true;
       },
       async clearReconciliation(entryIds) {
         if (!entryIds.length) return;
@@ -435,7 +461,28 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return ((data ?? []) as any[]).map(toBank);
       },
-      async claim(orgId, id, transactionId) {
+      async claim(orgId, id, transactionId, audit) {
+        if (audit) {
+          try {
+            await auditedWrite(
+              sb,
+              orgId,
+              [
+                {
+                  table: "bank_transactions",
+                  op: "update",
+                  values: { transaction_id: transactionId, needs_review: false },
+                  match: { id, transaction_id: null },
+                  minRows: 1,
+                },
+              ],
+              entryOf(audit),
+            );
+            return true;
+          } catch {
+            return false;
+          }
+        }
         const { data, error } = await sb
           .from("bank_transactions")
           .update({ transaction_id: transactionId, needs_review: false })
@@ -494,8 +541,8 @@ export function createSupabaseRepositories(db: Db): Repositories {
     },
 
     reconciliations: {
-      async start(r) {
-        const { error } = await sb.from("reconciliations").insert({
+      async start(r, audit) {
+        const row = {
           id: r.id,
           org_id: r.orgId,
           account_id: r.accountId,
@@ -506,7 +553,13 @@ export function createSupabaseRepositories(db: Db): Repositories {
           mode: r.mode,
           batch_id: r.batchId,
           created_by: r.createdBy,
-        });
+        };
+        if (audit) {
+          const { org_id: _o, ...values } = row;
+          await auditedWrite(sb, r.orgId, [{ table: "reconciliations", op: "insert", values }], entryOf(audit));
+          return;
+        }
+        const { error } = await sb.from("reconciliations").insert(row);
         fail(error);
       },
       async get(orgId, id) {
@@ -564,15 +617,35 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return ((data ?? []) as any[]).map(toRecon);
       },
-      async setTicked(reconciliationId, entryIds, ticked) {
+      async setTicked(reconciliationId, entryIds, ticked, audit) {
         if (!entryIds.length) return;
         const { data: rec, error: rErr } = await sb
           .from("reconciliations")
-          .select("account_id")
+          .select("account_id, org_id")
           .eq("id", reconciliationId)
           .maybeSingle();
         fail(rErr);
         if (!rec) return;
+        if (audit) {
+          await auditedWrite(
+            sb,
+            rec.org_id,
+            [
+              {
+                table: "entries",
+                op: "update",
+                values: { reconciliation_id: ticked ? reconciliationId : null },
+                match: {
+                  account_id: rec.account_id,
+                  reconciliation_id: ticked ? null : reconciliationId,
+                },
+                in: { id: entryIds },
+              },
+            ],
+            entryOf(audit),
+          );
+          return;
+        }
         const q = sb
           .from("entries")
           .update({ reconciliation_id: ticked ? reconciliationId : null })
@@ -591,7 +664,24 @@ export function createSupabaseRepositories(db: Db): Repositories {
         fail(error);
         return ((data ?? []) as any[]).reduce((s, r) => s + Number(r.amount_cents), 0);
       },
-      async finish(orgId, id, userId) {
+      async finish(orgId, id, userId, audit) {
+        if (audit) {
+          await auditedWrite(
+            sb,
+            orgId,
+            [
+              {
+                table: "reconciliations",
+                op: "update",
+                values: { status: "completed", completed_by: userId, completed_at: new Date().toISOString() },
+                match: { id },
+                minRows: 1,
+              },
+            ],
+            entryOf(audit),
+          );
+          return;
+        }
         const { error } = await sb
           .from("reconciliations")
           .update({ status: "completed", completed_by: userId, completed_at: new Date().toISOString() })
@@ -599,7 +689,24 @@ export function createSupabaseRepositories(db: Db): Repositories {
           .eq("id", id);
         fail(error);
       },
-      async reopen(orgId, id) {
+      async reopen(orgId, id, audit) {
+        if (audit) {
+          await auditedWrite(
+            sb,
+            orgId,
+            [
+              {
+                table: "reconciliations",
+                op: "update",
+                values: { status: "in_progress", completed_by: null, completed_at: null },
+                match: { id },
+                minRows: 1,
+              },
+            ],
+            entryOf(audit),
+          );
+          return;
+        }
         const { error } = await sb
           .from("reconciliations")
           .update({ status: "in_progress", completed_by: null, completed_at: null })
@@ -607,7 +714,20 @@ export function createSupabaseRepositories(db: Db): Repositories {
           .eq("id", id);
         fail(error);
       },
-      async discard(orgId, id) {
+      async discard(orgId, id, audit) {
+        if (audit) {
+          const ops: WriteOp[] = [
+            {
+              table: "entries",
+              op: "update",
+              values: { reconciliation_id: null },
+              match: { reconciliation_id: id },
+            },
+            { table: "reconciliations", op: "delete", match: { id, status: "in_progress" }, minRows: 1 },
+          ];
+          await auditedWrite(sb, orgId, ops, entryOf(audit));
+          return;
+        }
         const { error: uErr } = await sb
           .from("entries")
           .update({ reconciliation_id: null })

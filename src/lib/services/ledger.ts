@@ -66,8 +66,16 @@ export async function postTransaction(
     entries: input.entries.map((e) => ({ ...e, id: newId() })),
     tagIds: input.tagIds,
   };
+  const audit = {
+    orgId: input.orgId,
+    userId: input.userId,
+    action: "create",
+    entity: "transaction",
+    entityId: tx.id,
+    after: { description: tx.description, entries: tx.entries },
+  };
   try {
-    await repos.transactions.post(tx);
+    await repos.transactions.post(tx, audit);
   } catch (err) {
     // Lost a race with an identical concurrent submit: return the winner.
     if (err instanceof DuplicateKeyError && key) {
@@ -76,15 +84,6 @@ export async function postTransaction(
     }
     throw err;
   }
-
-  await repos.audit.append({
-    orgId: input.orgId,
-    userId: input.userId,
-    action: "create",
-    entity: "transaction",
-    entityId: tx.id,
-    after: { description: tx.description, entries: tx.entries },
-  });
   return { id: tx.id };
 }
 
@@ -104,23 +103,22 @@ export async function voidTransaction(
   }
   voidDecision("posted", lockedByCompleted);
 
-  // Only flips posted -> void, so a concurrent void can't run the side effects twice.
-  if (!(await repos.transactions.markVoid(input.orgId, tx.id)))
-    return { ok: true, alreadyVoid: true };
-
   const stamped = tx.entries.filter((e) => e.reconciliationId).map((e) => e.id);
-  await repos.transactions.clearReconciliation(stamped);
-  const unmatchedBankRows = await repos.bank.unlinkTransaction(input.orgId, tx.id);
-
-  await repos.audit.append({
+  // Only flips posted -> void, so a concurrent void can't run the side effects twice.
+  // The void and its history entry are saved together.
+  const voided = await repos.transactions.markVoid(input.orgId, tx.id, {
     orgId: input.orgId,
     userId: input.userId,
     action: "void",
     entity: "transaction",
     entityId: tx.id,
     before: { id: tx.id, description: tx.description, status: tx.status },
-    after: { status: "void", unmatchedBankRows, unticked: stamped.length },
+    after: { status: "void", unticked: stamped.length },
   });
+  if (!voided) return { ok: true, alreadyVoid: true };
+
+  await repos.transactions.clearReconciliation(stamped);
+  await repos.bank.unlinkTransaction(input.orgId, tx.id);
   return { ok: true };
 }
 
@@ -201,12 +199,7 @@ export async function postBankRow(
   });
   if (res.duplicate) throw new Error("Already posted to the ledger");
 
-  if (!(await repos.bank.claim(input.orgId, bank.id, res.id))) {
-    // Someone else linked it first: undo our copy so the row is posted once.
-    await repos.transactions.markVoid(input.orgId, res.id);
-    throw new Error("Already posted to the ledger");
-  }
-  await repos.audit.append({
+  const linked = await repos.bank.claim(input.orgId, bank.id, res.id, {
     orgId: input.orgId,
     userId: input.userId,
     action: "post_from_bank",
@@ -214,5 +207,10 @@ export async function postBankRow(
     entityId: res.id,
     after: { bank_transaction_id: bank.id },
   });
+  if (!linked) {
+    // Someone else linked it first: undo our copy so the row is posted once.
+    await repos.transactions.markVoid(input.orgId, res.id);
+    throw new Error("Already posted to the ledger");
+  }
   return { id: res.id };
 }

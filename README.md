@@ -37,15 +37,15 @@ psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql
 
 Pick **one** path for the database and sign-in service, then finish with the shared steps.
 
-| | Path 1 — Cloud-hosted Supabase | Path 2 — Self-hosted Supabase (Docker) |
-|---|---|---|
-| Where data lives | supabase.com | Your own server |
-| Effort | Easiest | More setup, 4 GB+ RAM |
+|                     | Path 1 — Cloud-hosted Supabase               | Path 2 — Self-hosted Supabase (Docker)                                 |
+| ------------------- | -------------------------------------------- | ---------------------------------------------------------------------- |
+| Where data lives    | supabase.com                                 | Your own server                                                        |
+| Effort              | Easiest                                      | More setup, 4 GB+ RAM                                                  |
 | Migrations run with | `psql` on your machine or `supabase db push` | `docker exec` into the `supabase-db` container (no host `psql` needed) |
 
 ### Shared prerequisites
 
-- **Node.js 20+** (or Bun 1.1+) and **Git**.
+- **Node.js 24** (or 22.22.2+) with **npm 11+** and **Git**.
 - Get the code:
 
   ```sh
@@ -72,6 +72,7 @@ Pick **one** path for the database and sign-in service, then finish with the sha
    ```
 
    Or with the Supabase CLI: `supabase link --project-ref <ref> && supabase db push`.
+
 5. **Configure sign-in** (Authentication → Sign In / Providers): enable Email; keep email confirmation ON for production; optionally enable Google. Under URL Configuration set **Site URL** to your app's URL and add `<app-url>/reset-password` (and your local dev URL) to the redirect list.
 6. **Fill in `.env`:**
 
@@ -85,7 +86,7 @@ Pick **one** path for the database and sign-in service, then finish with the sha
    LOVABLE_API_KEY=<optional, enables AI PDF import>
    ```
 
-7. *(Optional, dev/test only)* load sample data: `psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql`.
+7. _(Optional, dev/test only)_ load sample data: `psql "$SUPABASE_DB_URL" -f supabase/seed/demo.sql`.
 
 Continue with **Run the app** below.
 
@@ -122,7 +123,8 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    ```
 
    The API gateway listens on port `8000`: your project URL is `http://<server-ip>:8000` (or your TLS URL if you put a proxy in front).
-4. **Apply every migration inside the database container.** Go back to *this app's* project folder and run the migrations through Docker — you do **not** need `psql` installed on the host:
+
+4. **Apply every migration inside the database container.** Go back to _this app's_ project folder and run the migrations through Docker — you do **not** need `psql` installed on the host:
 
    ```sh
    # Confirm the database container name (usually supabase-db)
@@ -135,6 +137,7 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    ```
 
    If `docker ps` shows a different name (e.g. `supabase-project-db-1`), use that instead of `supabase-db`.
+
 5. **Fill in `.env`** — the browser and server values are the same here:
 
    ```sh
@@ -148,7 +151,7 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
    ```
 
 6. **Check the sign-in URLs.** If your app's URL differs from what you entered during setup, edit `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` (include `<app-url>/reset-password`) in `supabase-project/.env`, then `docker compose restart auth`.
-7. *(Optional, home/lab use)* **skip email verification.** By default, new users must click a link in a confirmation email before they can sign in. On a home server without email set up, that leaves everyone stuck. To let people use the app right after signing up, edit `supabase-project/.env` and set:
+7. _(Optional, home/lab use)_ **skip email verification.** By default, new users must click a link in a confirmation email before they can sign in. On a home server without email set up, that leaves everyone stuck. To let people use the app right after signing up, edit `supabase-project/.env` and set:
 
    ```sh
    MAILER_AUTOCONFIRM=true
@@ -156,7 +159,7 @@ Runs Postgres, Auth, Storage and the API on your own machine. Allow **4 GB+ RAM*
 
    Then restart the auth service: `docker compose restart auth`. New sign-ups are marked as confirmed automatically. **Only do this on a private network you trust** — with it on, anyone who can reach your server can create an account with any email address, real or not. Leave it `false` anywhere the app is reachable from the internet.
 
-8. *(Optional, dev/test only)* load sample data:
+8. _(Optional, dev/test only)_ load sample data:
 
    ```sh
    docker exec -i supabase-db psql -U postgres -d postgres < supabase/seed/demo.sql
@@ -177,8 +180,8 @@ Updating Supabase later: run the stack's `update.sh` from `supabase-project` (ve
 ### Run the app (both paths)
 
 ```sh
-bun install        # or: npm install
-bun run dev        # or: npm run dev
+npm install        # npm is the only supported package manager
+npm run dev
 ```
 
 Open http://localhost:8080, create your first account, and the app walks you through creating your first organization. With sample data loaded you can sign in as `demo@demo.org` / `demo1234`.
@@ -186,8 +189,8 @@ Open http://localhost:8080, create your first account, and the app walks you thr
 Production build:
 
 ```sh
-bun run build
-bun run preview    # serves the production build
+npm run build
+npm run preview    # serves the production build
 ```
 
 The app is server-rendered: pages **and** server functions run on the server, so a static-file host alone will not work. App servers are stateless and can be replaced or multiplied freely.
@@ -212,8 +215,8 @@ One Linux VM (1 vCPU / 1 GB RAM is enough for a handful of users) plus a hosted 
 # on the server
 git clone <repo> /opt/open-ledger && cd /opt/open-ledger
 cp .env.example .env && nano .env      # fill in values; chmod 600 .env
-bun install --frozen-lockfile
-bun run build
+npm ci
+npm run build
 ```
 
 Run it under a process manager so it restarts on crash and boot, e.g. systemd (`/etc/systemd/system/open-ledger.service`):
@@ -226,7 +229,7 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/open-ledger
 EnvironmentFile=/opt/open-ledger/.env
-ExecStart=/usr/local/bin/bun run preview --host 127.0.0.1 --port 8080
+ExecStart=/usr/local/bin/npm run preview --host 127.0.0.1 --port 8080
 Restart=always
 User=openledger
 
@@ -246,7 +249,7 @@ books.example.com {
 }
 ```
 
-Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun run build && sudo systemctl restart open-ledger`. Restarting never touches data.
+Updating: `git pull && npm ci && supabase db push && npm run build && sudo systemctl restart open-ledger`. Restarting never touches data.
 
 #### Fully self-contained alternative
 
@@ -275,10 +278,10 @@ Use **Path 2 — Self-hosted Supabase with Docker** above on the same server, th
 ### Running the tests
 
 ```sh
-bun run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
-bun run check:migrations   # every public table has GRANTs + row level security
+npm run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
+npm run check:migrations   # every public table has GRANTs + row level security
 # Database rules — ONLY against a disposable database (e.g. `supabase db start`):
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db
 ```
 
 The database checks (`supabase/tests/*.sql`) run inside a transaction that always rolls back. They verify tenant isolation (a stranger can't read or change any org table) and ledger invariants (unbalanced/single-entry transactions rejected, entries and posted transactions immutable, voids can't be undone, books lock enforced, no cross-org entries, last admin kept).
@@ -309,8 +312,8 @@ See LICENSE. This is pre-1.0 software — test it with sample data before trusti
 
 ## Before you release
 
-1. `bun run test`, `bun run lint`, `bun run format:check`, `bun run check:migrations` all pass.
-2. `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db` passes (local throwaway DB only — the script refuses anything else).
+1. `npm run test`, `npm run lint`, `npm run format:check`, `npm run check:migrations` all pass.
+2. `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db` passes (local throwaway DB only — the script refuses anything else).
 3. `python3 scripts/smoke/smoke.py` against a dev server with the demo seed reports "No problems found."
 4. Add the operator mailing address and have the Terms and Privacy Policy reviewed by counsel before release.
 5. Leave `VITE_ALLOW_DEMO_LOGIN` unset in production so the shared demo login is refused.

@@ -7,7 +7,7 @@ import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { pledgeOutstanding, type PledgeStatus } from "./domain/funds";
 import { fundSummary, postPledge, releaseFund, settlePledge } from "./services/funds";
-import { writeAudit } from "./audit";
+import { auditedWrite } from "./audited-write";
 
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -50,12 +50,25 @@ export const setFundRestricted = createServerFn({ method: "POST" })
     if ((count ?? 0) > 0) {
       throw new Error("A fund with transactions cannot change restriction. Create a new fund.");
     }
-    const { error } = await context.supabase
-      .from("funds")
-      .update({ is_restricted: data.isRestricted })
-      .eq("id", data.fundId)
-      .eq("org_id", data.orgId);
-    if (error) throw new Error(error.message);
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "funds",
+          op: "update",
+          values: { is_restricted: data.isRestricted },
+          match: { id: data.fundId },
+          minRows: 1,
+        },
+      ],
+      {
+        action: "update",
+        entity: "fund",
+        entityId: data.fundId,
+        after: { isRestricted: data.isRestricted },
+      },
+    );
     return { ok: true };
   });
 
@@ -190,19 +203,33 @@ export const createPledge = createServerFn({ method: "POST" })
     });
     if (tx.duplicate) return { ok: true };
     const pledgeId = newId();
-    const { error } = await context.supabase.from("pledges").insert({
-      id: pledgeId,
-      org_id: data.orgId,
-      donor_name: data.donorName,
-      fund_id: data.fundId,
-      amount_cents: data.amountCents,
-      pledge_date: data.pledgeDate,
-      expected_date: data.expectedDate,
-      note: data.note,
-      transaction_id: tx.id,
-      created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "pledges",
+          op: "insert",
+          values: {
+            id: pledgeId,
+            donor_name: data.donorName,
+            fund_id: data.fundId,
+            amount_cents: data.amountCents,
+            pledge_date: data.pledgeDate,
+            expected_date: data.expectedDate,
+            note: data.note,
+            transaction_id: tx.id,
+            created_by: context.userId,
+          },
+        },
+      ],
+      {
+        action: "create",
+        entity: "pledge",
+        entityId: pledgeId,
+        after: { donorName: data.donorName, amountCents: data.amountCents },
+      },
+    );
     return { ok: true, id: pledgeId };
   });
 
@@ -274,29 +301,44 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
       idempotencyKey: `pledge-${data.kind}:${data.idempotencyKey}`,
     });
     if (tx.duplicate) return { ok: true };
-    const { error: e2 } = await supabase.from("pledge_payments").insert({
-      id: newId(),
-      org_id: data.orgId,
-      pledge_id: p.id,
-      transaction_id: tx.id,
-      kind: data.kind,
-      amount_cents: data.amountCents,
-      paid_date: data.date,
-    });
-    if (e2) throw new Error(e2.message);
+    // The payment record, any status change and their history are saved together.
+    const paymentId = newId();
     const remaining = pledgeOutstanding(Number(p.amount_cents), settled + data.amountCents);
-    if (remaining === 0) {
-      const status = data.kind === "write_off" ? "written_off" : "paid";
-      await supabase.from("pledges").update({ status }).eq("id", p.id);
-      await writeAudit({
-        org_id: data.orgId,
-        user_id: userId,
-        action: "update",
+    const status = remaining === 0 ? (data.kind === "write_off" ? "written_off" : "paid") : null;
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [
+        {
+          table: "pledge_payments",
+          op: "insert",
+          values: {
+            id: paymentId,
+            pledge_id: p.id,
+            transaction_id: tx.id,
+            kind: data.kind,
+            amount_cents: data.amountCents,
+            paid_date: data.date,
+          },
+        },
+        ...(status
+          ? [
+              {
+                table: "pledges",
+                op: "update" as const,
+                values: { status },
+                match: { id: p.id },
+              },
+            ]
+          : []),
+      ],
+      {
+        action: data.kind === "write_off" ? "write_off" : "payment",
         entity: "pledge",
-        entity_id: p.id,
+        entityId: p.id,
         before: { status: p.status },
-        after: { status },
-      });
-    }
+        after: { amountCents: data.amountCents, status: status ?? p.status },
+      },
+    );
     return { ok: true };
   });

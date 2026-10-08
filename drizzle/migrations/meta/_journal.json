@@ -29,6 +29,41 @@
       "when": 1791351063217,
       "tag": "0003_balance_check_skip_deleted_tx",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791435048742,
+      "tag": "0004_atomic_ledger_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791435912288,
+      "tag": "0005_atomic_audited_writes",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791435954748,
+      "tag": "0006_atomic_audited_writes_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791436368319,
+      "tag": "0007_audited_write_row_count",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791436756475,
+      "tag": "0008_audited_write_allow_pledge_payments",
+      "breakpoints": true
     }
   ]
 }

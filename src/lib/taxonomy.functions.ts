@@ -1,6 +1,7 @@
 import { newId } from "./domain/ledger";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { postOpeningBalance } from "./services/ledger";
+import { auditedWrite } from "./audited-write";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -58,14 +59,24 @@ export const createAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
-    const { error } = await context.supabase.from("accounts").insert({
-      id: newId(),
-      org_id: data.orgId,
-      name: data.name,
-      type: data.type,
-      subtype: data.subtype ?? null,
-    });
-    if (error) throw new Error(error.message);
+    const id = newId();
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "accounts",
+          op: "insert",
+          values: { id, name: data.name, type: data.type, subtype: data.subtype ?? null },
+        },
+      ],
+      {
+        action: "create",
+        entity: "account",
+        entityId: id,
+        after: { name: data.name, type: data.type },
+      },
+    );
     return { ok: true };
   });
 
@@ -117,10 +128,18 @@ function makeCrud(
     .handler(async ({ data, context }) => {
       const { orgId, name, ...rest } = data as any;
       await assertCan(context.supabase, context.userId, orgId, "write");
-      const { error } = await context.supabase
-        .from(table)
-        .insert({ id: newId(), org_id: orgId, name, ...rest });
-      if (error) throw new Error(error.message);
+      const id = newId();
+      await auditedWrite(
+        context.supabase,
+        orgId,
+        [{ table, op: "insert", values: { id, name, ...rest } }],
+        {
+          action: "create",
+          entity: table.replace(/s$/, "").replace(/ie$/, "y"),
+          entityId: id,
+          after: { name },
+        },
+      );
       return { ok: true };
     });
 

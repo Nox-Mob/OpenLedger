@@ -7,8 +7,14 @@ import { writeAudit } from "./audit";
 const orgId = z.string().uuid();
 const PAGE = 1000;
 
-async function all(build: (from: number, to: number) => PromiseLike<{ data: any; error: any }>) {
-  const out: any[] = [];
+type PageRow = Record<string, unknown>;
+async function all(
+  build: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: PageRow[] | null; error: { message: string } | null }>,
+): Promise<PageRow[]> {
+  const out: PageRow[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await build(from, from + PAGE - 1);
     if (error) throw new Error(error.message);
@@ -89,6 +95,7 @@ export const listHistory = createServerFn({ method: "GET" })
         orgId,
         page: z.number().int().min(0).max(10000),
         entity: z.string().max(40).optional(),
+        kind: z.enum(["change", "ledger", "system"]).optional(),
       })
       .parse(input),
   )
@@ -97,13 +104,14 @@ export const listHistory = createServerFn({ method: "GET" })
     const size = 50;
     let q = context.supabase
       .from("audit_log")
-      .select("id, user_id, action, entity, entity_id, before, after, created_at", {
+      .select("id, user_id, action, entity, entity_id, before, after, created_at, kind", {
         count: "exact",
       })
       .eq("org_id", data.orgId)
       .order("created_at", { ascending: false })
       .range(data.page * size, data.page * size + size - 1);
     if (data.entity) q = q.eq("entity", data.entity);
+    if (data.kind) q = q.eq("kind", data.kind);
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
     const ids = [...new Set((rows ?? []).map((r) => r.user_id).filter(Boolean))] as string[];

@@ -23,10 +23,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Direct database writes (server functions must use shared code)
+        # Tracked on its own so a new direct write shows up as a named failure.
+        # Fix by moving the write into a service or audited_write; only cloud-only
+        # records may carry a `// cloud-only-write: <reason>` comment.
+        run: |
+          npx vitest run src/lib/direct-writes.test.ts --reporter=default --reporter=github-actions || {
+            echo "### ❌ A server function writes to the database directly. Move it into shared code (see src/lib/direct-writes.test.ts)." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
       - name: Run tests
-        run: bunx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results.xml --reporter=github-actions
+        run: npx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results.xml --reporter=github-actions
       - name: Report failures
         if: failure()
         run: echo "### ❌ Unit tests failed — see the annotations above for which rule broke and why. The build was blocked." >> "$GITHUB_STEP_SUMMARY"
@@ -39,11 +51,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: tsc --noEmit
         run: |
-          bunx tsc --noEmit --pretty false 2>&1 | tee tsc.log
+          npx tsc --noEmit --pretty false 2>&1 | tee tsc.log
           code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
             echo "### ❌ Type errors (build blocked)" >> "$GITHUB_STEP_SUMMARY"
@@ -61,11 +76,14 @@ jobs:
       VITE_SUPABASE_PROJECT_ID: ci
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: vite build
         run: |
-          bun run build 2>&1 | tee build.log
+          npm run build 2>&1 | tee build.log
           code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
             echo "### ❌ Build failed" >> "$GITHUB_STEP_SUMMARY"
@@ -97,11 +115,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: eslint
         run: |
-          bunx eslint . --format stylish 2>&1 | tee lint.log
+          npx eslint . --format stylish 2>&1 | tee lint.log
           code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
             echo "### ❌ Lint errors (real code problems, build blocked)" >> "$GITHUB_STEP_SUMMARY"
@@ -112,29 +133,30 @@ jobs:
   format:
     name: Formatting
     runs-on: ubuntu-latest
-    # Whitespace/style only. Reported, never auto-applied; run `bun run format` locally to fix.
+    # Whitespace/style only. Reported, never auto-applied; run `npm run format` locally to fix.
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run format:check || (echo "### ⚠️ Files not formatted — run \`bun run format\` locally (blocks the build)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check || (echo "### ⚠️ Files not formatted — run \`npm run format\` locally (blocks the build)" >> "$GITHUB_STEP_SUMMARY"; exit 1)
 
   dependency-audit:
     name: Dependency vulnerabilities
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: Audit (fails on high/critical)
-        # Reviewed exceptions — keep this list short and dated. Each must be dev-only tooling
-        # whose input is our own source code, never user data or anything shipped to the app.
-        #   2026-10-01 brace-expansion (eslint/typescript-eslint -> minimatch): only expands
-        #   glob patterns from our own lint config. Remove once eslint pulls >=1.1.20 / >=5.0.11.
+        # Audits packages shipped with the app (dev-only tooling such as eslint is skipped).
         run: |
-          bun audit --audit-level=high \
-            --ignore=GHSA-mh99-v99m-4gvg --ignore=GHSA-rgw5-rvv9-x895 \
-            --ignore=GHSA-qhr7-859c-m2p7 --ignore=GHSA-6j4f-fj2g-mc7p 2>&1 | tee audit.log
+          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.log
           code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
             echo "### ❌ High/critical vulnerable packages found — update them manually" >> "$GITHUB_STEP_SUMMARY"

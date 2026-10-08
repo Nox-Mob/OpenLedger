@@ -4,6 +4,33 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-10-07
+
+### Added
+
+- History page can be filtered by type: money, setup and settings, or system.
+- Backups now record the app version and include a reserved slot for future attachments (format v3). Older v2 backups still restore.
+- Permissions live in one fixed table, with a test that pins every role and action.
+- Full-year business and nonprofit test scenarios check reports against fixed expected totals.
+- Core libraries are pinned to exact versions; see docs/dependencies.md.
+- More automated tests: the audited-write helper, database checks for audited writes and their history, the migration safety script, app version against the changelog, and roll-back checks for every statement-check step, bank-row post and reconciliation finish.
+
+### Changed
+
+- If a change can't be recorded in history, the request now fails with an error instead of reporting success.
+- Posting or voiding a transaction now saves the transaction and its history entry together. If either fails, nothing is kept.
+- Adding accounts, categories, tags, projects and funds, changing a fund's restriction, recording pledges and pledge payments, and saving import layouts now save their history entry in the same step.
+- A new automatic check stops any feature from saving to the database without going through the shared code. It runs on every change.
+- Settings, account setup, members and invites, budgets, statement checks, imports and pledge status changes are now saved together with their history entry. If either fails, nothing is kept.
+- History entries are now sorted into changes, money and system events.
+- npm (version 11 or newer) is now the only supported package manager; `package-lock.json` is the only lock file and automated checks install with `npm ci` on Node 24.
+- Added an architecture overview in docs/architecture.md.
+
+### Fixed
+
+- Every `npm audit` warning is resolved without downgrades (brace-expansion, uuid inside the Excel export library, esbuild inside the database config tool).
+- A database safety check no longer reports a false failure when a fund and its history save correctly.
+
 ## [0.0.3] - 2026-10-07
 
 ### Added
@@ -30,6 +57,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ## [0.0.2] - 2026-10-06
 
 ### Added
+
 - High-contrast dark mode with a toggle in the website header and the app sidebar. It remembers your choice and follows the system preference on first visit.
 - Public website explaining OpenLedgerApp's purpose, limitations, and development status.
 - Clear distinction between available self-hosted web source and planned desktop and managed-cloud editions.
@@ -37,6 +65,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Product blueprint for v0.0.3 desktop-ready foundations and later optional synchronization.
 
 ### Changed
+
 - Groundwork for the future desktop edition: a local SQLite storage option with the same bookkeeping protections, tested against the same rules as the cloud app (not yet packaged as an app).
 - Statement checks, reports, organization settings, books lock and year-end close now run in the same shared, storage-independent code, ready for the future desktop edition.
 - Every new record (organizations, accounts, statement checks, year-end closes, import batches, history entries, categories) now gets its ID from the app instead of the database.
@@ -49,6 +78,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Consistent section spacing across the website and app.
 
 ### Removed
+
 - Marketing strips and eyebrow badges above headlines on the public website.
 - Legal mailing address from legal notices; contact is by email only.
 - Em dashes and en dashes from all user-facing copy.
@@ -58,6 +88,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 Initial usable web foundation.
 
 ### Added
+
 - Organization-scoped double-entry accounting, chart of accounts, opening balances, and transaction register.
 - Money in, money out, transfers, and advanced entry flows with duplicate-submit protection.
 - CSV, OFX/QFX, and reviewed PDF bank imports; reconciliation and completion locks.
@@ -68,12 +99,14 @@ Initial usable web foundation.
 - Automated unit tests, database-rule checks, CI, and deployment documentation.
 
 ### Security and data integrity
+
 - Balanced-entry enforcement, organization isolation, and permission checks.
 - Posted transactions corrected by voiding and re-entry rather than destructive editing.
 - Bank evidence protection, account archiving, and reconciliation locks.
 - Startup data-safety safeguards and manual development-only sample seeding.
 
 ### Known limitations
+
 - Pre-1.0 development software; review results and keep independent backups.
 - Fund tags are not full nonprofit fund accounting.
 - No standalone desktop installer, automated bank feeds, payroll, or tax filing.

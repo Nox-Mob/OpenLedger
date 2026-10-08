@@ -124,3 +124,35 @@ describe("restore planning", () => {
     );
   });
 });
+
+describe("backup format v3", async () => {
+  const keys = await keysFromSeed("a".repeat(64));
+  const v3 = clone(await signBackup(keys, ORG, sample(), "2026-10-07T00:00:00Z"));
+
+  it("records the app version and an empty attachments slot", () => {
+    expect(v3.manifest.version).toBe(3);
+    expect(typeof v3.manifest.appVersion).toBe("string");
+    expect(v3.manifest.attachments).toEqual([]);
+  });
+
+  it("still restores a v2 backup", async () => {
+    const m: Record<string, unknown> = { ...clone(v3.manifest), version: 2 };
+    delete m["appVersion"];
+    delete m["attachments"];
+    const sig = await crypto.subtle.sign(
+      { name: "Ed25519" },
+      keys.privateKey,
+      new TextEncoder().encode(canonical(m)),
+    );
+    const { b64url } = await import("./backup");
+    const v2 = { ...clone(v3), manifest: m, signature: b64url(sig) };
+    const v = await verifyBackup(v2, keys.publicRaw);
+    expect(v.counts["entries"]).toBe(2);
+  });
+
+  it("refuses a stripped v3 manifest", async () => {
+    const bad = clone(v3) as any;
+    delete bad.manifest.attachments;
+    await expect(verifyBackup(bad, keys.publicRaw)).rejects.toBeInstanceOf(BackupRejected);
+  });
+});

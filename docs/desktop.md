@@ -17,7 +17,7 @@ Status: storage layer done and tested; the Tauri shell itself is not built yet.
 
 ## Wiring the Tauri shell (next step, needs Rust toolchain on a dev machine)
 
-1. `bun add @tauri-apps/api @tauri-apps/plugin-sql` and `cargo tauri init`;
+1. `npm install @tauri-apps/api @tauri-apps/plugin-sql` and `cargo tauri init`;
    enable `tauri-plugin-sql` with the `sqlite` feature.
 2. Driver (plugin-sql already matches `SqlDriver`):
    ```ts

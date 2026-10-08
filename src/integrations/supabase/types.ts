@@ -99,6 +99,7 @@ export type Database = {
           entity: string
           entity_id: string | null
           id: string
+          kind: string
           org_id: string
           user_id: string | null
         }
@@ -110,6 +111,7 @@ export type Database = {
           entity: string
           entity_id?: string | null
           id?: string
+          kind?: string
           org_id: string
           user_id?: string | null
         }
@@ -121,6 +123,7 @@ export type Database = {
           entity?: string
           entity_id?: string | null
           id?: string
+          kind?: string
           org_id?: string
           user_id?: string | null
         }
@@ -1116,6 +1119,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_append_in_write: {
+        Args: { p_audit: Json; p_org: string; p_user: string }
+        Returns: undefined
+      }
+      audited_write: {
+        Args: { p_audit: Json; p_ops: Json; p_org: string; p_user?: string }
+        Returns: Json
+      }
       can_write_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
@@ -1130,6 +1141,14 @@ export type Database = {
       }
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      post_transaction_atomic: {
+        Args: { p_audit: Json; p_entries: Json; p_tags: Json; p_tx: Json }
+        Returns: undefined
+      }
+      void_transaction_atomic: {
+        Args: { p_audit: Json; p_id: string; p_org: string }
         Returns: boolean
       }
     }

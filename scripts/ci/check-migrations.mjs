@@ -17,7 +17,9 @@ for (const f of files) {
   if (!/^\d{14}_[\w-]+\.sql$/.test(f))
     errors.push(`${f}: name must look like YYYYMMDDHHMMSS_description.sql`);
   const sql = readFileSync(`${dir}/${f}`, "utf8").toLowerCase();
-  const code = sql.replace(/--[^\n]*/g, "");
+  // Function bodies ($$ ... $$) don't run when the migration is applied, so a DELETE
+  // inside one isn't a startup data loss; only top-level statements are checked.
+  const code = sql.replace(/--[^\n]*/g, "").replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, "");
   for (const bad of [
     /\btruncate\b(?!\s*on)/,
     /\bdelete\s+from\b/,

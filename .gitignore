@@ -34,3 +34,7 @@ dist-ssr
 # Environment files (never commit real values)
 .env.*
 !.env.example
+
+# npm is the only package manager; the editor may recreate this
+bun.lock
+bun.lockb
