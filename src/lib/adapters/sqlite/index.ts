@@ -181,6 +181,22 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     }));
   }
 
+  async function insertAudit(e: AuditEvent) {
+    await db.execute(
+      "INSERT INTO audit_log (org_id, user_id, action, entity, entity_id, before, after, created_at) VALUES (?,?,?,?,?,?,?,?)",
+      [
+        e.orgId,
+        e.userId,
+        e.action,
+        e.entity,
+        e.entityId ?? null,
+        json(e.before),
+        json(e.after),
+        now(),
+      ],
+    );
+  }
+
   return {
     orgs: {
       async get(id) {
@@ -697,21 +713,6 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
     audit: {
       async append(e) {
         await insertAudit(e);
-      },
-      async _unused(e: AuditEvent) {
-        await db.execute(
-          "INSERT INTO audit_log (org_id, user_id, action, entity, entity_id, before, after, created_at) VALUES (?,?,?,?,?,?,?,?)",
-          [
-            e.orgId,
-            e.userId,
-            e.action,
-            e.entity,
-            e.entityId ?? null,
-            json(e.before),
-            json(e.after),
-            now(),
-          ],
-        );
       },
       async listFor(orgId, entity, entityId, limit = 50) {
         const rows = await db.select<any>(

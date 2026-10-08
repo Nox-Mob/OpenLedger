@@ -24,6 +24,8 @@ export interface MemoryStore {
   bank: Map<string, BankTransaction>;
   reconciliations: Map<string, Reconciliation>;
   audit: (AuditEvent & { at: string })[];
+  /** Test hook: make every history write fail. */
+  failAudit?: boolean;
   periodCloses: Map<string, PeriodClose>;
   projects: Map<string, Project>;
   statements: (StatementInfo & { orgId: string; accountId: string })[];
@@ -67,6 +69,9 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
       .filter((e) => pred(e))
       .map(({ accountId: _a, ...e }) => e);
   let tick = 0;
+  // Monotonic fake clock so "newest first" ordering is deterministic in tests.
+  const pushAudit = (e: AuditEvent) =>
+    s.audit.push({ ...e, at: new Date(Date.parse(NOW) + tick++).toISOString() });
   return {
     store: s,
     orgs: {
