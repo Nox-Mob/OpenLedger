@@ -1,49 +1,76 @@
-# Plan: after v0.0.4 (v0.0.5 to v0.0.7)
+# Plan: road to v1.0
 
-v0.0.4 is released (2026-10-07). The groundwork is in place: every change is saved together with its history, all features go through shared code, permissions sit in one table, backups are signed, and CI checks all of it. The next three releases build on that groundwork, smallest risk first.
+Based on the security and controls review and the 1.0 feature review. Both say: keep the current design, no rewrite, and make 1.0 about trust (correct books, reconciliation, nonprofit funds, permissions, recovery) rather than a long feature list.
 
-## v0.0.5 - Close the gaps and tidy up
+1.0 is the **web edition** (cloud and self-hosted). Desktop ships separately, only when its native storage is proven.
 
-Goal: no known loose ends left from v0.0.4, and dependencies kept current.
+## Review findings and how each is handled
 
-1. **Year-end close in one step.** Saving "year closed" and locking the books now happen together; today the record can be left on its own if the lock fails.
-2. **Pledge payment in one step.** The payment and the pledge's new status are saved together.
-3. **Trusted history descriptions.** The server writes each history description from the real change, so a user can't attach a misleading one.
-4. **Remove the unused database config tool** (drizzle-kit): clears two outdated-part warnings.
-5. **Charts upgrade** (recharts 2 to 3) on the dashboard's two charts, with screenshots before and after.
-6. **Code checker upgrade** (eslint 9 to 10) and its settings.
-7. **Fewer loose types** in older code, so the checker's warnings drop to zero.
-8. **Tests for each item above**, including database checks for 1 to 3.
+| Finding | Action | Release |
+| --- | --- | --- |
+| .env is tracked in Git | Keep it (Lovable needs it). It only holds public keys. Add a CI check that fails if any private key shape ever appears in it; document why it is tracked | v0.0.6 |
+| Prove "change and history roll back together" everywhere | Add a failure test for every remaining high-impact change: member removal, ownership transfer, org delete, invite claim, settings | v0.0.6 |
+| Direct-write check is text matching only | Add a code-structure rule that also catches multi-line calls, helper functions and admin-client use outside approved files | v0.0.6 |
+| Dev-only packages not audited | Add a separate full audit that reports but does not block | v0.0.6 |
+| Architecture doc out of date | Done in this change | now |
+| Concurrent requests (double close, double post) | Tests that send the same request twice at once | v0.0.7 |
+| SQLite tested with sql.js only | Native driver tests before any desktop release | Desktop track |
 
-## v0.0.6 - Safety and everyday use
+## v0.0.6 - Safety and controls
 
-Goal: features people expect before using it for real books.
+1. Items from the table above marked v0.0.6.
+2. Two-step sign-in (MFA), optional per user, admin can require it.
+3. Delete my account (blocked while you own an organization).
+4. Session safety: removed members lose access right away; password reset tested end to end.
+5. Manual keyboard and screen reader walk-through.
 
-1. **Two-step sign-in (MFA)** with an authenticator app, optional per user, with an admin setting to require it for the organization.
-2. **Delete my account**: blocked while you own an organization; your name stays on history entries as "deleted user".
-3. **Organization switcher** in the sidebar for people in more than one organization.
-4. **Empty, loading and error screens** on every page, with plain-language messages.
-5. **Accessibility pass**: keyboard use, focus, labels, contrast in both themes.
-6. **Input checks**: shared rules for amounts, dates and names, same message on every form.
-7. **Account catalog**: stop duplicate account names; delete an account only if it was never used (otherwise archive).
+## v0.0.7 - Reports people can trust
 
-## v0.0.7 - Scale and portability
+1. General ledger and account activity reports with running balances.
+2. Statement check report (matched and outstanding items).
+3. Click any report total to see the transactions behind it.
+4. Every report states its period and "cash basis", and exports to CSV, Excel and PDF.
+5. Fund balance and fund activity reports.
+6. Speed at 10,000 to 50,000 ledger lines.
 
-Goal: stays fast with real-world volume and moves the remaining cloud-only features toward desktop.
+## v0.0.8 - Periods and roles
 
-1. **Performance at 10,000 to 50,000 ledger lines**: test data at that size, timing targets for reports, register and import, and indexes where needed.
-2. **Budgets, exports and history behind the shared storage layer**, so a future desktop edition gets them too.
-3. **"Cash basis" labels** on reports so the method is stated clearly.
-4. **Self-hosted installer, first version**: one script that asks hosted versus self-hosted database, writes the local settings file, applies database changes safely, builds and starts the app.
+1. Month close with warnings (unreconciled accounts, open statement checks); audited reopen by an admin.
+2. Treasurer/bookkeeper role added to the permissions table (between admin and member).
+3. Plain-language errors for the common failures (unbalanced, period closed, statement off, bad backup, no permission).
 
-## Stays in Future (unscheduled)
+## v0.0.9 - Everyday use
 
-Desktop edition, desktop and cloud sync, accrual basis, invoices and bills, bank feeds, receipt attachments, cloud pricing.
+1. Transaction templates and recurring drafts (never auto-posted).
+2. Search and filters across transactions.
+3. Budget vs actual for funds and projects; board report package (one PDF).
+4. Guided first-run checklist; support and diagnostics page (version, database type, last backup).
+
+## v0.1.0 to v0.9.x - Hardening
+
+- Self-hosted installer and tested upgrade from the previous release.
+- Backup restore tested across versions.
+- Real users (non-accountants) complete common tasks with the docs.
+- Security disclosure policy and contact published.
+
+## v1.0 release gates (all required)
+
+1. Accounting correctness: every report ties to the ledger.
+2. Security and permissions: isolation, authorization and membership changes covered by automated tests.
+3. Import and statement checks work end to end on a real statement.
+4. Backup and recovery: full restore works; a failed restore changes nothing.
+5. Clean install and upgrade both work.
+6. A non-accountant can do common tasks.
+7. Support, privacy and vulnerability-reporting pages published.
+
+## Left out of 1.0
+
+Bank feeds, invoices and bills, payroll, multi-currency, desktop and cloud sync, donor CRM, custom report builder, consolidation across organizations. AI statement reading stays opt-in and never posts by itself.
 
 ## Technical details
 
-- 1 to 3 of v0.0.5 use new migrations (one RPC for close+lock, pledge payment folded into audited_write ops, server-built audit descriptions); existing migrations stay untouched.
-- MFA uses the built-in auth TOTP factors; the org "require MFA" flag is checked in requireSupabaseAuth-backed server functions, not only in the UI.
-- Account deletion goes through a server function using the admin client after ownership checks; history rows keep user_id, display name resolved as "deleted user".
-- Performance work adds a seeded load fixture for the memory adapter plus an optional local-database run; no seed data in migrations.
-- Every release keeps the rules: npm 11+, direct-writes check at zero, permissions table pinned, CHANGELOG as the only release notes.
+- .env check: CI step greps `.env` for `service_role`, `sb_secret_`, and JWT payloads with role service_role; fails if found.
+- Structural direct-write rule: a custom ESLint rule (AST) over `src/lib/*.functions.ts` and `src/routes/**` flagging `.from(...).insert|update|delete|upsert` chains and `client.server` imports outside an allowlist; existing regex test stays.
+- Atomicity tests use the memory adapter plus new `supabase/tests/*.sql` checks with a forced failure after the data step.
+- Treasurer role needs a new `app_role` enum value (additive migration) and new CAPABILITIES rows pinned by test.
+- Month close reuses `books_locked_through` and period_closes; reopen goes through audited_write.

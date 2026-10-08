@@ -101,6 +101,7 @@ export type Database = {
           id: string
           kind: string
           org_id: string
+          recorded_change: Json | null
           user_id: string | null
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           id?: string
           kind?: string
           org_id: string
+          recorded_change?: Json | null
           user_id?: string | null
         }
         Update: {
@@ -125,6 +127,7 @@ export type Database = {
           id?: string
           kind?: string
           org_id?: string
+          recorded_change?: Json | null
           user_id?: string | null
         }
         Relationships: [
@@ -1143,6 +1146,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      normalize_name: { Args: { p: string }; Returns: string }
       post_transaction_atomic: {
         Args: { p_audit: Json; p_entries: Json; p_tags: Json; p_tx: Json }
         Returns: undefined
