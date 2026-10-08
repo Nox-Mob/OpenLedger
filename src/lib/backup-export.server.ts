@@ -1,7 +1,13 @@
 // Backup reads shared by the signed export handler and its roundtrip regression tests.
 const PAGE = 1000;
-async function all(build: (from: number, to: number) => PromiseLike<{ data: any; error: any }>) {
-  const out: any[] = [];
+type PageRow = Record<string, unknown>;
+async function all(
+  build: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: PageRow[] | null; error: { message: string } | null }>,
+): Promise<PageRow[]> {
+  const out: PageRow[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await build(from, from + PAGE - 1);
     if (error) throw new Error(error.message);
@@ -47,7 +53,7 @@ export async function readBackupData(db: any, orgId: string) {
         .order("id")
         .range(f, to),
     )
-  ).map(({ transactions: _t, ...e }: any) => e);
+  ).map(({ transactions: _t, ...e }: PageRow) => e);
   tables["transaction_tags"] = (
     await all((f, to) =>
       db
@@ -57,6 +63,6 @@ export async function readBackupData(db: any, orgId: string) {
         .order("transaction_id")
         .range(f, to),
     )
-  ).map(({ transactions: _t, ...e }: any) => e);
+  ).map(({ transactions: _t, ...e }: PageRow) => e);
   return { organization: org, tables };
 }

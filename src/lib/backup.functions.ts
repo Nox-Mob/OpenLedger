@@ -7,8 +7,14 @@ import { writeAudit } from "./audit";
 const orgId = z.string().uuid();
 const PAGE = 1000;
 
-async function all(build: (from: number, to: number) => PromiseLike<{ data: any; error: any }>) {
-  const out: any[] = [];
+type PageRow = Record<string, unknown>;
+async function all(
+  build: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: PageRow[] | null; error: { message: string } | null }>,
+): Promise<PageRow[]> {
+  const out: PageRow[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await build(from, from + PAGE - 1);
     if (error) throw new Error(error.message);
