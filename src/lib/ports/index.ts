@@ -53,8 +53,10 @@ export interface OrgRepository {
         | "aiPdfEnabled"
       >
     >,
+    audit?: AuditEvent,
   ): Promise<void>;
-  setBooksLockedThrough(orgId: Id, date: IsoDate | null): Promise<void>;
+  /** Audited methods: with `audit`, the change and its history entry are saved atomically. */
+  setBooksLockedThrough(orgId: Id, date: IsoDate | null, audit?: AuditEvent): Promise<void>;
   roleOf(userId: Id, orgId: Id): Promise<Role | null>;
   listMembers(orgId: Id): Promise<Member[]>;
 }
@@ -130,7 +132,7 @@ export interface BankTransactionRepository {
   get(orgId: Id, id: Id): Promise<BankTransaction | null>;
   listUnmatched(orgId: Id, accountId?: Id): Promise<BankTransaction[]>;
   /** Links only if still unlinked; false means someone else claimed it. */
-  claim(orgId: Id, id: Id, transactionId: Id): Promise<boolean>;
+  claim(orgId: Id, id: Id, transactionId: Id, audit?: AuditEvent): Promise<boolean>;
   unlinkTransaction(orgId: Id, transactionId: Id): Promise<number>;
   listInPeriod(orgId: Id, accountId: Id, from: IsoDate, to: IsoDate): Promise<BankTransaction[]>;
   latestStatement(orgId: Id, accountId: Id): Promise<StatementInfo | null>;
@@ -148,7 +150,7 @@ export interface ReconciliationRepository {
     mode: ReconcileMode;
     batchId: Id | null;
     createdBy: Id;
-  }): Promise<void>;
+  }, audit?: AuditEvent): Promise<void>;
   get(orgId: Id, id: Id): Promise<Reconciliation | null>;
   /** Lookup by id alone; the adapter's own scoping (RLS / single-tenant file) applies. */
   locate(id: Id): Promise<Reconciliation | null>;
@@ -164,12 +166,17 @@ export interface ReconciliationRepository {
   /** Entries ticked by this check. */
   entriesOf(reconciliationId: Id): Promise<ReconEntry[]>;
   /** Ticks only unticked lines on the check's account; unticks only this check's lines. */
-  setTicked(reconciliationId: Id, entryIds: Id[], ticked: boolean): Promise<void>;
+  setTicked(
+    reconciliationId: Id,
+    entryIds: Id[],
+    ticked: boolean,
+    audit?: AuditEvent,
+  ): Promise<void>;
   clearedTotalCents(reconciliationId: Id): Promise<number>;
-  finish(orgId: Id, id: Id, userId: Id): Promise<void>;
-  reopen(orgId: Id, id: Id): Promise<void>;
+  finish(orgId: Id, id: Id, userId: Id, audit?: AuditEvent): Promise<void>;
+  reopen(orgId: Id, id: Id, audit?: AuditEvent): Promise<void>;
   /** In-progress only: unticks its lines and removes it. */
-  discard(orgId: Id, id: Id): Promise<void>;
+  discard(orgId: Id, id: Id, audit?: AuditEvent): Promise<void>;
 }
 
 export interface PeriodCloseRepository {
