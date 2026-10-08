@@ -26,7 +26,7 @@ export function AccountChecklist({
   rows: ChecklistRow[];
   terms: Terms;
   onToggle: (row: ChecklistRow, next: boolean) => void;
-  onDelete?: (row: ChecklistRow) => void;
+  onDelete?: ((row: ChecklistRow) => void) | undefined;
   disabled?: boolean;
 }) {
   return (
