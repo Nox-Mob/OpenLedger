@@ -1,6 +1,18 @@
 # OpenLedgerApp — Roadmap
 
-## v0.0.3 — Funds, members, exports, budgets, observability (in progress)
+## v0.0.4 - Stability and foundations (in progress)
+- [x] History save failures now fail the request instead of reporting success
+- [ ] 1. Change and its history saved atomically (cloud: same database step; desktop/test: one unit of work)
+- [ ] 2. History kinds: change, money, system (+ History page filter, backfill)
+- [ ] 3. Remaining workflows (members, invites, pledges, budgets, backups, imports, categories) behind services; guard test against direct writes in server functions
+- [ ] 4. Declarative role capability table
+- [ ] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
+- [x] 6a. Bun is the only package manager (package-lock.json removed)
+- [ ] 6b. Dependency review (docs/dependencies.md), pin core versions, clear loose-type warnings in backup code
+- [ ] 7. Backup format v3 (app version, attachments slot; v2 still restores)
+- [x] 8. docs/architecture.md
+
+## v0.0.3 - Funds, members, exports, budgets, observability (released 2026-10-07)
 - [x] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
 - [x] 16. Invites, remove member, transfer ownership, org deletion (account deletion still open)
 - [x] Server functions use `.validator()` everywhere (no deprecated `.inputValidator()` left)
