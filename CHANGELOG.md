@@ -4,6 +4,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-10-08
+
 ### Added
 
 - Organization switcher in the sidebar for people in more than one organization, showing each organization's type and your role.
@@ -27,6 +29,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Creating a project with a budget or a restricted fund failed; both save correctly again.
 - The pledge form and year-end close could offer archived accounts.
 - Import column pickers and statement-check tables no longer rebuild themselves on every change, which could drop keyboard focus.
+- The GitHub database checks were missing the name and delete protections, so their test failed.
 
 ## [0.0.4] - 2026-10-07
 
