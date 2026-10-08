@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { checkAmount, checkDate, checkName, nameField, sameName, MAX_AMOUNT_CENTS } from "./validation";
+import {
+  checkAmount,
+  checkDate,
+  checkName,
+  nameField,
+  sameName,
+  MAX_AMOUNT_CENTS,
+} from "./validation";
 import { errorMessage } from "./errors";
 import { toColumns } from "./columns";
 
@@ -33,7 +40,10 @@ describe("checkAmount", () => {
     expect(checkAmount("999999999.99")).toEqual({ ok: true, value: MAX_AMOUNT_CENTS });
   });
   it("uses the field label in messages", () => {
-    expect(checkAmount("", { label: "Budget" })).toEqual({ ok: false, error: "Budget is required." });
+    expect(checkAmount("", { label: "Budget" })).toEqual({
+      ok: false,
+      error: "Budget is required.",
+    });
   });
 });
 

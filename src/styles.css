@@ -72,6 +72,8 @@
 
 .website-hero {
   min-height: 590px;
+  /* Matches the photo's dark green, so the headline stays readable if the image is slow or missing. */
+  background-color: oklch(0.24 0.035 165);
 }
 .website-hero-shade {
   display: none;

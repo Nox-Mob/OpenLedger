@@ -19,10 +19,16 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
-      // The two classic hook rules. react-hooks 7 also ships React Compiler rules
-      // (static-components, set-state-in-effect, purity); those are tracked on the roadmap.
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      // React Compiler rules. Components defined inside render remount (and lose focus) every time.
+      "react-hooks/static-components": "error",
+      "react-hooks/purity": "error",
+      "react-hooks/refs": "error",
+      "react-hooks/immutability": "error",
+      // Off on purpose: reading browser-only state (theme, storage, URL hash) in useEffect is how
+      // this app avoids SSR hydration mismatches, and that pattern sets state inside an effect.
+      "react-hooks/set-state-in-effect": "off",
       "no-restricted-imports": [
         "error",
         {
@@ -48,6 +54,11 @@ export default tseslint.config(
   {
     files: ["src/routes/**/*.tsx", "src/components/ui/**/*.tsx"],
     rules: { "react-refresh/only-export-components": "off" },
+  },
+  // Vendored shadcn files: skeleton widths use Math.random by design.
+  {
+    files: ["src/components/ui/**/*.tsx"],
+    rules: { "react-hooks/purity": "off" },
   },
   // Test doubles fake only the slice of a library they need; loose types are fine there.
   {

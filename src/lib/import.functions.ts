@@ -508,7 +508,7 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
     if (!res.ok) {
       const body = await res.text();
       console.error(`AI extract failed [${res.status}]: ${body}`);
-      if (res.status === 429) throw new Error("The reader is busy — try again in a minute.");
+      if (res.status === 429) throw new Error("The reader is busy. Try again in a minute.");
       if (res.status === 402) throw new Error("AI credits are used up for this workspace.");
       throw new Error("Couldn't read this PDF automatically.");
     }
