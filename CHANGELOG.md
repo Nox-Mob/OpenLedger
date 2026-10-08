@@ -4,6 +4,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-10-07
+
 ### Added
 
 - Fund accounting for nonprofits: restricted and unrestricted funds, fund balances, net assets with and without donor restrictions, and releases from restriction.
