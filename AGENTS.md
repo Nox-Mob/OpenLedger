@@ -42,3 +42,5 @@
 - Backups: Ed25519-signed manifest (key derived from server secret BACKUP_SIGNING_SEED) over chained per-row SHA-256 table digests (src/lib/domain/backup.ts); unsigned/changed files are refused. Restore only creates a new org with new IDs, re-runs domain checks, writes via the caller's RLS client, and rolls back by deleting the new org on failure.
 - Backup export reads live in a server-only helper shared with roundtrip tests, so pagination and organization scoping are tested without mocking TanStack RPC; persistence doubles do not replace database RLS/trigger CI checks.
 - Org delete relies on deferrable "no action" FKs and a balance trigger that skips deleted transactions; keep new cascading FKs deferrable.
+- Package manager: Bun only (bun.lock); no package-lock.json, so every install resolves the same tree.
+- Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
