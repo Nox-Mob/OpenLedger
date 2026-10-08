@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -130,6 +131,16 @@ function NewTransactionPage() {
       if (mode === "advanced") {
         if (!advancedTotals.balanced)
           throw new Error(`${terms.debit}s and ${terms.credit.toLowerCase()}s must be equal.`);
+        for (const r of rows) {
+          for (const [v, label] of [
+            [r.debit, terms.debit],
+            [r.credit, terms.credit],
+          ] as const) {
+            if (!v.trim()) continue;
+            const c = checkAmount(v, { allowZero: true, label });
+            if (!c.ok) throw new Error(c.error);
+          }
+        }
         entries = rows.flatMap((r) => {
           const d = parseToCents(r.debit) ?? 0;
           const c = parseToCents(r.credit) ?? 0;
@@ -139,8 +150,9 @@ function NewTransactionPage() {
         });
         if (entries.length < 2) throw new Error("Add at least two account lines.");
       } else {
-        const cents = parseToCents(amount);
-        if (!cents || cents <= 0) throw new Error("Enter an amount greater than zero.");
+        const amt = checkAmount(amount);
+        if (!amt.ok) throw new Error(amt.error);
+        const cents = amt.value;
         if (!moneyAccountId) throw new Error("Choose an account.");
 
         if (mode === "in") {

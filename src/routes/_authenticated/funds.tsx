@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -150,11 +151,12 @@ function FundsPage() {
 
   async function submitRelease(e: React.FormEvent) {
     e.preventDefault();
-    const cents = parseToCents(releaseAmount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(releaseAmount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     setBusy(true);
     try {
       await releaseFromRestriction({

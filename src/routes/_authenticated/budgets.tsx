@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,10 +65,14 @@ function BudgetsPage() {
   async function save(accountId: string) {
     const raw = drafts[accountId];
     if (raw === undefined) return;
-    const cents = raw.trim() === "" ? null : parseToCents(raw);
-    if (cents !== null && (cents === undefined || cents < 0)) {
-      toast.error("Enter an amount of zero or more");
-      return;
+    let cents: number | null = null;
+    if (raw.trim() !== "") {
+      const amt = checkAmount(raw, { allowZero: true, label: "Budget" });
+      if (!amt.ok) {
+        toast.error(amt.error);
+        return;
+      }
+      cents = amt.value;
     }
     try {
       await saveBudget({

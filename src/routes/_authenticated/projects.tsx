@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
@@ -43,9 +44,17 @@ function ProjectsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!org) return;
+    const n = checkName(name, "Project name");
+    if (!n.ok) return void toast.error(n.error);
+    let budgetCents = 0;
+    if (budget.trim()) {
+      const b = checkAmount(budget, { allowZero: true, label: "Budget" });
+      if (!b.ok) return void toast.error(b.error);
+      budgetCents = b.value;
+    }
     try {
       await createProject({
-        data: { orgId: org.id, name, budgetCents: parseToCents(budget) ?? 0 },
+        data: { orgId: org.id, name: n.value, budgetCents },
       });
       toast.success("Project created");
       setName("");

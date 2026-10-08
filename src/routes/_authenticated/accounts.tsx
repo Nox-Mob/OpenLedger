@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
@@ -45,6 +46,12 @@ function AccountsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!org) return;
+    const n = checkName(name, "Account name");
+    if (!n.ok) return void toast.error(n.error);
+    if (opening.trim()) {
+      const o = checkAmount(opening, { allowZero: true, label: "Opening balance" });
+      if (!o.ok) return void toast.error(o.error);
+    }
     try {
       await createAccount({ data: { orgId: org.id, name, type: type as "asset" | "liability" | "equity" | "revenue" | "expense" } });
       const cents = parseToCents(opening);

@@ -1,3 +1,4 @@
+import { checkAmount, checkName } from "@/lib/validation";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,11 +85,12 @@ function PledgesPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const cents = parseToCents(amount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(amount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     const rev = revenueId || revenue[0]?.id;
     if (!rev) {
       toast.error("Turn on an income account first.");
@@ -126,11 +128,12 @@ function PledgesPage() {
   async function submitSettle(e: React.FormEvent) {
     e.preventDefault();
     if (!settle) return;
-    const cents = parseToCents(settleAmount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(settleAmount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     setBusy(true);
     try {
       await settlePledgeFn({
