@@ -4,6 +4,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+- Switched the package manager from Bun to npm: `package-lock.json` is the only lock file, and every automated check installs with `npm ci`.
+
 - Added more automated tests: the audited-write helper, the audited_write and audit_append_in_write database checks, migration safety script, app version against the changelog, and roll-back checks that every statement-check step, every bank-row post, and every reconciliation finish stays unchanged if its history cannot be saved.
 
 ### Added
