@@ -203,19 +203,33 @@ export const createPledge = createServerFn({ method: "POST" })
     });
     if (tx.duplicate) return { ok: true };
     const pledgeId = newId();
-    const { error } = await context.supabase.from("pledges").insert({
-      id: pledgeId,
-      org_id: data.orgId,
-      donor_name: data.donorName,
-      fund_id: data.fundId,
-      amount_cents: data.amountCents,
-      pledge_date: data.pledgeDate,
-      expected_date: data.expectedDate,
-      note: data.note,
-      transaction_id: tx.id,
-      created_by: context.userId,
-    });
-    if (error) throw new Error(error.message);
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
+        {
+          table: "pledges",
+          op: "insert",
+          values: {
+            id: pledgeId,
+            donor_name: data.donorName,
+            fund_id: data.fundId,
+            amount_cents: data.amountCents,
+            pledge_date: data.pledgeDate,
+            expected_date: data.expectedDate,
+            note: data.note,
+            transaction_id: tx.id,
+            created_by: context.userId,
+          },
+        },
+      ],
+      {
+        action: "create",
+        entity: "pledge",
+        entityId: pledgeId,
+        after: { donorName: data.donorName, amountCents: data.amountCents },
+      },
+    );
     return { ok: true, id: pledgeId };
   });
 
