@@ -1,3 +1,4 @@
+import type { Db } from "@/lib/db";
 // Fund accounting server functions: auth + assertCan, then the shared services.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -12,14 +13,14 @@ import { auditedWrite } from "./audited-write";
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-async function loadFunds(supabase: any, orgId: string) {
+async function loadFunds(supabase: Db, orgId: string) {
   const { data, error } = await supabase
     .from("funds")
     .select("id, name, is_restricted")
     .eq("org_id", orgId)
     .order("name");
   if (error) throw new Error(error.message);
-  return (data ?? []).map((f: any) => ({
+  return (data ?? []).map((f) => ({
     id: f.id as string,
     name: f.name as string,
     isRestricted: !!f.is_restricted,
@@ -143,14 +144,14 @@ export const listPledges = createServerFn({ method: "GET" })
     ]);
     if (error) throw new Error(error.message);
     if (e2) throw new Error(e2.message);
-    return (pledges ?? []).map((p: any) => {
-      const mine = (payments ?? []).filter((x: any) => x.pledge_id === p.id);
+    return (pledges ?? []).map((p) => {
+      const mine = (payments ?? []).filter((x) => x.pledge_id === p.id);
       const paid = mine
-        .filter((x: any) => x.kind === "payment")
-        .reduce((s: number, x: any) => s + Number(x.amount_cents), 0);
+        .filter((x) => x.kind === "payment")
+        .reduce((s: number, x) => s + Number(x.amount_cents), 0);
       const writtenOff = mine
-        .filter((x: any) => x.kind === "write_off")
-        .reduce((s: number, x: any) => s + Number(x.amount_cents), 0);
+        .filter((x) => x.kind === "write_off")
+        .reduce((s: number, x) => s + Number(x.amount_cents), 0);
       return {
         id: p.id as string,
         donorName: p.donor_name as string,
@@ -274,7 +275,7 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
       .from("pledge_payments")
       .select("amount_cents")
       .eq("pledge_id", p.id);
-    const settled = (pays ?? []).reduce((s: number, x: any) => s + Number(x.amount_cents), 0);
+    const settled = (pays ?? []).reduce((s: number, x) => s + Number(x.amount_cents), 0);
     const receivableAccountId = await receivableAccount(repos, data.orgId);
 
     let debitAccountId: string;

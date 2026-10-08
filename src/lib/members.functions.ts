@@ -1,3 +1,4 @@
+import type { Db } from "@/lib/db";
 // Member lifecycle: invite links, remove/leave, transfer ownership, delete organization.
 // Each handler checks the caller with the user's own client before any privileged write.
 import { createServerFn } from "@tanstack/react-start";
@@ -30,16 +31,16 @@ function randomToken() {
     .replace(/=+$/, "");
 }
 
-async function orgMembers(supabase: any, orgId: string): Promise<MemberRef[]> {
+async function orgMembers(supabase: Db, orgId: string): Promise<MemberRef[]> {
   const { data, error } = await supabase
     .from("user_roles")
     .select("user_id, role")
     .eq("org_id", orgId);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((r: any) => ({ userId: r.user_id, role: r.role }));
+  return (data ?? []).map((r) => ({ userId: r.user_id, role: r.role }));
 }
 
-async function orgRow(supabase: any, orgId: string) {
+async function orgRow(supabase: Db, orgId: string) {
   const { data, error } = await supabase
     .from("organizations")
     .select("id, name, created_by")
@@ -72,7 +73,7 @@ export const listInvites = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((r: any) => ({
+    return (rows ?? []).map((r) => ({
       id: r.id as string,
       role: r.role as string,
       expiresAt: r.expires_at as string,
@@ -164,7 +165,7 @@ export const acceptInvite = createServerFn({ method: "POST" })
       inv ? { expiresAt: inv.expires_at, usedAt: inv.used_at, revokedAt: inv.revoked_at } : null,
     );
     const invite = inv!;
-    const orgName = (invite as any).organizations?.name ?? "the organization";
+    const orgName = invite.organizations?.name ?? "the organization";
 
     const { data: existing } = await supabaseAdmin
       .from("user_roles")

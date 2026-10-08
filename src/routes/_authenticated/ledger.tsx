@@ -1,7 +1,10 @@
+import { errorMessage } from "@/lib/errors";
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import { listTransactions } from "@/lib/transactions.functions";
 import { incomeStatement } from "@/lib/reports.functions";
@@ -54,8 +57,8 @@ function DashboardPage() {
 
   if (isLoading || !org) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-        Loading…
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <LoadingState label="Loading your dashboard" />
       </div>
     );
   }

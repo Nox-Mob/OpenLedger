@@ -37,13 +37,23 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      // Reported, not blocking: legacy uses; tighten file by file.
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Zero loose types in app code since v0.0.5; new ones fail the check.
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   eslintPluginPrettier,
   // Formatting is checked separately (`npm run format:check`) so lint errors mean real code problems.
   { rules: { "prettier/prettier": "off" } },
+  // Route files must export `Route`, and shadcn ui files export variants by design.
+  {
+    files: ["src/routes/**/*.tsx", "src/components/ui/**/*.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
+  // Test doubles fake only the slice of a library they need; loose types are fine there.
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
   // Generated / vendored files are not ours to edit.
   { ignores: ["src/integrations/supabase/**", "src/routeTree.gen.ts"] },
 );

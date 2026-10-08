@@ -1,7 +1,10 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, listFunds } from "@/lib/taxonomy.functions";
 import { createPledge, listPledges, settlePledgeFn } from "@/lib/funds.functions";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
@@ -69,8 +72,8 @@ function PledgesPage() {
   const [cashId, setCashId] = useState("");
   const [settleKey, setSettleKey] = useState(() => crypto.randomUUID());
 
-  if (!org) return null;
-  const accounts = ((accountsQuery.data ?? []) as any[]).filter((a) => a.is_active !== false);
+  if (!org) return <OrgPending />;
+  const accounts = (accountsQuery.data ?? []).filter((a) => a.isActive);
   const revenue = accounts.filter((a) => a.type === "revenue");
   const cash = accounts.filter((a) => a.type === "asset" && a.subtype !== "pledges_receivable");
   const pledges = pledgesQuery.data ?? [];
@@ -82,11 +85,12 @@ function PledgesPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const cents = parseToCents(amount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(amount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     const rev = revenueId || revenue[0]?.id;
     if (!rev) {
       toast.error("Turn on an income account first.");
@@ -114,8 +118,8 @@ function PledgesPage() {
       setExpected("");
       setKey(crypto.randomUUID());
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -124,11 +128,12 @@ function PledgesPage() {
   async function submitSettle(e: React.FormEvent) {
     e.preventDefault();
     if (!settle) return;
-    const cents = parseToCents(settleAmount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(settleAmount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     setBusy(true);
     try {
       await settlePledgeFn({
@@ -147,8 +152,8 @@ function PledgesPage() {
       setSettleAmount("");
       setSettleKey(crypto.randomUUID());
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -198,7 +203,7 @@ function PledgesPage() {
             Fund
             <select value={fundId} onChange={(e) => setFundId(e.target.value)} className={inputCls}>
               <option value="">No fund (unrestricted)</option>
-              {((fundsQuery.data ?? []) as any[]).map((f) => (
+              {(fundsQuery.data ?? []).map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
                   {f.is_restricted ? " (restricted)" : ""}

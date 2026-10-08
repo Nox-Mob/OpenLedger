@@ -1,3 +1,5 @@
+import type { UntypedDb } from "./db";
+import type { Json } from "@/integrations/supabase/types";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -46,8 +48,8 @@ export const exportBackup = createServerFn({ method: "POST" })
     return signed as unknown as {
       manifest: typeof signed.manifest;
       signature: string;
-      organization: any;
-      tables: Record<string, any[]>;
+      organization: { [k: string]: Json };
+      tables: Record<string, { [k: string]: Json }[]>;
     };
   });
 
@@ -57,7 +59,7 @@ export const exportTransactions = createServerFn({ method: "GET" })
   .validator((input) => z.object({ orgId }).parse(input))
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "read");
-    const db = context.supabase as any;
+    const db = context.supabase as UntypedDb;
     const rows = await all((f, to) =>
       db
         .from("entries")
@@ -68,7 +70,22 @@ export const exportTransactions = createServerFn({ method: "GET" })
         .order("id")
         .range(f, to),
     );
-    return (rows as any[])
+    type Named = { name?: string; type?: string } | null;
+    type ExportRow = {
+      amount_cents: number;
+      memo: string | null;
+      accounts: Named;
+      categories: Named;
+      projects: Named;
+      funds: Named;
+      transactions: {
+        transaction_date: string;
+        description: string;
+        source: string;
+        status: string;
+      };
+    };
+    return (rows as unknown as ExportRow[])
       .map((r) => ({
         date: r.transactions.transaction_date as string,
         description: r.transactions.description as string,

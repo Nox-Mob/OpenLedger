@@ -1,7 +1,10 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, listCategories, listProjects, listFunds } from "@/lib/taxonomy.functions";
 import { createTransaction } from "@/lib/transactions.functions";
 import { parseToCents, todayISO, formatCents } from "@/lib/money";
@@ -13,6 +16,7 @@ import {
   SlidersHorizontal,
   Plus,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/transactions/new")({
 
 type Mode = "in" | "out" | "transfer" | "advanced";
 
-const MODES: Array<{ id: Mode; label: string; icon: any }> = [
+const MODES: Array<{ id: Mode; label: string; icon: LucideIcon }> = [
   { id: "in", label: "Money In", icon: ArrowDownToLine },
   { id: "out", label: "Money Out", icon: ArrowUpFromLine },
   { id: "transfer", label: "Transfer", icon: Repeat },
@@ -127,6 +131,16 @@ function NewTransactionPage() {
       if (mode === "advanced") {
         if (!advancedTotals.balanced)
           throw new Error(`${terms.debit}s and ${terms.credit.toLowerCase()}s must be equal.`);
+        for (const r of rows) {
+          for (const [v, label] of [
+            [r.debit, terms.debit],
+            [r.credit, terms.credit],
+          ] as const) {
+            if (!v.trim()) continue;
+            const c = checkAmount(v, { allowZero: true, label });
+            if (!c.ok) throw new Error(c.error);
+          }
+        }
         entries = rows.flatMap((r) => {
           const d = parseToCents(r.debit) ?? 0;
           const c = parseToCents(r.credit) ?? 0;
@@ -136,8 +150,9 @@ function NewTransactionPage() {
         });
         if (entries.length < 2) throw new Error("Add at least two account lines.");
       } else {
-        const cents = parseToCents(amount);
-        if (!cents || cents <= 0) throw new Error("Enter an amount greater than zero.");
+        const amt = checkAmount(amount);
+        if (!amt.ok) throw new Error(amt.error);
+        const cents = amt.value;
         if (!moneyAccountId) throw new Error("Choose an account.");
 
         if (mode === "in") {
@@ -189,15 +204,15 @@ function NewTransactionPage() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       navigate({ to: "/transactions" });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not save transaction");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not save transaction"));
     } finally {
       submittingRef.current = false;
       setBusy(false);
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const selectCls = inputCls;
 
@@ -230,6 +245,7 @@ function NewTransactionPage() {
           <div>
             <label className="text-sm font-medium">Date</label>
             <input
+              aria-label="Date"
               type="date"
               required
               value={date}
@@ -240,6 +256,7 @@ function NewTransactionPage() {
           <div>
             <label className="text-sm font-medium">Description</label>
             <input
+              aria-label="Description"
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -261,6 +278,7 @@ function NewTransactionPage() {
               <div>
                 <label className="text-sm font-medium">Amount</label>
                 <input
+                  aria-label="Amount"
                   required
                   inputMode="decimal"
                   value={amount}
@@ -274,6 +292,9 @@ function NewTransactionPage() {
                   {mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"}
                 </label>
                 <select
+                  aria-label={
+                    mode === "in" ? "Deposit into" : mode === "out" ? "Paid from" : "From account"
+                  }
                   required
                   value={moneyAccountId}
                   onChange={(e) => setMoneyAccountId(e.target.value)}
@@ -293,6 +314,7 @@ function NewTransactionPage() {
               <div>
                 <label className="text-sm font-medium">To account</label>
                 <select
+                  aria-label="To account"
                   required
                   value={transferToId}
                   onChange={(e) => setTransferToId(e.target.value)}
@@ -374,6 +396,7 @@ function NewTransactionPage() {
                     : `What it was for (${terms.expenses})`}
                 </label>
                 <select
+                  aria-label={mode === "in" ? "Where it came from" : "What it was for"}
                   required
                   value={otherAccountId}
                   onChange={(e) => setOtherAccountId(e.target.value)}
@@ -396,12 +419,13 @@ function NewTransactionPage() {
                     Category <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Category"
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(categoriesQuery.data ?? []).map((c: any) => (
+                    {(categoriesQuery.data ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -413,12 +437,13 @@ function NewTransactionPage() {
                     Project <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Project"
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(projectsQuery.data ?? []).map((p: any) => (
+                    {(projectsQuery.data ?? []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
@@ -430,12 +455,13 @@ function NewTransactionPage() {
                     Fund <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <select
+                    aria-label="Fund"
                     value={fundId}
                     onChange={(e) => setFundId(e.target.value)}
                     className={selectCls}
                   >
                     <option value="">None</option>
-                    {(fundsQuery.data ?? []).map((f: any) => (
+                    {(fundsQuery.data ?? []).map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
                       </option>
@@ -463,6 +489,7 @@ function NewTransactionPage() {
             {rows.map((row, i) => (
               <div key={i} className="grid grid-cols-[1fr_110px_110px_1fr_32px] gap-2">
                 <select
+                  aria-label={`Line ${i + 1} account`}
                   value={row.accountId}
                   onChange={(e) =>
                     setRows(rows.map((r, j) => (j === i ? { ...r, accountId: e.target.value } : r)))
@@ -477,6 +504,7 @@ function NewTransactionPage() {
                   ))}
                 </select>
                 <input
+                  aria-label={`Line ${i + 1} ${terms.debit}`}
                   inputMode="decimal"
                   value={row.debit}
                   onChange={(e) =>
@@ -490,6 +518,7 @@ function NewTransactionPage() {
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
+                  aria-label={`Line ${i + 1} ${terms.credit}`}
                   inputMode="decimal"
                   value={row.credit}
                   onChange={(e) =>
@@ -503,6 +532,7 @@ function NewTransactionPage() {
                   className={`${inputCls} tnum text-right`}
                 />
                 <input
+                  aria-label={`Line ${i + 1} memo`}
                   value={row.memo}
                   onChange={(e) =>
                     setRows(rows.map((r, j) => (j === i ? { ...r, memo: e.target.value } : r)))

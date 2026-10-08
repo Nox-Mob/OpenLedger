@@ -1,3 +1,6 @@
+import type { CsvMapping } from "./parsers/csv";
+import type { Json } from "@/integrations/supabase/types";
+import type { Db } from "@/lib/db";
 import { newId } from "./domain/ledger";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { postBankRow } from "./services/ledger";
@@ -213,7 +216,7 @@ export const listImportBatches = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return ((rows ?? []) as any[]).map((b) => ({
+    return (rows ?? []).map((b) => ({
       id: b.id as string,
       accountId: b.account_id as string,
       accountName: b.accounts?.name ?? "",
@@ -228,7 +231,7 @@ export const listImportBatches = createServerFn({ method: "GET" })
       rowsError: b.rows_error as number,
       status: b.status as string,
       createdAt: b.created_at as string,
-      postedCount: ((b.bank_transactions ?? []) as any[]).filter((t) => t.transaction_id).length,
+      postedCount: (b.bank_transactions ?? []).filter((t) => t.transaction_id).length,
     }));
   });
 
@@ -306,7 +309,7 @@ export const listImportProfiles = createServerFn({ method: "GET" })
       id: r.id,
       accountId: r.account_id,
       name: r.name,
-      mapping: r.mapping as any,
+      mapping: r.mapping as unknown as CsvMapping,
     }));
   });
 
@@ -342,14 +345,19 @@ export const saveImportProfile = createServerFn({ method: "POST" })
           ? {
               table: "import_profiles",
               op: "update",
-              values: { mapping: data.mapping },
+              values: { mapping: data.mapping as Json },
               match: { id },
               minRows: 1,
             }
           : {
               table: "import_profiles",
               op: "insert",
-              values: { id, account_id: data.accountId, name: data.name, mapping: data.mapping },
+              values: {
+                id,
+                account_id: data.accountId,
+                name: data.name,
+                mapping: data.mapping as Json,
+              },
             },
       ],
       {
@@ -362,7 +370,7 @@ export const saveImportProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function pdfUsage(supabase: any, orgId: string, userId: string) {
+async function pdfUsage(supabase: Db, orgId: string, userId: string) {
   const now = Date.now();
   const since = (ms: number) => new Date(now - ms).toISOString();
   const count = async (ms: number) => {
@@ -504,17 +512,27 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
       if (res.status === 402) throw new Error("AI credits are used up for this workspace.");
       throw new Error("Couldn't read this PDF automatically.");
     }
-    const json: any = await res.json();
+    const json = (await res.json()) as {
+      choices?: { message?: { tool_calls?: { function?: { arguments?: unknown } }[] } }[];
+    };
     const args = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const parsed = (typeof args === "string" ? JSON.parse(args) : args) as
+      | {
+          statement_start?: string;
+          statement_end?: string;
+          beginning_balance?: unknown;
+          ending_balance?: unknown;
+          transactions?: { date?: unknown; description?: unknown; amount?: unknown }[];
+        }
+      | undefined;
     const c = (n: unknown) =>
       typeof n === "number" && Number.isFinite(n) ? Math.round(n * 100) : null;
     return {
-      statementStart: (parsed?.statement_start as string) ?? null,
-      statementEnd: (parsed?.statement_end as string) ?? null,
+      statementStart: parsed?.statement_start ?? null,
+      statementEnd: parsed?.statement_end ?? null,
       beginningBalanceCents: c(parsed?.beginning_balance),
       endingBalanceCents: c(parsed?.ending_balance),
-      transactions: ((parsed?.transactions ?? []) as any[]).map((t) => ({
+      transactions: (parsed?.transactions ?? []).map((t) => ({
         date: String(t.date ?? ""),
         description: String(t.description ?? ""),
         amountCents: c(t.amount) ?? 0,
@@ -546,7 +564,7 @@ export const listBankTransactions = createServerFn({ method: "GET" })
     if (data.unlinkedOnly) query = query.is("transaction_id", null);
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    return ((rows ?? []) as any[]).map((r) => ({
+    return (rows ?? []).map((r) => ({
       id: r.id as string,
       date: r.bank_date as string,
       description: r.description as string,

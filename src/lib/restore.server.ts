@@ -1,3 +1,4 @@
+import type { UntypedDb } from "./db";
 // Server-only restore: verified backup -> brand new organization.
 // Data is written with the caller's RLS client (they become admin of the new org), so
 // every database guard still applies. Only history rows and rollback use the admin client.
@@ -13,7 +14,7 @@ function pick(row: Row, cols: string[]): Row {
   return out;
 }
 
-async function insertAll(db: any, table: string, rows: Row[]) {
+async function insertAll(db: UntypedDb, table: string, rows: Row[]) {
   for (let i = 0; i < rows.length; i += CHUNK) {
     const { error } = await db.from(table).insert(rows.slice(i, i + CHUNK));
     if (error) throw new Error(`Could not restore ${table.replace(/_/g, " ")}: ${error.message}`);
@@ -21,7 +22,7 @@ async function insertAll(db: any, table: string, rows: Row[]) {
 }
 
 export async function restoreIntoNewOrg(
-  db: any,
+  db: UntypedDb,
   userId: string,
   verified: VerifiedBackup,
 ): Promise<{ orgId: string; name: string }> {
@@ -345,7 +346,7 @@ export async function restoreIntoNewOrg(
     for (let i = 0; i < history.length; i += CHUNK) {
       const { error } = await supabaseAdmin
         .from("audit_log")
-        .insert(history.slice(i, i + CHUNK) as any);
+        .insert(history.slice(i, i + CHUNK) as never);
       if (error) throw new Error(`Could not restore history: ${error.message}`);
     }
     const { error: markErr } = await supabaseAdmin.from("audit_log").insert({
@@ -364,7 +365,7 @@ export async function restoreIntoNewOrg(
         counts: verified.counts,
         members_not_restored: (backup.tables["user_roles"] ?? []).length,
       },
-    } as any);
+    } as never);
     if (markErr) throw new Error(`Could not record the restore: ${markErr.message}`);
     return { orgId, name };
   } catch (err) {
@@ -372,7 +373,7 @@ export async function restoreIntoNewOrg(
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("deleted_organizations")
-      .insert({ id: newId(), org_id: orgId, name, deleted_by: userId } as any);
+      .insert({ id: newId(), org_id: orgId, name, deleted_by: userId });
     await supabaseAdmin.from("organizations").delete().eq("id", orgId);
     throw err;
   }

@@ -1,8 +1,11 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import {
   listReconciliations,
@@ -82,7 +85,7 @@ function ReconcileIndex() {
     setBatchId(s.batchId);
   }, [suggestQuery.data]);
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const accounts = (accountsQuery.data ?? []).filter(
     (a) => a.isActive && (a.type === "asset" || a.type === "liability"),
   );
@@ -112,8 +115,8 @@ function ReconcileIndex() {
         },
       });
       navigate({ to: "/reconcile/$id", params: { id } });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -133,6 +136,7 @@ function ReconcileIndex() {
           <div className="md:col-span-2">
             <label className="text-sm font-medium">Account</label>
             <select
+              aria-label="Account"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               className={inputCls}
@@ -162,6 +166,7 @@ function ReconcileIndex() {
                 <div>
                   <label className="text-sm font-medium">Statement from</label>
                   <input
+                    aria-label="Statement from"
                     type="date"
                     value={form.start}
                     onChange={(e) => setForm({ ...form, start: e.target.value })}
@@ -171,6 +176,7 @@ function ReconcileIndex() {
                 <div>
                   <label className="text-sm font-medium">Statement to</label>
                   <input
+                    aria-label="Statement to"
                     type="date"
                     value={form.end}
                     onChange={(e) => setForm({ ...form, end: e.target.value })}
@@ -180,6 +186,7 @@ function ReconcileIndex() {
                 <div>
                   <label className="text-sm font-medium">Beginning balance</label>
                   <input
+                    aria-label="Beginning balance"
                     inputMode="decimal"
                     value={form.beginning}
                     onChange={(e) => setForm({ ...form, beginning: e.target.value })}
@@ -195,6 +202,7 @@ function ReconcileIndex() {
                 <div>
                   <label className="text-sm font-medium">Ending balance (from statement)</label>
                   <input
+                    aria-label="Ending balance (from statement)"
                     inputMode="decimal"
                     value={form.ending}
                     onChange={(e) => setForm({ ...form, ending: e.target.value })}
@@ -244,10 +252,15 @@ function ReconcileIndex() {
 
       <h2 className="font-display mt-8 text-lg font-semibold">History</h2>
       <div className="mt-3 overflow-hidden rounded-lg border bg-card">
-        {recs.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No statements checked yet.
-          </div>
+        {recsQuery.isPending ? (
+          <LoadingState label="Loading statement checks" />
+        ) : recsQuery.isError ? (
+          <ErrorState message={errorMessage(recsQuery.error)} onRetry={() => recsQuery.refetch()} />
+        ) : recs.length === 0 ? (
+          <EmptyState
+            title="No statements checked yet"
+            description="Start one above when your bank statement arrives."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
