@@ -20,7 +20,7 @@
 - Audit rows: every change goes with its history in one DB transaction: ledger RPCs post_transaction_atomic/void_transaction_atomic, and audited_write (src/lib/audited-write.ts; ports take an optional audit arg) for everything else. writeAudit() is only for event-only history with no data change (e.g. backup export). Users have no INSERT on audit_log; the definer helper only works inside audited_write.
 - Org data: requireSupabaseAuth + assertCan + member RLS; settings/accounts admin-only.
 - Terminology is presentation-only; reports/PDFs use org level only.
-- Accounts: catalog-based, archive never delete.
+- Accounts: catalog-based; delete only if never used (domain/accounts.ts + DB trigger), otherwise archive. Names unique per org ignoring case/spaces (DB trigger backs it up).
 - Dates YYYY-MM-DD in org.timezone; never toISOString.
 - Reports: pure math; retained earnings derived; year-end close is virtual (no closing tx; legacy source='closing' excluded).
 - Currency: two-decimal only, frozen once transactions exist.
@@ -46,3 +46,6 @@
 - Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
+- Inputs: amounts, dates and names go through src/lib/validation.ts on both form and server so every form shows the same message.
+- Page states: lists use EmptyState/LoadingState/ErrorState from src/components/PageStates.tsx; errors are read with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
+- Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
