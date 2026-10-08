@@ -99,8 +99,8 @@ function ReconcileWorkspace() {
     if (ids.length) run(() => setCleared({ data: { id, entryIds: ids, cleared } }));
   };
 
-  const EntryRow = ({ e, badge }: { e: (typeof entries)[number]; badge?: string | undefined }) => (
-    <tr className={`border-b last:border-0 ${e.cleared ? "bg-primary/5" : ""}`}>
+  const entryRow = (e: (typeof entries)[number], badge?: string | undefined) => (
+    <tr key={e.id} className={`border-b last:border-0 ${e.cleared ? "bg-primary/5" : ""}`}>
       <td className="px-3 py-2">
         <input
           type="checkbox"
@@ -126,7 +126,7 @@ function ReconcileWorkspace() {
       <td className="tnum px-3 py-2 text-right">{show(e.amountCents)}</td>
     </tr>
   );
-  const EntryTable = ({
+  const entryTable = ({
     rows,
     empty,
     badge,
@@ -139,11 +139,7 @@ function ReconcileWorkspace() {
       <p className="p-4 text-sm text-muted-foreground">{empty}</p>
     ) : (
       <table className="w-full text-sm">
-        <tbody>
-          {rows.map((e) => (
-            <EntryRow key={e.id} e={e} badge={badge?.(e)} />
-          ))}
-        </tbody>
+        <tbody>{rows.map((e) => entryRow(e, badge?.(e)))}</tbody>
       </table>
     );
 
@@ -263,11 +259,12 @@ function ReconcileWorkspace() {
       {r.mode === "simple" && !done ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Section title={`Matched to bank (${matches.length})`}>
-            <EntryTable
-              rows={entries.filter((e) => matchedEntry.has(e.id))}
-              empty="No matches found. Import this period's statement first, or switch to ticking items yourself."
-              badge={() => "bank match"}
-            />
+            {entryTable({
+              rows: entries.filter((e) => matchedEntry.has(e.id)),
+              empty:
+                "No matches found. Import this period's statement first, or switch to ticking items yourself.",
+              badge: () => "bank match",
+            })}
           </Section>
           <Section title={`In the bank, not in your books (${unmatchedBank.length})`}>
             {unmatchedBank.length === 0 ? (
@@ -297,10 +294,10 @@ function ReconcileWorkspace() {
             title={`In your books, not in the bank (${unmatchedEntries.length})`}
             className="lg:col-span-2"
           >
-            <EntryTable
-              rows={unmatchedEntries}
-              empty="Everything in your books has a bank match."
-            />
+            {entryTable({
+              rows: unmatchedEntries,
+              empty: "Everything in your books has a bank match.",
+            })}
           </Section>
         </div>
       ) : (
@@ -313,11 +310,11 @@ function ReconcileWorkspace() {
             }
             className="lg:col-span-2"
           >
-            <EntryTable
-              rows={entries}
-              empty="No unreconciled items for this account."
-              badge={(e) => (matchedEntry.has(e.id) ? "bank match" : undefined)}
-            />
+            {entryTable({
+              rows: entries,
+              empty: "No unreconciled items for this account.",
+              badge: (e) => (matchedEntry.has(e.id) ? "bank match" : undefined),
+            })}
           </Section>
           {!done && (
             <Section title={`Bank rows with no match (${unmatchedBank.length})`}>
