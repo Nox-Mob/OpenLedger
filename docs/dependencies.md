@@ -19,3 +19,5 @@ npm is the only package manager (`package-lock.json`). Core libraries that touch
 | radix-ui, lucide-react, recharts, sonner, etc.     | UI components and charts                                                  | caret  |
 
 Rules: add a package only when the shared domain or a port can't do it; record it here; never commit registry cache URLs in `package-lock.json` (registry.npmjs.org only).
+
+Audit overrides (package.json): `brace-expansion@1` → 1.1.21, `exceljs > uuid` → 11.1.1, `@esbuild-kit/core-utils > esbuild` → 0.25.12. Never run `npm audit fix --force`; it downgrades exceljs to 3.4.0.
