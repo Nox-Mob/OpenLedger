@@ -84,7 +84,12 @@ export const saveBudget = createServerFn({ method: "POST" })
       after: { ...match, amount_cents: data.amountCents },
     };
     if (data.amountCents === null) {
-      await auditedWrite(context.supabase, data.orgId, [{ table: "budgets", op: "delete", match }], audit);
+      await auditedWrite(
+        context.supabase,
+        data.orgId,
+        [{ table: "budgets", op: "delete", match }],
+        audit,
+      );
     } else {
       assertBudgetAmount(data.amountCents);
       // Keep the record's app-generated ID stable: update if it exists, else insert.

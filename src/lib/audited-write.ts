@@ -37,7 +37,10 @@ export interface WriteResult {
 }
 
 interface RpcClient {
-  rpc(fn: string, args: Record<string, unknown>): PromiseLike<{
+  rpc(
+    fn: string,
+    args: Record<string, unknown>,
+  ): PromiseLike<{
     data: unknown;
     error: { message: string } | null;
   }>;

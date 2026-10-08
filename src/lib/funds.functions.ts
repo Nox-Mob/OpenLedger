@@ -291,7 +291,13 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
         supabase,
         data.orgId,
         [{ table: "pledges", op: "update", values: { status }, match: { id: p.id } }],
-        { action: "update", entity: "pledge", entityId: p.id, before: { status: p.status }, after: { status } },
+        {
+          action: "update",
+          entity: "pledge",
+          entityId: p.id,
+          before: { status: p.status },
+          after: { status },
+        },
       );
     }
     return { ok: true };

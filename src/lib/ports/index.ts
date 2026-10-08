@@ -139,18 +139,21 @@ export interface BankTransactionRepository {
 }
 
 export interface ReconciliationRepository {
-  start(r: {
-    id: Id;
-    orgId: Id;
-    accountId: Id;
-    periodStart: IsoDate;
-    periodEnd: IsoDate;
-    beginningBalanceCents: number;
-    endingBalanceCents: number;
-    mode: ReconcileMode;
-    batchId: Id | null;
-    createdBy: Id;
-  }, audit?: AuditEvent): Promise<void>;
+  start(
+    r: {
+      id: Id;
+      orgId: Id;
+      accountId: Id;
+      periodStart: IsoDate;
+      periodEnd: IsoDate;
+      beginningBalanceCents: number;
+      endingBalanceCents: number;
+      mode: ReconcileMode;
+      batchId: Id | null;
+      createdBy: Id;
+    },
+    audit?: AuditEvent,
+  ): Promise<void>;
   get(orgId: Id, id: Id): Promise<Reconciliation | null>;
   /** Lookup by id alone; the adapter's own scoping (RLS / single-tenant file) applies. */
   locate(id: Id): Promise<Reconciliation | null>;

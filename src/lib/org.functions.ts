@@ -320,7 +320,14 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
         await auditedWrite(
           supabase,
           data.orgId,
-          [{ table: "accounts", op: "update", values: { is_active: true }, match: { id: target.id } }],
+          [
+            {
+              table: "accounts",
+              op: "update",
+              values: { is_active: true },
+              match: { id: target.id },
+            },
+          ],
           {
             action: "reactivate",
             entity: "account",
@@ -340,7 +347,12 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
           {
             table: "accounts",
             op: "insert",
-            values: { id: accountId, name: item.name, type: item.type, subtype: item.subtype ?? null },
+            values: {
+              id: accountId,
+              name: item.name,
+              type: item.type,
+              subtype: item.subtype ?? null,
+            },
           },
         ],
         {

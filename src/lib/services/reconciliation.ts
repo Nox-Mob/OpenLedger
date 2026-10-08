@@ -182,7 +182,15 @@ function ev(
   before: unknown,
   after: unknown,
 ): AuditEvent {
-  return { orgId: r.orgId, userId, action, entity: "reconciliation", entityId: r.id, before, after };
+  return {
+    orgId: r.orgId,
+    userId,
+    action,
+    entity: "reconciliation",
+    entityId: r.id,
+    before,
+    after,
+  };
 }
 
 export async function listReconciliations(repos: Repositories, orgId: Id) {

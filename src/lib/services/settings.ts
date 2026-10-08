@@ -75,8 +75,7 @@ export async function setBooksLock(
   lockedThrough: IsoDate | null,
 ) {
   const before = await repos.orgs.get(orgId);
-  await repos.orgs.setBooksLockedThrough(orgId, lockedThrough);
-  await repos.audit.append({
+  await repos.orgs.setBooksLockedThrough(orgId, lockedThrough, {
     orgId,
     userId,
     action: lockedThrough ? "lock_books" : "unlock_books",

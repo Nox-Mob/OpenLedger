@@ -113,7 +113,13 @@ export const createInvite = createServerFn({ method: "POST" })
           },
         },
       ],
-      { action: "create", entity: "invite", entityId: id, after: { role: data.role, expiresAt }, kind: "system" },
+      {
+        action: "create",
+        entity: "invite",
+        entityId: id,
+        after: { role: data.role, expiresAt },
+        kind: "system",
+      },
     );
     // The raw token is returned once and never stored.
     return { id, token, expiresAt };
