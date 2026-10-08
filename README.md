@@ -45,7 +45,7 @@ Pick **one** path for the database and sign-in service, then finish with the sha
 
 ### Shared prerequisites
 
-- **Node.js 20+** (or Bun 1.1+) and **Git**.
+- **Node.js 20+** (with npm) and **Git**.
 - Get the code:
 
   ```sh
@@ -180,8 +180,8 @@ Updating Supabase later: run the stack's `update.sh` from `supabase-project` (ve
 ### Run the app (both paths)
 
 ```sh
-bun install        # Bun is the only supported package manager
-bun run dev        # or: npm run dev
+npm install        # npm is the only supported package manager
+npm run dev
 ```
 
 Open http://localhost:8080, create your first account, and the app walks you through creating your first organization. With sample data loaded you can sign in as `demo@demo.org` / `demo1234`.
@@ -189,8 +189,8 @@ Open http://localhost:8080, create your first account, and the app walks you thr
 Production build:
 
 ```sh
-bun run build
-bun run preview    # serves the production build
+npm run build
+npm run preview    # serves the production build
 ```
 
 The app is server-rendered: pages **and** server functions run on the server, so a static-file host alone will not work. App servers are stateless and can be replaced or multiplied freely.
@@ -215,8 +215,8 @@ One Linux VM (1 vCPU / 1 GB RAM is enough for a handful of users) plus a hosted 
 # on the server
 git clone <repo> /opt/open-ledger && cd /opt/open-ledger
 cp .env.example .env && nano .env      # fill in values; chmod 600 .env
-bun install --frozen-lockfile
-bun run build
+npm ci
+npm run build
 ```
 
 Run it under a process manager so it restarts on crash and boot, e.g. systemd (`/etc/systemd/system/open-ledger.service`):
@@ -229,7 +229,7 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/open-ledger
 EnvironmentFile=/opt/open-ledger/.env
-ExecStart=/usr/local/bin/bun run preview --host 127.0.0.1 --port 8080
+ExecStart=/usr/local/bin/npm run preview --host 127.0.0.1 --port 8080
 Restart=always
 User=openledger
 
@@ -249,7 +249,7 @@ books.example.com {
 }
 ```
 
-Updating: `git pull && bun install --frozen-lockfile && supabase db push && bun run build && sudo systemctl restart open-ledger`. Restarting never touches data.
+Updating: `git pull && npm ci && supabase db push && npm run build && sudo systemctl restart open-ledger`. Restarting never touches data.
 
 #### Fully self-contained alternative
 
@@ -278,10 +278,10 @@ Use **Path 2 — Self-hosted Supabase with Docker** above on the same server, th
 ### Running the tests
 
 ```sh
-bun run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
-bun run check:migrations   # every public table has GRANTs + row level security
+npm run test               # unit tests: money, terminology, account catalog, reports, dates, parsers, permissions
+npm run check:migrations   # every public table has GRANTs + row level security
 # Database rules — ONLY against a disposable database (e.g. `supabase db start`):
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db
 ```
 
 The database checks (`supabase/tests/*.sql`) run inside a transaction that always rolls back. They verify tenant isolation (a stranger can't read or change any org table) and ledger invariants (unbalanced/single-entry transactions rejected, entries and posted transactions immutable, voids can't be undone, books lock enforced, no cross-org entries, last admin kept).
@@ -312,8 +312,8 @@ See LICENSE. This is pre-1.0 software — test it with sample data before trusti
 
 ## Before you release
 
-1. `bun run test`, `bun run lint`, `bun run format:check`, `bun run check:migrations` all pass.
-2. `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bun run test:db` passes (local throwaway DB only — the script refuses anything else).
+1. `npm run test`, `npm run lint`, `npm run format:check`, `npm run check:migrations` all pass.
+2. `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db` passes (local throwaway DB only — the script refuses anything else).
 3. `python3 scripts/smoke/smoke.py` against a dev server with the demo seed reports "No problems found."
 4. Add the operator mailing address and have the Terms and Privacy Policy reviewed by counsel before release.
 5. Leave `VITE_ALLOW_DEMO_LOGIN` unset in production so the shared demo login is refused.

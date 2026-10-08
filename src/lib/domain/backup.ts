@@ -1,5 +1,5 @@
 // Signed backups: pure, storage-free. Uses only WebCrypto (available in browsers, Node,
-// Bun and the worker runtime).
+// Node and the worker runtime).
 //
 // Row fingerprints show *which* rows changed; they prove nothing alone, because anyone
 // can recompute them. The Ed25519 signature over the manifest is what proves the file

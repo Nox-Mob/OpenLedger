@@ -1,6 +1,6 @@
 # Dependencies
 
-Bun is the only package manager (`bun.lock`). Core libraries that touch money, data or sign-in are pinned to exact versions; UI helpers use caret ranges and are locked by `bun.lock`.
+npm is the only package manager (`package-lock.json`). Core libraries that touch money, data or sign-in are pinned to exact versions; UI helpers use caret ranges and are locked by `package-lock.json`.
 
 | Package                                            | Why it is here                                                            | Pinned |
 | -------------------------------------------------- | ------------------------------------------------------------------------- | ------ |
@@ -18,4 +18,4 @@ Bun is the only package manager (`bun.lock`). Core libraries that touch money, d
 | postgres (dev)                                     | Driver used by the migration tool                                         | caret  |
 | radix-ui, lucide-react, recharts, sonner, etc.     | UI components and charts                                                  | caret  |
 
-Rules: add a package only when the shared domain or a port can't do it; record it here; never commit registry cache URLs in `bun.lock`.
+Rules: add a package only when the shared domain or a port can't do it; record it here; never commit registry cache URLs in `package-lock.json` (registry.npmjs.org only).

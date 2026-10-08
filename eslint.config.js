@@ -39,7 +39,7 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
-  // Formatting is checked separately (`bun run format:check`) so lint errors mean real code problems.
+  // Formatting is checked separately (`npm run format:check`) so lint errors mean real code problems.
   { rules: { "prettier/prettier": "off" } },
   // Generated / vendored files are not ours to edit.
   { ignores: ["src/integrations/supabase/**", "src/routeTree.gen.ts"] },
