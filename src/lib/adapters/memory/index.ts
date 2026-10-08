@@ -425,6 +425,20 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
           throw new DuplicateKeyError();
         s.periodCloses.set(c.id, { ...c, createdAt: NOW });
       },
+      async closeAndLock(c, lockThrough, audit) {
+        guardAudit(audit);
+        if (
+          s.periodCloses.has(c.id) ||
+          [...s.periodCloses.values()].some(
+            (x) => x.orgId === c.orgId && x.fiscalYearEnd === c.fiscalYearEnd,
+          )
+        )
+          throw new DuplicateKeyError();
+        s.periodCloses.set(c.id, { ...c, createdAt: NOW });
+        const o = s.orgs.get(c.orgId);
+        if (o) s.orgs.set(c.orgId, { ...o, booksLockedThrough: lockThrough });
+        afterAudit(audit);
+      },
     },
     projects: {
       async list(orgId) {

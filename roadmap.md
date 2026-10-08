@@ -1,5 +1,30 @@
 # OpenLedgerApp — Roadmap
 
+## v0.0.5 - Close the gaps and tidy up (released 2026-10-08)
+
+- [x] 1. Year-end close and book lock saved in one step
+- [x] 2. Pledge payment and pledge status saved in one step (already true); retries now finish a half-saved pledge or payment
+- [x] 3. History entries carry the change recorded by the database (recorded_change)
+- [x] 4. drizzle-kit kept: the database-change tool uses it (documented)
+- [x] 5. recharts 2 to 3
+- [x] 6. eslint 9 to 10 (classic hook rules)
+- [x] 7. Loose types to zero (now blocking) and React Compiler rules on (set-state-in-effect off on purpose)
+- [x] 9. Organization switcher (moved up from v0.0.6)
+- [x] 10. Empty, loading and error screens (moved up)
+- [x] 11. Accessibility pass: automated scan clean on every page, both themes (moved up)
+- [x] 12. Shared input checks for amounts, dates and names (moved up)
+- [x] 13. Catalog duplicates blocked + delete never-used accounts (moved up)
+- [x] 8. Tests: year-close rollback (all adapters), database checks for recorded change and year close, input checks, account deletion rules, duplicate names, org switcher choice, database checks for catalog guards
+
+## v0.0.6 - Safety and everyday use (planned)
+
+- [ ] MFA (optional per user, org can require) - [ ] Delete my account
+- [ ] Manual screen reader and keyboard walk-through (automated scan already clean)
+
+## v0.0.7 - Scale and portability (planned)
+
+- [ ] Performance at 10k to 50k entries - [ ] Budgets/exports/history behind ports - [ ] Cash basis labels - [ ] Self-hosted installer v1
+
 ## v0.0.4 - Stability and foundations (released 2026-10-07)
 
 - [x] History save failures now fail the request instead of reporting success
@@ -37,8 +62,7 @@
 - [ ] 19. MFA - [ ] 20. "Cash basis" labels; A/R, A/P later - [ ] 22. Performance at 10k–50k entries
 - [ ] Account deletion (part of 16)
 - [ ] Budgets, exports and history behind the ports for desktop
-- [ ] 23–32. README, org switcher, terminology note, empty/error states, a11y, input validation, currency rules, undo wording, catalog duplicate protection
-- [ ] Reduce legacy `any` types (non-blocking warnings)
+- [ ] 23–32 leftovers: README refresh, terminology note, currency rules, undo wording (switcher, page states, a11y, input checks, catalog protection done in v0.0.5)
 - Deferred: accrual basis, invoices/bills, bank feeds (Plaid), receipt attachments
 
 ## Shipped

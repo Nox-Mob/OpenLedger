@@ -1,3 +1,4 @@
+import type { PlainRow, UntypedDb } from "./db";
 // Backup reads shared by the signed export handler and its roundtrip regression tests.
 const PAGE = 1000;
 type PageRow = Record<string, unknown>;
@@ -36,10 +37,10 @@ const ORG_TABLES = [
   "audit_log",
 ] as const;
 
-export async function readBackupData(db: any, orgId: string) {
+export async function readBackupData(db: UntypedDb, orgId: string) {
   const { data: org, error } = await db.from("organizations").select("*").eq("id", orgId).single();
   if (error) throw new Error(error.message);
-  const tables: Record<string, any[]> = {};
+  const tables: Record<string, PlainRow[]> = {};
   for (const t of ORG_TABLES)
     tables[t] = await all((f, to) =>
       db.from(t).select("*").eq("org_id", orgId).order("id").range(f, to),

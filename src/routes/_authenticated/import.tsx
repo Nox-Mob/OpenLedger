@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts } from "@/lib/taxonomy.functions";
 import {
   checkDuplicates,
@@ -171,8 +173,8 @@ function ImportPage() {
       });
       const dupSet = new Set(duplicates.map((i) => valid[i]));
       return withStatus.map((r) => (dupSet.has(r) ? { ...r, status: "duplicate" } : r));
-    } catch (err: any) {
-      toast.error(`Couldn't check for duplicates: ${err.message}`);
+    } catch (err) {
+      toast.error(`Couldn't check for duplicates: ${errorMessage(err)}`);
       return withStatus;
     }
   }
@@ -255,8 +257,8 @@ function ImportPage() {
         setMapping(m);
         setRows(await markDuplicates(applyMapping(tokens, m)));
       }
-    } catch (err: any) {
-      toast.error(err.message ?? "Couldn't read this file");
+    } catch (err) {
+      toast.error(errorMessage(err, "Couldn't read this file"));
       reset();
     } finally {
       setBusy(null);
@@ -341,8 +343,8 @@ function ImportPage() {
       reset();
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Import failed. Nothing was saved.");
+    } catch (err) {
+      toast.error(errorMessage(err, "Import failed. Nothing was saved."));
     } finally {
       setBusy(null);
     }
@@ -352,13 +354,13 @@ function ImportPage() {
     if (!org || !accountId || !mapping || !profileName.trim()) return;
     try {
       await saveImportProfile({
-        data: { orgId: org.id, accountId, name: profileName.trim(), mapping: mapping as any },
+        data: { orgId: org.id, accountId, name: profileName.trim(), mapping: { ...mapping } },
       });
       toast.success("Layout saved for this account");
       setProfileName("");
       queryClient.invalidateQueries({ queryKey: ["import-profiles"] });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     }
   }
 
@@ -370,8 +372,8 @@ function ImportPage() {
       toast.success(`Removed ${r.removed} imported rows`);
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     }
   }
 
@@ -392,8 +394,8 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not post");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not post"));
     } finally {
       setPosting((p) => {
         const n = new Set(p);
@@ -403,14 +405,27 @@ function ImportPage() {
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const header = csvRows[0] ?? [];
   const colOptions = header.map((h, i) => ({
     i,
     label: mapping?.hasHeader ? h || `Column ${i + 1}` : `Column ${i + 1} (${h.slice(0, 16)})`,
   }));
-  const ColSelect = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
-    <select value={value} onChange={(e) => onChange(Number(e.target.value))} className={inputCls}>
+  const colSelect = ({
+    value,
+    onChange,
+    label,
+  }: {
+    value: number;
+    onChange: (v: number) => void;
+    label: string;
+  }) => (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className={inputCls}
+    >
       {colOptions.map((c) => (
         <option key={c.i} value={c.i}>
           {c.label}
@@ -432,6 +447,7 @@ function ImportPage() {
           <div>
             <label className="text-sm font-medium">1. Bank account</label>
             <select
+              aria-label="1. Bank account"
               value={accountId}
               onChange={(e) => {
                 setAccountId(e.target.value);
@@ -503,8 +519,8 @@ function ImportPage() {
                   onChange={async (e) => {
                     const p = profiles.find((x) => x.id === e.target.value);
                     if (p) {
-                      setMapping(p.mapping as any);
-                      setRows(await markDuplicates(applyMapping(csvRows, p.mapping as any)));
+                      setMapping(p.mapping);
+                      setRows(await markDuplicates(applyMapping(csvRows, p.mapping)));
                     }
                   }}
                 >
@@ -520,23 +536,28 @@ function ImportPage() {
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div>
                 <label className="text-xs text-muted-foreground">Date column</label>
-                <ColSelect
-                  value={mapping.dateCol}
-                  onChange={(v) => updateMapping({ dateCol: v })}
-                />
+                {colSelect({
+                  value: mapping.dateCol,
+                  onChange: (v) => updateMapping({ dateCol: v }),
+                  label: "Date column",
+                })}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Description column</label>
-                <ColSelect
-                  value={mapping.descCol}
-                  onChange={(v) => updateMapping({ descCol: v })}
-                />
+                {colSelect({
+                  value: mapping.descCol,
+                  onChange: (v) => updateMapping({ descCol: v }),
+                  label: "Description column",
+                })}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Date format</label>
                 <select
+                  aria-label="Date format"
                   value={mapping.dateFormat}
-                  onChange={(e) => updateMapping({ dateFormat: e.target.value as any })}
+                  onChange={(e) =>
+                    updateMapping({ dateFormat: e.target.value as CsvMapping["dateFormat"] })
+                  }
                   className={inputCls}
                 >
                   <option value="auto">Detect automatically</option>
@@ -548,8 +569,11 @@ function ImportPage() {
               <div>
                 <label className="text-xs text-muted-foreground">Amounts are in</label>
                 <select
+                  aria-label="Amounts are in"
                   value={mapping.amountMode}
-                  onChange={(e) => updateMapping({ amountMode: e.target.value as any })}
+                  onChange={(e) =>
+                    updateMapping({ amountMode: e.target.value as CsvMapping["amountMode"] })
+                  }
                   className={inputCls}
                 >
                   <option value="single">One column (+ in, − out)</option>
@@ -559,8 +583,13 @@ function ImportPage() {
               <div>
                 <label className="text-xs text-muted-foreground">Number format</label>
                 <select
+                  aria-label="Number format"
                   value={mapping.decimalSeparator ?? "dot"}
-                  onChange={(e) => updateMapping({ decimalSeparator: e.target.value as any })}
+                  onChange={(e) =>
+                    updateMapping({
+                      decimalSeparator: e.target.value as CsvMapping["decimalSeparator"],
+                    })
+                  }
                   className={inputCls}
                 >
                   <option value="dot">1,234.56 (dot decimals)</option>
@@ -570,26 +599,29 @@ function ImportPage() {
               {mapping.amountMode === "single" ? (
                 <div>
                   <label className="text-xs text-muted-foreground">Amount column</label>
-                  <ColSelect
-                    value={mapping.amountCol}
-                    onChange={(v) => updateMapping({ amountCol: v })}
-                  />
+                  {colSelect({
+                    value: mapping.amountCol,
+                    onChange: (v) => updateMapping({ amountCol: v }),
+                    label: "Amount column",
+                  })}
                 </div>
               ) : (
                 <>
                   <div>
                     <label className="text-xs text-muted-foreground">Money in column</label>
-                    <ColSelect
-                      value={mapping.creditCol}
-                      onChange={(v) => updateMapping({ creditCol: v })}
-                    />
+                    {colSelect({
+                      value: mapping.creditCol,
+                      onChange: (v) => updateMapping({ creditCol: v }),
+                      label: "Money in column",
+                    })}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Money out column</label>
-                    <ColSelect
-                      value={mapping.debitCol}
-                      onChange={(v) => updateMapping({ debitCol: v })}
-                    />
+                    {colSelect({
+                      value: mapping.debitCol,
+                      onChange: (v) => updateMapping({ debitCol: v }),
+                      label: "Money out column",
+                    })}
                   </div>
                 </>
               )}
@@ -643,6 +675,7 @@ function ImportPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">From</label>
                   <input
+                    aria-label="From"
                     type="date"
                     value={statement.start}
                     onChange={(e) => setStatement({ ...statement, start: e.target.value })}
@@ -652,6 +685,7 @@ function ImportPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">To</label>
                   <input
+                    aria-label="To"
                     type="date"
                     value={statement.end}
                     onChange={(e) => setStatement({ ...statement, end: e.target.value })}
@@ -661,6 +695,7 @@ function ImportPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">Beginning balance</label>
                   <input
+                    aria-label="Beginning balance"
                     inputMode="decimal"
                     value={statement.beginning}
                     onChange={(e) => setStatement({ ...statement, beginning: e.target.value })}
@@ -671,6 +706,7 @@ function ImportPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">Ending balance</label>
                   <input
+                    aria-label="Ending balance"
                     inputMode="decimal"
                     value={statement.ending}
                     onChange={(e) => setStatement({ ...statement, ending: e.target.value })}
@@ -853,7 +889,7 @@ function ImportPage() {
                   <td className="tnum px-4 py-2.5 text-xs">
                     {b.statementStart && b.statementEnd
                       ? `${b.statementStart} → ${b.statementEnd}`
-                      : "—"}
+                      : "None"}
                     {b.endingBalanceCents != null && (
                       <span className="ml-2 text-muted-foreground">
                         ends {formatCents(b.endingBalanceCents)}
@@ -869,7 +905,7 @@ function ImportPage() {
                         {b.statementEnd && (
                           <Link
                             to="/reconcile"
-                            search={{ account: b.accountId } as any}
+                            search={{ account: b.accountId }}
                             className="rounded border px-2 py-1 text-xs hover:bg-accent"
                           >
                             {terms.reconcile}

@@ -11,9 +11,9 @@ export async function extractPdfText(file: File): Promise<string> {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
     const lines = new Map<number, string[]>();
-    for (const item of content.items as any[]) {
+    for (const item of content.items as { str?: string; transform: number[] }[]) {
       if (!item.str) continue;
-      const y = Math.round(item.transform[5]);
+      const y = Math.round(item.transform[5] ?? 0);
       lines.set(y, [...(lines.get(y) ?? []), item.str]);
     }
     const sorted = [...lines.entries()]

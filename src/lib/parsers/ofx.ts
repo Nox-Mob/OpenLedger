@@ -37,7 +37,7 @@ export function parseOfx(text: string): { rows: ParsedRow[]; meta: StatementMeta
     const name = tag(b, "NAME") ?? "";
     const memo = tag(b, "MEMO") ?? "";
     const description =
-      [name, memo && memo !== name ? memo : ""].filter(Boolean).join(" — ") || "Bank transaction";
+      [name, memo && memo !== name ? memo : ""].filter(Boolean).join(", ") || "Bank transaction";
     let error: string | undefined;
     if (!date) error = "Missing date";
     else if (amt == null) error = "Missing amount";

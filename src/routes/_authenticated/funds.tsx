@@ -1,7 +1,10 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import {
   listFunds,
   createFund,
@@ -46,7 +49,7 @@ function SimpleListManager({
 }: {
   title: string;
   description: string;
-  items: any[];
+  items: { id: string; name: string; type?: string }[];
   onAdd: (name: string) => Promise<void>;
   placeholder: string;
 }) {
@@ -126,7 +129,7 @@ function FundsPage() {
   const [busy, setBusy] = useState(false);
   const [releaseKey, setReleaseKey] = useState(() => crypto.randomUUID());
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const funds = summaryQuery.data?.funds ?? [];
   const net = summaryQuery.data?.netAssets;
   const refresh = () => {
@@ -141,18 +144,19 @@ function FundsPage() {
       toast.success("Fund created");
       setFundName("");
       refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     }
   }
 
   async function submitRelease(e: React.FormEvent) {
     e.preventDefault();
-    const cents = parseToCents(releaseAmount);
-    if (!cents || cents <= 0) {
-      toast.error("Enter an amount greater than zero.");
+    const amt = checkAmount(releaseAmount);
+    if (!amt.ok) {
+      toast.error(amt.error);
       return;
     }
+    const cents = amt.value;
     setBusy(true);
     try {
       await releaseFromRestriction({
@@ -172,8 +176,8 @@ function FundsPage() {
       setReleaseKey(crypto.randomUUID());
       refresh();
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -239,8 +243,8 @@ function FundsPage() {
                               },
                             });
                             refresh();
-                          } catch (err: any) {
-                            toast.error(err.message);
+                          } catch (err) {
+                            toast.error(errorMessage(err));
                           }
                         }}
                       >
@@ -378,8 +382,8 @@ function FundsPage() {
               await createCategory({ data: { orgId: org.id, name, type: "expense" } });
               toast.success("Category created");
               queryClient.invalidateQueries({ queryKey: ["categories"] });
-            } catch (err: any) {
-              toast.error(err.message);
+            } catch (err) {
+              toast.error(errorMessage(err));
             }
           }}
         />
@@ -393,8 +397,8 @@ function FundsPage() {
               await createTag({ data: { orgId: org.id, name } });
               toast.success("Tag created");
               queryClient.invalidateQueries({ queryKey: ["tags"] });
-            } catch (err: any) {
-              toast.error(err.message);
+            } catch (err) {
+              toast.error(errorMessage(err));
             }
           }}
         />

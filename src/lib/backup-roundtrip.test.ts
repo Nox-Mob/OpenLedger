@@ -1,3 +1,4 @@
+import type { UntypedDb } from "./db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   checkRestorable,
@@ -331,7 +332,7 @@ describe("moderately sized organization backup roundtrip", () => {
 
   it("exports and restores 1,500 transactions, all tables, links and reports", async () => {
     const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
-    const source = await readBackupData(db, ORG_ID);
+    const source = await readBackupData(db as unknown as UntypedDb, ORG_ID);
     const exported = await signBackup(
       keys,
       source.organization,
@@ -352,7 +353,11 @@ describe("moderately sized organization backup roundtrip", () => {
     ])
       expect(db.pages.some((p) => p.table === table && p.from === 1000)).toBe(true);
     const original = structuredClone(db.tables);
-    const restored = await restoreIntoNewOrg(db, "restoring-user", verified);
+    const restored = await restoreIntoNewOrg(
+      db as unknown as UntypedDb,
+      "restoring-user",
+      verified,
+    );
     const restoredTxIds = new Set(
       (db.tables["transactions"] ?? [])
         .filter((t) => t["org_id"] === restored.orgId)
@@ -417,7 +422,7 @@ describe("moderately sized organization backup roundtrip", () => {
 
   it("removes the partial organization after a later restore write fails", async () => {
     const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
-    const source = await readBackupData(db, ORG_ID);
+    const source = await readBackupData(db as unknown as UntypedDb, ORG_ID);
     const exported = await signBackup(
       keys,
       source.organization,
@@ -427,9 +432,9 @@ describe("moderately sized organization backup roundtrip", () => {
     const verified = await verifyBackup(JSON.parse(JSON.stringify(exported)), keys.publicRaw);
     const original = structuredClone(db.tables);
     db.failTable = "budgets";
-    await expect(restoreIntoNewOrg(db, "restoring-user", verified)).rejects.toThrow(
-      "Injected write failure",
-    );
+    await expect(
+      restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", verified),
+    ).rejects.toThrow("Injected write failure");
     for (const table of ["organizations", ...TABLES])
       expect(db.tables[table]).toEqual(original[table]);
     expect(db.tables["deleted_organizations"]).toHaveLength(1);

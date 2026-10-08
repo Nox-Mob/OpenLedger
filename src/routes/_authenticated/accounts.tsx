@@ -1,7 +1,11 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listAccounts, createAccount, setOpeningBalance } from "@/lib/taxonomy.functions";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
 import { accountTypeLabel, displayBalance } from "@/lib/terminology";
@@ -42,8 +46,20 @@ function AccountsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!org) return;
+    const n = checkName(name, "Account name");
+    if (!n.ok) return void toast.error(n.error);
+    if (opening.trim()) {
+      const o = checkAmount(opening, { allowZero: true, label: "Opening balance" });
+      if (!o.ok) return void toast.error(o.error);
+    }
     try {
-      await createAccount({ data: { orgId: org.id, name, type: type as any } });
+      await createAccount({
+        data: {
+          orgId: org.id,
+          name,
+          type: type as "asset" | "liability" | "equity" | "revenue" | "expense",
+        },
+      });
       const cents = parseToCents(opening);
       if (cents && cents !== 0 && (type === "asset" || type === "liability")) {
         const accounts = accountsQuery.data ?? [];
@@ -69,12 +85,12 @@ function AccountsPage() {
       setOpening("");
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not create account");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not create account"));
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const accounts = accountsQuery.data ?? [];
   const groups = ["asset", "liability", "equity", "revenue", "expense"]
@@ -101,6 +117,7 @@ function AccountsPage() {
           <div className="col-span-2">
             <label className="text-sm font-medium">Name</label>
             <input
+              aria-label="Name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -110,7 +127,12 @@ function AccountsPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
+            <select
+              aria-label="Type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className={inputCls}
+            >
               <option value="asset">{accountTypeLabel("asset", terms)}</option>
               <option value="liability">{accountTypeLabel("liability", terms)}</option>
               <option value="equity">{accountTypeLabel("equity", terms)}</option>
@@ -121,6 +143,7 @@ function AccountsPage() {
           <div>
             <label className="text-sm font-medium">Opening balance</label>
             <input
+              aria-label="Opening balance"
               inputMode="decimal"
               value={opening}
               onChange={(e) => setOpening(e.target.value)}
@@ -138,6 +161,19 @@ function AccountsPage() {
       )}
 
       <div className="mt-6 space-y-6">
+        {accountsQuery.isPending && <LoadingState label="Loading accounts" />}
+        {accountsQuery.isError && (
+          <ErrorState
+            message={errorMessage(accountsQuery.error)}
+            onRetry={() => accountsQuery.refetch()}
+          />
+        )}
+        {accountsQuery.isSuccess && groups.length === 0 && (
+          <EmptyState
+            title="No accounts yet"
+            description="Add an account above, or choose from the list in Settings, Accounts."
+          />
+        )}
         {groups.map((g) => (
           <div key={g.type}>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">

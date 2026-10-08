@@ -22,3 +22,18 @@ export function useCurrentOrgId(): string | null {
   }, []);
   return orgId;
 }
+
+/** The organization to show: the stored choice if the user still belongs to it, else the first. */
+export function pickCurrentOrg<T extends { id: string }>(
+  orgs: T[],
+  storedId: string | null,
+): T | null {
+  return orgs.find((o) => o.id === storedId) ?? orgs[0] ?? null;
+}
+
+export function roleLabel(role: string): string {
+  if (role === "admin") return "Admin";
+  if (role === "member") return "Member";
+  if (role === "viewer") return "Viewer";
+  return role;
+}

@@ -1,9 +1,11 @@
+import { OrgPending } from "@/components/AppShell";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { TermSliders } from "@/components/TermSliders";
 import type { TermOverrides } from "@/lib/terminology";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { updateOrganization } from "@/lib/org.functions";
 import { toast } from "sonner";
 
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SEK", "NOK", "DKK", "CHF"];
 const TIMEZONES: string[] = (() => {
   try {
-    return (Intl as any).supportedValuesOf("timeZone") as string[];
+    return Intl.supportedValuesOf("timeZone");
   } catch {
     return [
       "UTC",
@@ -70,7 +72,7 @@ function OrgProfileSettings() {
   const [aiPdf, setAiPdf] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
 
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
 
   const isAdmin = org.role === "admin";
   const dirty =
@@ -95,8 +97,8 @@ function OrgProfileSettings() {
           currency: currency ?? org.currency,
           fiscalYearStartMonth: fyMonth ?? org.fiscalYearStartMonth,
           timezone: timezone ?? org.timezone,
-          terminology: term ?? (org as any).terminology ?? "simplest",
-          termOverrides: overrides ?? (org as any).termOverrides ?? {},
+          terminology: term ?? org.terminology ?? "simplest",
+          termOverrides: overrides ?? org.termOverrides ?? {},
           aiPdfEnabled: aiPdf ?? org.aiPdfEnabled,
         },
       });
@@ -110,8 +112,8 @@ function OrgProfileSettings() {
       setOverrides(null);
       setAiPdf(null);
       toast.success("Organization settings saved");
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not save");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not save"));
     } finally {
       setSaving(false);
     }
@@ -205,7 +207,7 @@ function OrgProfileSettings() {
                   }}
                   disabled={!isAdmin}
                   className={`rounded-md border p-4 text-left transition-colors disabled:opacity-60 ${
-                    (term ?? (org as any).terminology ?? "simplest") === o.id
+                    (term ?? org.terminology ?? "simplest") === o.id
                       ? "border-primary bg-accent"
                       : "border-input hover:bg-accent/50"
                   }`}
@@ -222,8 +224,8 @@ function OrgProfileSettings() {
             <div className="mt-2">
               <TermSliders
                 orgType={orgType ?? org.orgType}
-                base={() => term ?? (org as any).terminology ?? "simplest"}
-                value={overrides ?? (org as any).termOverrides ?? {}}
+                base={() => term ?? org.terminology ?? "simplest"}
+                value={overrides ?? org.termOverrides ?? {}}
                 onChange={setOverrides}
                 disabled={!isAdmin}
               />

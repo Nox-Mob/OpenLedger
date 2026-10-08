@@ -1,7 +1,10 @@
+import { errorMessage } from "@/lib/errors";
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { OrgPending } from "@/components/AppShell";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listHistory } from "@/lib/backup.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/history")({
@@ -51,7 +54,7 @@ function HistoryPage() {
       }),
     enabled: !!org && isAdmin,
   });
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   if (!isAdmin)
     return <p className="text-sm text-muted-foreground">Only admins can view history.</p>;
 
@@ -107,10 +110,12 @@ function HistoryPage() {
         </select>
       </div>
       <div className="mt-4 overflow-hidden rounded-lg border bg-card">
-        {q.isLoading ? (
-          <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+        {q.isPending ? (
+          <LoadingState label="Loading history" />
+        ) : q.isError ? (
+          <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : (q.data?.rows ?? []).length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground">No history yet.</p>
+          <EmptyState title="No history yet" description="Changes appear here as people work." />
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -157,6 +162,16 @@ function HistoryPage() {
                             </pre>
                           </div>
                         </div>
+                        {r.recorded_change ? (
+                          <div className="mt-3">
+                            <p className="text-xs font-semibold">
+                              Saved change (recorded by the database)
+                            </p>
+                            <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap text-xs">
+                              {JSON.stringify(r.recorded_change, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
                   )}

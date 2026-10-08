@@ -130,6 +130,21 @@ describe.each(adapters)("%s adapter", (name, make) => {
     expect((await repos.transactions.get(ORG, id))?.status).toBe("posted");
   });
 
+  it("year-end close, book lock and history are saved together", async () => {
+    await postTransaction(repos, sale());
+    const close = {
+      orgId: ORG,
+      userId: USER,
+      fiscalYearEnd: "2026-12-31",
+      retainedEarningsAccountId: EQUITY,
+    };
+    await breakHistory();
+    await expect(settings.closeFiscalYear(repos, close)).rejects.toThrow();
+    const status = await settings.getBooksStatus(repos, ORG);
+    expect(status.closes).toHaveLength(0);
+    expect(status.booksLockedThrough).toBeNull();
+  });
+
   it("settings changes and their history entry are saved together", async () => {
     const ev = (action: string) => ({
       orgId: ORG,

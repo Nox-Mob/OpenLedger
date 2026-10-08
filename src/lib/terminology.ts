@@ -93,7 +93,7 @@ export function cleanOverrides(v: unknown): TermOverrides {
   const out: TermOverrides = {};
   if (v && typeof v === "object") {
     for (const item of TERM_ITEMS) {
-      const val = (v as any)[item.key];
+      const val = (v as Record<string, unknown>)[item.key];
       if (val === "simplest" || val === "simple" || val === "accounting") out[item.key] = val;
     }
   }

@@ -1,7 +1,10 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { budgetVsActual, saveBudget } from "@/lib/budgets.functions";
 import { periodStartFor, shiftPeriod, type BudgetPeriod } from "@/lib/domain/budgets";
 import { formatCents, parseToCents, todayISO } from "@/lib/money";
@@ -56,16 +59,20 @@ function BudgetsPage() {
       budgetVsActual({ data: { orgId: org!.id, periodType: type, periodStart: start } }),
     enabled: !!org,
   });
-  if (!org) return null;
+  if (!org) return <OrgPending />;
   const canWrite = org.role !== "viewer";
 
   async function save(accountId: string) {
     const raw = drafts[accountId];
     if (raw === undefined) return;
-    const cents = raw.trim() === "" ? null : parseToCents(raw);
-    if (cents !== null && (cents === undefined || cents < 0)) {
-      toast.error("Enter an amount of zero or more");
-      return;
+    let cents: number | null = null;
+    if (raw.trim() !== "") {
+      const amt = checkAmount(raw, { allowZero: true, label: "Budget" });
+      if (!amt.ok) {
+        toast.error(amt.error);
+        return;
+      }
+      cents = amt.value;
     }
     try {
       await saveBudget({
@@ -79,8 +86,8 @@ function BudgetsPage() {
       });
       setDrafts(({ [accountId]: _, ...rest }) => rest);
       qc.invalidateQueries({ queryKey: ["budgets", org!.id] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not save budget");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not save budget"));
     }
   }
 

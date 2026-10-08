@@ -1,3 +1,4 @@
+import type { Db } from "@/lib/db";
 import { auditedWrite } from "./audited-write";
 import { isValidTimeZone } from "./dates";
 import { normalizeTerminology, cleanOverrides } from "./terminology";
@@ -13,6 +14,29 @@ import { assertCan } from "./permissions";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { updateOrganization as updateOrgSettings } from "./services/settings";
+import { deleteBlocker, NO_USAGE, type AccountUsage } from "./domain/accounts";
+
+/** Non-ledger records that point at each account (entries are counted separately). */
+async function accountUsage(supabase: Db, orgId: string) {
+  const out = new Map<string, AccountUsage>();
+  const bump = (id: string, k: keyof AccountUsage) => {
+    const u = out.get(id) ?? { ...NO_USAGE };
+    u[k] += 1;
+    out.set(id, u);
+  };
+  const [bank, imports, recs, budgets] = await Promise.all([
+    supabase.from("bank_transactions").select("account_id").eq("org_id", orgId),
+    supabase.from("import_batches").select("account_id").eq("org_id", orgId),
+    supabase.from("reconciliations").select("account_id").eq("org_id", orgId),
+    supabase.from("budgets").select("account_id").eq("org_id", orgId),
+  ]);
+  for (const r of [bank, imports, recs, budgets]) if (r.error) throw new Error(r.error.message);
+  for (const r of bank.data ?? []) bump(r.account_id, "bankRows");
+  for (const r of imports.data ?? []) bump(r.account_id, "imports");
+  for (const r of recs.data ?? []) bump(r.account_id, "reconciliations");
+  for (const r of budgets.data ?? []) bump(r.account_id, "budgets");
+  return out;
+}
 
 export const getMyOrgs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -25,7 +49,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return (data ?? [])
-      .map((row: any) => ({
+      .map((row) => ({
         id: row.organizations?.id as string,
         name: row.organizations?.name as string,
         orgType: row.organizations?.org_type as "nonprofit" | "business",
@@ -49,9 +73,9 @@ export const getMyProfile = createServerFn({ method: "GET" })
       .eq("id", context.userId)
       .maybeSingle();
     return {
-      displayName: (data as any)?.display_name ?? null,
-      terminology: normalizeTerminology((data as any)?.terminology),
-      termOverrides: cleanOverrides((data as any)?.term_overrides),
+      displayName: data?.display_name ?? null,
+      terminology: normalizeTerminology(data?.terminology),
+      termOverrides: cleanOverrides(data?.term_overrides),
     };
   });
 
@@ -62,12 +86,12 @@ export const setMyTermOverrides = createServerFn({ method: "POST" })
     const { error } = await context.supabase
       .from("profiles")
       // cloud-only-write: per-user or service record, not organization books
-      .upsert({ id: context.userId, term_overrides: data.termOverrides as any });
+      .upsert({ id: context.userId, term_overrides: data.termOverrides });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-async function requireOrgAdmin(supabase: any, userId: string, orgId: string) {
+async function requireOrgAdmin(supabase: Db, userId: string, orgId: string) {
   await assertCan(supabase, userId, orgId, "manage_settings");
 }
 
@@ -115,14 +139,14 @@ export const listOrgMembers = createServerFn({ method: "GET" })
       .eq("org_id", data.orgId);
     if (error) throw new Error(error.message);
 
-    const userIds = (rows ?? []).map((r: any) => r.user_id);
+    const userIds = (rows ?? []).map((r) => r.user_id);
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, display_name")
       .in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]);
-    const nameById = new Map((profiles ?? []).map((p: any) => [p.id, p.display_name]));
+    const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
 
-    return (rows ?? []).map((r: any) => ({
+    return (rows ?? []).map((r) => ({
       id: r.id as string,
       userId: r.user_id as string,
       role: r.role as string,
@@ -146,7 +170,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCan(supabase, userId, data.orgId, "manage_members");
     if (data.userId === userId && data.role !== "admin") {
-      throw new Error("You can't demote yourself — ask another admin to do it.");
+      throw new Error("You can't demote yourself. Ask another admin to do it.");
     }
 
     const { data: before } = await supabase
@@ -269,17 +293,21 @@ export const getAccountSetup = createServerFn({ method: "GET" })
       .select("account_id, transactions!inner(org_id)")
       .eq("transactions.org_id", data.orgId);
     if (uErr) throw new Error(uErr.message);
+    const usage = await accountUsage(supabase, data.orgId);
     const counts = new Map<string, number>();
-    for (const e of (used ?? []) as any[])
-      counts.set(e.account_id, (counts.get(e.account_id) ?? 0) + 1);
-    return ((accounts ?? []) as any[]).map((a) => ({
-      id: a.id as string,
-      name: a.name as string,
-      type: a.type as string,
-      subtype: (a.subtype ?? null) as string | null,
-      isActive: a.is_active as boolean,
-      entryCount: counts.get(a.id) ?? 0,
-    }));
+    for (const e of used ?? []) counts.set(e.account_id, (counts.get(e.account_id) ?? 0) + 1);
+    return (accounts ?? []).map((a) => {
+      const u = { ...(usage.get(a.id) ?? NO_USAGE), entries: counts.get(a.id) ?? 0 };
+      return {
+        id: a.id as string,
+        name: a.name as string,
+        type: a.type as string,
+        subtype: (a.subtype ?? null) as string | null,
+        isActive: a.is_active as boolean,
+        entryCount: u.entries,
+        deleteBlocker: deleteBlocker(u),
+      };
+    });
   });
 
 export const setAccountEnabled = createServerFn({ method: "POST" })
@@ -311,9 +339,9 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
       .select("id, name, type, is_active")
       .eq("org_id", data.orgId);
     const target = data.accountId
-      ? (existing ?? []).find((a: any) => a.id === data.accountId)
+      ? (existing ?? []).find((a) => a.id === data.accountId)
       : item
-        ? (existing ?? []).find((a: any) => matchesCatalog(a, item))
+        ? (existing ?? []).find((a) => matchesCatalog(a, item))
         : undefined;
 
     if (data.enabled) {
@@ -380,6 +408,54 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
         entityId: target.id,
         before: { name: target.name, type: target.type, is_active: true },
         after: { is_active: false },
+      },
+    );
+    return { ok: true };
+  });
+
+/** Permanently removes an account that was never used. Anything with history is archived instead. */
+export const deleteUnusedAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z.object({ orgId: z.string().uuid(), accountId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireOrgAdmin(supabase, userId, data.orgId);
+    const [{ data: acct, error }, { data: org }] = await Promise.all([
+      supabase
+        .from("accounts")
+        .select("id, name, type, subtype")
+        .eq("org_id", data.orgId)
+        .eq("id", data.accountId)
+        .maybeSingle(),
+      supabase.from("organizations").select("org_type").eq("id", data.orgId).single(),
+    ]);
+    if (error) throw new Error(error.message);
+    if (!acct) throw new Error("Account not found.");
+    const { count, error: cErr } = await supabase
+      .from("entries")
+      .select("id", { count: "exact", head: true })
+      .eq("account_id", acct.id);
+    if (cErr) throw new Error(cErr.message);
+    const usage = {
+      ...((await accountUsage(supabase, data.orgId)).get(acct.id) ?? NO_USAGE),
+      entries: count ?? 0,
+    };
+    const required = catalogFor((org?.org_type ?? "business") as OrgType).some(
+      (c) => c.required && matchesCatalog(acct, c),
+    );
+    const blocker = deleteBlocker(usage, { required });
+    if (blocker) throw new Error(blocker);
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [{ table: "accounts", op: "delete", match: { id: acct.id }, minRows: 1 }],
+      {
+        action: "delete",
+        entity: "account",
+        entityId: acct.id,
+        before: { name: acct.name, type: acct.type, subtype: acct.subtype },
       },
     );
     return { ok: true };
