@@ -4,6 +4,12 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+### Changed
+
+- If a change can't be recorded in history, the request now fails with an error instead of reporting success.
+- Bun is now the only supported package manager.
+- Added an architecture overview in docs/architecture.md.
+
 ## [0.0.3] - 2026-10-07
 
 ### Added

@@ -15,6 +15,11 @@ export interface AuditRow {
 export async function writeAudit(row: AuditRow) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { error } = await supabaseAdmin.from("audit_log").insert({ id: newId(), ...row } as any);
-  if (error) console.error("[audit] failed to record", row.action, error.message);
-  return { error };
+  // A change without its history entry is not acceptable in accounting software:
+  // fail loudly so the caller's request errors instead of reporting success.
+  if (error) {
+    console.error("[audit] failed to record", row.action, error.message);
+    throw new Error(`The change could not be recorded in history: ${error.message}`);
+  }
+  return { error: null };
 }

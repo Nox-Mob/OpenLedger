@@ -177,7 +177,7 @@ Updating Supabase later: run the stack's `update.sh` from `supabase-project` (ve
 ### Run the app (both paths)
 
 ```sh
-bun install        # or: npm install
+bun install        # Bun is the only supported package manager
 bun run dev        # or: npm run dev
 ```
 
