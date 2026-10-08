@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -46,10 +47,10 @@ function InvitePage() {
         sessionStorage.removeItem(PENDING_INVITE_KEY);
         await queryClient.invalidateQueries();
         void navigate({ to: "/ledger" });
-      } catch (err: any) {
+      } catch (err) {
         sessionStorage.removeItem(PENDING_INVITE_KEY);
         if (active) {
-          setError(err.message ?? "Could not accept the invite.");
+          setError(errorMessage(err, "Could not accept the invite."));
           setState("error");
         }
       }

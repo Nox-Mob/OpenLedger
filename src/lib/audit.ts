@@ -14,7 +14,7 @@ export interface AuditRow {
 
 export async function writeAudit(row: AuditRow) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { error } = await supabaseAdmin.from("audit_log").insert({ id: newId(), ...row } as any);
+  const { error } = await supabaseAdmin.from("audit_log").insert({ id: newId(), ...row } as never);
   // A change without its history entry is not acceptable in accounting software:
   // fail loudly so the caller's request errors instead of reporting success.
   if (error) {

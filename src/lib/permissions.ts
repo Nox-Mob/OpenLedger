@@ -1,3 +1,4 @@
+import type { Db } from "@/lib/db";
 // Role authorization matrix — the single source of truth for who can do what.
 // Server functions call assertCan() after requireSupabaseAuth; the database
 // mirrors the same rules in RLS policies and triggers so nothing slips around.
@@ -36,7 +37,7 @@ export class ForbiddenError extends Error {
 
 /** Look up the caller's role in an org and require it to allow `action`. */
 export async function assertCan(
-  supabase: any,
+  supabase: Db,
   userId: string,
   orgId: string,
   action: OrgAction,

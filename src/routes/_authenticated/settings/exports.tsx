@@ -1,8 +1,10 @@
+import { OrgPending } from "@/components/AppShell";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import {
   checkBackupFile,
   exportBackup,
@@ -37,15 +39,15 @@ const btn =
 function ExportsPage() {
   const { org } = useOrgContext();
   const [busy, setBusy] = useState<string | null>(null);
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const isAdmin = org.role === "admin";
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
     try {
       await fn();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Export failed");
+    } catch (e) {
+      toast.error(errorMessage(e, "Export failed"));
     } finally {
       setBusy(null);
     }
@@ -187,8 +189,8 @@ function RestoreSection() {
       const t = await file.text();
       setCheck(await checkBackupFile({ data: { text: t } }));
       setText(t);
-    } catch (e: any) {
-      setError(e?.message ?? "This backup can't be restored.");
+    } catch (e) {
+      setError(errorMessage(e, "This backup can't be restored."));
     } finally {
       setBusy(false);
     }
@@ -204,8 +206,8 @@ function RestoreSection() {
       setStoredOrgId(r.orgId);
       setCheck(null);
       setText(null);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Restore failed. Nothing was saved.");
+    } catch (e) {
+      toast.error(errorMessage(e, "Restore failed. Nothing was saved."));
     } finally {
       setBusy(false);
     }

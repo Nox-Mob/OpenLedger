@@ -1,9 +1,12 @@
+import { OrgPending } from "@/components/AppShell";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useOrgContext } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { AccountChecklist, type ChecklistRow } from "@/components/AccountChecklist";
-import { getAccountSetup, setAccountEnabled } from "@/lib/org.functions";
+import { deleteUnusedAccount, getAccountSetup, setAccountEnabled } from "@/lib/org.functions";
+import { ErrorState, LoadingState } from "@/components/PageStates";
 import { catalogFor, matchesCatalog } from "@/lib/account-catalog";
 import { toast } from "sonner";
 
@@ -32,7 +35,7 @@ function AccountsSetup() {
     enabled: !!org,
   });
 
-  if (!org) return null;
+  if (!org) return <OrgPending inShell={false} />;
   const isAdmin = org.role === "admin";
   const existing = setup.data ?? [];
   const catalog = catalogFor(org.orgType);
@@ -48,6 +51,7 @@ function AccountsSetup() {
         catalog: c,
         checked: acc?.isActive ?? !!c.required,
         locked,
+        canDelete: !!acc && !c.required && acc.deleteBlocker === null,
         note: acc?.entryCount
           ? `Used by ${acc.entryCount} transaction line${acc.entryCount === 1 ? "" : "s"}; those records stay intact if archived.`
           : null,
@@ -61,6 +65,7 @@ function AccountsSetup() {
         type: a.type,
         checked: a.isActive,
         locked: null,
+        canDelete: a.deleteBlocker === null,
         note: a.entryCount
           ? `Used by ${a.entryCount} transaction line${a.entryCount === 1 ? "" : "s"}; those records stay intact if archived.`
           : null,
@@ -79,25 +84,53 @@ function AccountsSetup() {
       await queryClient.invalidateQueries({ queryKey: ["account-setup"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast.success(next ? `${row.name} active` : `${row.name} archived`);
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not update account");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not update account"));
     } finally {
       setBusy(null);
     }
   }
+
+  async function remove(row: ChecklistRow) {
+    if (!org) return;
+    const acc = row.catalog
+      ? existing.find((a) => row.catalog && matchesCatalog(a, row.catalog))
+      : existing.find((a) => a.id === row.id);
+    if (!acc) return;
+    if (
+      !window.confirm(`Delete ${row.name} for good? It was never used, so no records are affected.`)
+    )
+      return;
+    setBusy(row.id);
+    try {
+      await deleteUnusedAccount({ data: { orgId: org.id, accountId: acc.id } });
+      await queryClient.invalidateQueries({ queryKey: ["account-setup"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      toast.success(`${row.name} deleted`);
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not delete account"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (setup.isPending) return <LoadingState label="Loading accounts" />;
+  if (setup.isError)
+    return <ErrorState message={errorMessage(setup.error)} onRetry={() => setup.refetch()} />;
 
   return (
     <div className="max-w-2xl rounded-lg border bg-card p-5">
       <h2 className="font-display text-lg font-semibold">Accounts</h2>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">
         Tick the accounts {org.name} uses for new activity. Archiving never removes past
-        transactions or reports.
+        transactions or reports. Accounts that were never used can be deleted.
         {!isAdmin && " Only admins can change these."}
       </p>
       <AccountChecklist
         rows={rows}
         terms={terms}
         onToggle={toggle}
+        onDelete={isAdmin ? remove : undefined}
         disabled={!isAdmin || !!busy || setup.isLoading}
       />
     </div>

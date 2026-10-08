@@ -59,9 +59,9 @@ export const listTransactions = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
 
-    let result = (rows ?? []) as any[];
+    let result = rows ?? [];
     if (data.accountId) {
-      result = result.filter((t) => t.entries.some((e: any) => e.account_id === data.accountId));
+      result = result.filter((t) => t.entries.some((e) => e.account_id === data.accountId));
     }
     return result.map((t) => ({
       id: t.id as string,
@@ -70,7 +70,7 @@ export const listTransactions = createServerFn({ method: "GET" })
       description: t.description as string,
       source: t.source as string,
       status: t.status as string,
-      entries: (t.entries as any[]).map((e) => ({
+      entries: t.entries.map((e) => ({
         id: e.id as string,
         accountId: e.account_id as string,
         accountName: e.accounts?.name ?? "",

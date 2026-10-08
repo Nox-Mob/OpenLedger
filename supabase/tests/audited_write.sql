@@ -92,6 +92,38 @@ BEGIN
   SELECT count(*) INTO n FROM public.audit_log WHERE org_id = org AND entity = 'fund';
   r := r || 'fund_history=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL(' || n || ')' END || '; ';
 
+  -- 6b. The history entry carries the change the database actually applied.
+  SELECT count(*) INTO n FROM public.audit_log
+   WHERE org_id = org AND entity = 'fund'
+     AND recorded_change->0->>'table' = 'funds'
+     AND recorded_change->0->'values'->0->>'name' = 'Building';
+  r := r || 'recorded_change=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL(' || n || ')' END || '; ';
+
+  -- 6c. Year-end close: the close record and the book lock save together with history.
+  PERFORM public.audited_write(org,
+    jsonb_build_array(
+      jsonb_build_object('table','period_closes','op','insert',
+        'values', jsonb_build_object('id', gen_random_uuid(), 'fiscal_year_end', '2025-12-31',
+          'net_income_cents', 0, 'closed_by', usr)),
+      jsonb_build_object('table','organizations','op','update',
+        'values', jsonb_build_object('books_locked_through', '2025-12-31'))),
+    jsonb_build_array(jsonb_build_object('id', gen_random_uuid(), 'action','close_fiscal_year',
+      'entity','period_close','entity_id', org)));
+  SELECT count(*) INTO n FROM public.period_closes p JOIN public.organizations o ON o.id = p.org_id
+   WHERE p.org_id = org AND o.books_locked_through = '2025-12-31';
+  r := r || 'year_close_and_lock=' || CASE WHEN n = 1 THEN 'PASS' ELSE 'FAIL(' || n || ')' END || '; ';
+  -- A second close of the same year is refused and leaves no extra history.
+  BEGIN
+    PERFORM public.audited_write(org,
+      jsonb_build_array(jsonb_build_object('table','period_closes','op','insert',
+        'values', jsonb_build_object('id', gen_random_uuid(), 'fiscal_year_end', '2025-12-31',
+          'net_income_cents', 0, 'closed_by', usr))),
+      jsonb_build_array(jsonb_build_object('id', gen_random_uuid(), 'action','close_fiscal_year',
+        'entity','period_close')));
+    r := r || 'year_close_duplicate=FAIL; ';
+  EXCEPTION WHEN unique_violation THEN r := r || 'year_close_duplicate=PASS; ';
+  END;
+
   -- 7. Someone else can't write to this org even if they know its id.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', stranger::text, 'role', 'authenticated')::text, true);

@@ -10,6 +10,8 @@ export interface ChecklistRow {
   checked: boolean;
   locked?: string | null | undefined; // reason it can't be changed
   note?: string | null | undefined;
+  /** Set when the account was never used and can be removed for good. */
+  canDelete?: boolean | undefined;
 }
 
 const ORDER = ["asset", "liability", "equity", "revenue", "expense"];
@@ -18,11 +20,13 @@ export function AccountChecklist({
   rows,
   terms,
   onToggle,
+  onDelete,
   disabled,
 }: {
   rows: ChecklistRow[];
   terms: Terms;
   onToggle: (row: ChecklistRow, next: boolean) => void;
+  onDelete?: ((row: ChecklistRow) => void) | undefined;
   disabled?: boolean;
 }) {
   return (
@@ -32,14 +36,14 @@ export function AccountChecklist({
         if (!group.length) return null;
         return (
           <div key={t}>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
               {accountTypeLabel(t, terms)}
             </h3>
             <ul className="mt-2 divide-y rounded-md border">
               {group.map((r) => (
-                <li key={r.id}>
+                <li key={r.id} className="flex items-start gap-2 pr-3">
                   <label
-                    className={`flex gap-3 p-3 ${r.locked || disabled ? "" : "cursor-pointer hover:bg-accent/40"}`}
+                    className={`flex flex-1 gap-3 p-3 ${r.locked || disabled ? "" : "cursor-pointer hover:bg-accent/40"}`}
                   >
                     <input
                       type="checkbox"
@@ -81,6 +85,16 @@ export function AccountChecklist({
                       )}
                     </span>
                   </label>
+                  {onDelete && r.canDelete && !disabled && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(r)}
+                      className="mt-3 shrink-0 rounded-md border border-destructive/40 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label={`Delete ${r.name}`}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

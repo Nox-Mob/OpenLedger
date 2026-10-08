@@ -4,6 +4,33 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-10-08
+
+### Added
+
+- Organization switcher in the sidebar for people in more than one organization, showing each organization's type and your role.
+- Accounts that were never used can now be deleted from Settings, Accounts. Accounts with any activity can still only be archived.
+- Account, category, tag, project and fund names must be unique within an organization, ignoring capital letters and extra spaces.
+- Shared input checks for amounts, dates and names, so every form gives the same clear message (for example, more than two decimal places is refused instead of rounded).
+- Loading, empty and error screens with a "Try again" button on the main pages, instead of blank pages.
+- Accessibility: every form field has a label for screen readers, a "Skip to content" link, labelled wording sliders, and higher-contrast sidebar text. An automated scan of every page reports no issues in light or dark mode.
+
+### Changed
+
+- Year-end close now saves the close, the book lock and the history entry in one step. If any part fails, nothing is kept.
+- Every history entry now also stores the exact change the database applied, shown on the History page as "Saved change".
+- Charts library upgraded to version 3 and the code checker to version 10.
+- Loose types removed from app code; the code checker now blocks new ones, along with React rules that catch layout pieces rebuilt on every change.
+- Long dashes removed from account descriptions and messages.
+
+### Fixed
+
+- Retrying a pledge or pledge payment after an interrupted save now finishes recording it instead of skipping it.
+- Creating a project with a budget or a restricted fund failed; both save correctly again.
+- The pledge form and year-end close could offer archived accounts.
+- Import column pickers and statement-check tables no longer rebuild themselves on every change, which could drop keyboard focus.
+- The GitHub database checks were missing the name and delete protections, so their test failed.
+
 ## [0.0.4] - 2026-10-07
 
 ### Added

@@ -732,6 +732,23 @@ export function createSqliteRepositories(db: SqlDriver): Repositories {
           throw e;
         }
       },
+      async closeAndLock(c, lockThrough, audit) {
+        try {
+          await audited(audit, async () => {
+            await db.execute(
+              "INSERT INTO period_closes (id, org_id, fiscal_year_end, net_income_cents, closed_by, created_at) VALUES (?,?,?,?,?,?)",
+              [c.id, c.orgId, c.fiscalYearEnd, c.netIncomeCents, c.closedBy, now()],
+            );
+            await db.execute("UPDATE organizations SET books_locked_through = ? WHERE id = ?", [
+              lockThrough,
+              c.orgId,
+            ]);
+          });
+        } catch (e) {
+          if (isUnique(e)) throw new DuplicateKeyError();
+          throw e;
+        }
+      },
     },
 
     projects: {

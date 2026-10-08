@@ -395,7 +395,7 @@ export async function reopenReconciliation(repos: Repositories, r: Reconciliatio
 }
 
 export async function discardReconciliation(repos: Repositories, r: Reconciliation, userId: Id) {
-  requireInProgress(r, "Completed reconciliations can't be discarded — reopen instead.");
+  requireInProgress(r, "Completed reconciliations can't be discarded. Reopen instead.");
   const before = await view(repos, r);
   await repos.reconciliations.discard(
     r.orgId,

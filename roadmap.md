@@ -46,8 +46,7 @@
 - [ ] 19. MFA - [ ] 20. "Cash basis" labels; A/R, A/P later - [ ] 22. Performance at 10k–50k entries
 - [ ] Account deletion (part of 16)
 - [ ] Budgets, exports and history behind the ports for desktop
-- [ ] 23–32. README, org switcher, terminology note, empty/error states, a11y, input validation, currency rules, undo wording, catalog duplicate protection
-- [ ] Reduce legacy `any` types (non-blocking warnings)
+- [ ] 23–32 leftovers: README refresh, terminology note, currency rules, undo wording (switcher, page states, a11y, input checks, catalog protection done in v0.0.5)
 - Deferred: accrual basis, invoices/bills, bank feeds (Plaid), receipt attachments
 
 ## Shipped

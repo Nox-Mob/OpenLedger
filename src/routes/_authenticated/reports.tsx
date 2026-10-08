@@ -1,7 +1,9 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { incomeStatement, balanceSheet, trialBalance } from "@/lib/reports.functions";
 import { fiscalYearStart } from "@/lib/dates";
 import { formatCents, todayISO } from "@/lib/money";
@@ -80,7 +82,7 @@ function ReportsPage() {
   });
 
   const [exporting, setExporting] = useState(false);
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   const income = incomeQuery.data;
   const balance = balanceQuery.data;
@@ -94,8 +96,8 @@ function ReportsPage() {
         await pdf.exportIncomePdf({ org, terms, pref: terminology, from, to, data: income });
       else if (tab === "balance" && balance)
         await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create PDF");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not create PDF"));
     } finally {
       setExporting(false);
     }
@@ -120,8 +122,8 @@ function ReportsPage() {
     try {
       if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
       else await ex.downloadXlsx([sheet], `${base}.xlsx`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not export");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not export"));
     }
   }
   const sheetReady =
@@ -179,6 +181,7 @@ function ReportsPage() {
         <div className="mt-4 flex items-center gap-3 text-sm">
           <label className="text-muted-foreground">As of</label>
           <input
+            aria-label="As of"
             type="date"
             value={asOf}
             onChange={(e) => setAsOf(e.target.value)}
@@ -192,6 +195,7 @@ function ReportsPage() {
           <div className="flex items-center gap-3 text-sm">
             <label className="text-muted-foreground">From</label>
             <input
+              aria-label="From"
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
@@ -199,6 +203,7 @@ function ReportsPage() {
             />
             <label className="text-muted-foreground">To</label>
             <input
+              aria-label="To"
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}

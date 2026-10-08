@@ -21,7 +21,7 @@ const shared: CatalogAccount[] = [
     subtype: "bank",
     defaultOn: true,
     required: true,
-    why: "Your main bank account — where most money comes in and goes out.",
+    why: "Your main bank account. It is where most money comes in and goes out.",
     whyNot: "Always needed so there's somewhere to record money.",
   },
   {
@@ -70,7 +70,7 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       type: "equity",
       defaultOn: true,
       required: true,
-      why: "What the organization is worth — needed to balance the books.",
+      why: "What the organization is worth, needed to balance the books.",
       whyNot: "Always needed; opening balances land here.",
     },
     {
@@ -89,14 +89,14 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       type: "revenue",
       defaultOn: true,
       why: "Money given freely, with nothing sold in return.",
-      whyNot: "Rarely skipped — most nonprofits receive donations.",
+      whyNot: "Rarely skipped. Most nonprofits receive donations.",
     },
     {
       key: "fundraising_sales",
       name: "Fundraising Sales",
       type: "revenue",
       defaultOn: true,
-      why: "Money from things you sell to raise funds, like T-shirts or bake sales — kept separate from donations.",
+      why: "Money from things you sell to raise funds, like T-shirts or bake sales, kept separate from donations.",
       whyNot: "Skip it if you never sell anything to raise money.",
     },
     {
@@ -128,7 +128,7 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       name: "Program Expenses",
       type: "expense",
       defaultOn: true,
-      why: "Spending that directly delivers your mission — donors and filings often ask for this.",
+      why: "Spending that directly delivers your mission. Donors and filings often ask for this.",
       whyNot: "Rarely skipped.",
     },
     {
@@ -156,7 +156,7 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       type: "equity",
       defaultOn: true,
       required: true,
-      why: "What the owners have put in and kept in the business — needed to balance the books.",
+      why: "What the owners have put in and kept in the business, needed to balance the books.",
       whyNot: "Always needed; opening balances land here.",
     },
     {
@@ -188,7 +188,7 @@ export const ACCOUNT_CATALOG: Record<OrgType, CatalogAccount[]> = {
       name: "Cost of Goods Sold",
       type: "expense",
       defaultOn: true,
-      why: "What the products you sold cost you — shows your real profit per sale.",
+      why: "What the products you sold cost you. Shows your real profit per sale.",
       whyNot: "Skip it if you don't sell physical products.",
     },
     {

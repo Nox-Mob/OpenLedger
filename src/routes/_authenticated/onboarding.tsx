@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -97,8 +98,8 @@ function OnboardingPage() {
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       navigate({ to: "/ledger" });
-    } catch (err: any) {
-      setError(err.message ?? "Could not create organization");
+    } catch (err) {
+      setError(errorMessage(err, "Could not create organization"));
       setBusy(false);
     }
   }
@@ -131,6 +132,7 @@ function OnboardingPage() {
             >
               <label className="block text-sm font-medium">Organization name</label>
               <input
+                aria-label="Organization name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -235,6 +237,7 @@ function OnboardingPage() {
                 <div>
                   <label className="text-sm font-medium">Currency</label>
                   <select
+                    aria-label="Currency"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className={inputCls}
@@ -247,6 +250,7 @@ function OnboardingPage() {
                 <div>
                   <label className="text-sm font-medium">Fiscal year starts</label>
                   <select
+                    aria-label="Fiscal year starts"
                     value={fyMonth}
                     onChange={(e) => setFyMonth(Number(e.target.value))}
                     className={inputCls}

@@ -1,7 +1,11 @@
+import { checkAmount, checkName } from "@/lib/validation";
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppShell, useOrgContext } from "@/components/AppShell";
+import { AppShell, OrgPending } from "@/components/AppShell";
+import { useOrgContext } from "@/hooks/use-org-context";
 import { listProjects, createProject } from "@/lib/taxonomy.functions";
 import { projectSummary } from "@/lib/reports.functions";
 import { formatCents, parseToCents } from "@/lib/money";
@@ -40,21 +44,29 @@ function ProjectsPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!org) return;
+    const n = checkName(name, "Project name");
+    if (!n.ok) return void toast.error(n.error);
+    let budgetCents = 0;
+    if (budget.trim()) {
+      const b = checkAmount(budget, { allowZero: true, label: "Budget" });
+      if (!b.ok) return void toast.error(b.error);
+      budgetCents = b.value;
+    }
     try {
       await createProject({
-        data: { orgId: org.id, name, budgetCents: parseToCents(budget) ?? 0 },
+        data: { orgId: org.id, name: n.value, budgetCents },
       });
       toast.success("Project created");
       setName("");
       setBudget("");
       queryClient.invalidateQueries({ queryKey: ["project-summary"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Could not create project");
+    } catch (err) {
+      toast.error(errorMessage(err, "Could not create project"));
     }
   }
 
-  if (!org) return null;
+  if (!org) return <OrgPending />;
 
   return (
     <AppShell>
@@ -68,6 +80,7 @@ function ProjectsPage() {
         <div className="flex-1">
           <label className="text-sm font-medium">Project name</label>
           <input
+            aria-label="Project name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -78,6 +91,7 @@ function ProjectsPage() {
         <div className="w-36">
           <label className="text-sm font-medium">Budget</label>
           <input
+            aria-label="Budget"
             inputMode="decimal"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
@@ -94,8 +108,18 @@ function ProjectsPage() {
       </form>
 
       <div className="mt-6 overflow-hidden rounded-lg border bg-card">
-        {(summaryQuery.data ?? []).length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">No projects yet.</div>
+        {summaryQuery.isPending ? (
+          <LoadingState label="Loading projects" />
+        ) : summaryQuery.isError ? (
+          <ErrorState
+            message={errorMessage(summaryQuery.error)}
+            onRetry={() => summaryQuery.refetch()}
+          />
+        ) : (summaryQuery.data ?? []).length === 0 ? (
+          <EmptyState
+            title="No projects yet"
+            description="Add a project above to track its budget and spending."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
