@@ -1,3 +1,4 @@
+import type { AuditEvent } from "@/lib/domain/models";
 // Statement checks (reconciliation), written once against the repository ports.
 // Compares bank evidence to the ledger; never edits amounts — only ticks entries.
 // Balances are in "statement sign" (cash on hand for assets, amount owed for liabilities).
@@ -173,23 +174,15 @@ async function loadWorkspace(repos: Repositories, r: Reconciliation) {
   return buildWorkspace(r, entries, bank);
 }
 
-async function audit(
-  repos: Repositories,
+/** History entry saved atomically with the change it describes. */
+function ev(
   r: { orgId: Id; id: Id },
   userId: Id,
   action: string,
   before: unknown,
   after: unknown,
-) {
-  await repos.audit.append({
-    orgId: r.orgId,
-    userId,
-    action,
-    entity: "reconciliation",
-    entityId: r.id,
-    before,
-    after,
-  });
+): AuditEvent {
+  return { orgId: r.orgId, userId, action, entity: "reconciliation", entityId: r.id, before, after };
 }
 
 export async function listReconciliations(repos: Repositories, orgId: Id) {
@@ -271,8 +264,7 @@ export async function startReconciliation(
     batchId: input.batchId,
     createdBy: input.userId,
   };
-  await repos.reconciliations.start(row);
-  await audit(repos, row, input.userId, "reconcile_start", null, row);
+  await repos.reconciliations.start(row, ev(row, input.userId, "reconcile_start", null, row));
   return { id: row.id };
 }
 
@@ -320,10 +312,12 @@ export async function setCleared(
   userId: Id,
 ) {
   requireInProgress(r, "This reconciliation is completed. Reopen it to make changes.");
-  await repos.reconciliations.setTicked(r.id, entryIds, cleared);
-  await audit(repos, r, userId, cleared ? "reconcile_clear" : "reconcile_unclear", null, {
+  await repos.reconciliations.setTicked(
+    r.id,
     entryIds,
-  });
+    cleared,
+    ev(r, userId, cleared ? "reconcile_clear" : "reconcile_unclear", null, { entryIds }),
+  );
   return { ok: true };
 }
 
@@ -335,8 +329,12 @@ export async function acceptMatches(repos: Repositories, r: Reconciliation, user
     .map((m) => m.entryId)
     .filter((id) => !ws.entries.find((e) => e.id === id)?.cleared);
   if (ids.length) {
-    await repos.reconciliations.setTicked(r.id, ids, true);
-    await audit(repos, r, userId, "reconcile_accept_matches", null, { entryIds: ids });
+    await repos.reconciliations.setTicked(
+      r.id,
+      ids,
+      true,
+      ev(r, userId, "reconcile_accept_matches", null, { entryIds: ids }),
+    );
   }
   return { cleared: ids.length };
 }
@@ -347,18 +345,21 @@ export async function completeReconciliation(repos: Repositories, r: Reconciliat
   const a = await accountOf(repos, r.orgId, r.accountId);
   const s = summarize(r, a?.type ?? "asset", ws.entries);
   assertReconciliationCanFinish(s.difference);
-  await repos.reconciliations.finish(r.orgId, r.id, userId);
-  await audit(
-    repos,
-    r,
+  await repos.reconciliations.finish(
+    r.orgId,
+    r.id,
     userId,
-    "reconcile_complete",
-    { status: "in_progress" },
-    {
-      status: "completed",
-      items: ws.entries.filter((e) => e.cleared).length,
-      clearedBalance: s.clearedBalance,
-    },
+    ev(
+      r,
+      userId,
+      "reconcile_complete",
+      { status: "in_progress" },
+      {
+        status: "completed",
+        items: ws.entries.filter((e) => e.cleared).length,
+        clearedBalance: s.clearedBalance,
+      },
+    ),
   );
   return { ok: true };
 }
@@ -377,16 +378,10 @@ export async function reopenReconciliation(repos: Repositories, r: Reconciliatio
       "reconciliation",
       "Discard the in-progress reconciliation for this account first.",
     );
-  await repos.reconciliations.reopen(r.orgId, r.id);
-  await audit(
-    repos,
-    r,
-    userId,
-    "reconcile_reopen",
-    { status: "completed" },
-    {
-      status: "in_progress",
-    },
+  await repos.reconciliations.reopen(
+    r.orgId,
+    r.id,
+    ev(r, userId, "reconcile_reopen", { status: "completed" }, { status: "in_progress" }),
   );
   return { ok: true };
 }
@@ -394,7 +389,10 @@ export async function reopenReconciliation(repos: Repositories, r: Reconciliatio
 export async function discardReconciliation(repos: Repositories, r: Reconciliation, userId: Id) {
   requireInProgress(r, "Completed reconciliations can't be discarded — reopen instead.");
   const before = await view(repos, r);
-  await repos.reconciliations.discard(r.orgId, r.id);
-  await audit(repos, r, userId, "reconcile_discard", before, null);
+  await repos.reconciliations.discard(
+    r.orgId,
+    r.id,
+    ev(r, userId, "reconcile_discard", before, null),
+  );
   return { ok: true };
 }

@@ -37,19 +37,19 @@ export async function updateOrganization(
   const before = await repos.orgs.get(orgId);
   if (!before) throw new LedgerRuleError("settings", "Organization not found");
   const { aiPdfEnabled, ...rest } = s;
-  await repos.orgs.updateSettings(orgId, {
-    ...rest,
-    ...(aiPdfEnabled !== undefined ? { aiPdfEnabled } : {}),
-  });
-  await repos.audit.append({
+  await repos.orgs.updateSettings(
     orgId,
-    userId,
-    action: "update",
-    entity: "organization",
-    entityId: orgId,
-    before: snapshot(before),
-    after: snapshot({ ...before, ...rest, aiPdfEnabled: aiPdfEnabled ?? before.aiPdfEnabled }),
-  });
+    { ...rest, ...(aiPdfEnabled !== undefined ? { aiPdfEnabled } : {}) },
+    {
+      orgId,
+      userId,
+      action: "update",
+      entity: "organization",
+      entityId: orgId,
+      before: snapshot(before),
+      after: snapshot({ ...before, ...rest, aiPdfEnabled: aiPdfEnabled ?? before.aiPdfEnabled }),
+    },
+  );
   return { ok: true };
 }
 
@@ -137,8 +137,7 @@ export async function closeFiscalYear(
     if (e instanceof DuplicateKeyError) return { ok: true, duplicate: true };
     throw e;
   }
-  await repos.orgs.setBooksLockedThrough(orgId, fiscalYearEnd);
-  await repos.audit.append({
+  await repos.orgs.setBooksLockedThrough(orgId, fiscalYearEnd, {
     orgId,
     userId,
     action: "close_fiscal_year",
