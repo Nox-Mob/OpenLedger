@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -96,8 +97,18 @@ function ProjectsPage() {
       </form>
 
       <div className="mt-6 overflow-hidden rounded-lg border bg-card">
-        {(summaryQuery.data ?? []).length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">No projects yet.</div>
+        {summaryQuery.isPending ? (
+          <LoadingState label="Loading projects" />
+        ) : summaryQuery.isError ? (
+          <ErrorState
+            message={errorMessage(summaryQuery.error)}
+            onRetry={() => summaryQuery.refetch()}
+          />
+        ) : (summaryQuery.data ?? []).length === 0 ? (
+          <EmptyState
+            title="No projects yet"
+            description="Add a project above to track its budget and spending."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>

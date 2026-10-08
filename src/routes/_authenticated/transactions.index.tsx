@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,8 +61,23 @@ function TransactionsPage() {
       </div>
 
       <div className="mt-6 overflow-hidden rounded-lg border bg-card">
-        {(txQuery.data ?? []).length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">No transactions yet.</div>
+        {txQuery.isPending ? (
+          <LoadingState label="Loading transactions" />
+        ) : txQuery.isError ? (
+          <ErrorState message={errorMessage(txQuery.error)} onRetry={() => txQuery.refetch()} />
+        ) : (txQuery.data ?? []).length === 0 ? (
+          <EmptyState
+            title="No transactions yet"
+            description="Record money coming in or going out, or import a bank file."
+            action={
+              <Link
+                to="/transactions/new"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                New transaction
+              </Link>
+            }
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>

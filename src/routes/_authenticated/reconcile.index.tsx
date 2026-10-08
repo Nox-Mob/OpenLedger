@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -246,10 +247,15 @@ function ReconcileIndex() {
 
       <h2 className="font-display mt-8 text-lg font-semibold">History</h2>
       <div className="mt-3 overflow-hidden rounded-lg border bg-card">
-        {recs.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No statements checked yet.
-          </div>
+        {recsQuery.isPending ? (
+          <LoadingState label="Loading statement checks" />
+        ) : recsQuery.isError ? (
+          <ErrorState message={errorMessage(recsQuery.error)} onRetry={() => recsQuery.refetch()} />
+        ) : recs.length === 0 ? (
+          <EmptyState
+            title="No statements checked yet"
+            description="Start one above when your bank statement arrives."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
