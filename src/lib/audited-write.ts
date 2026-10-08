@@ -36,15 +36,9 @@ export interface WriteResult {
   ids: string[];
 }
 
-interface RpcClient {
-  rpc(
-    fn: string,
-    args: Record<string, unknown>,
-  ): PromiseLike<{
-    data: unknown;
-    error: { message: string } | null;
-  }>;
-}
+// Loose on purpose: works with both the typed user client and the admin client.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RpcClient = { rpc: (...args: any[]) => any };
 
 export function toAuditJson(a: AuditEntry) {
   return {
@@ -79,12 +73,12 @@ export async function auditedWrite(
   asUser?: string,
 ): Promise<WriteResult[]> {
   const entries = Array.isArray(audit) ? audit : [audit];
-  const { data, error } = await db.rpc("audited_write", {
+  const { data, error } = (await db.rpc("audited_write", {
     p_org: orgId,
     p_ops: ops.map(toOpJson),
     p_audit: entries.map(toAuditJson),
     ...(asUser ? { p_user: asUser } : {}),
-  });
+  })) as { data: unknown; error: { message: string } | null };
   if (error) {
     if (/duplicate key/i.test(error.message)) {
       throw new DuplicateKeyError(error.message);
