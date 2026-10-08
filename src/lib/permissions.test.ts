@@ -37,3 +37,20 @@ describe("role authorization matrix", () => {
     expect(new ForbiddenError("close_books").message).toContain("close_books");
   });
 });
+
+import { CAPABILITIES, ROLES } from "./permissions";
+describe("capability table snapshot", () => {
+  it("every cell is pinned", () => {
+    const grid = Object.fromEntries(
+      Object.entries(CAPABILITIES).map(([a, roles]) => [a, ROLES.map((r) => roles.includes(r))]),
+    );
+    expect(grid).toEqual({
+      read: [true, true, true],
+      write: [true, true, false],
+      reopen_reconciliation: [true, false, false],
+      manage_settings: [true, false, false],
+      manage_members: [true, false, false],
+      close_books: [true, false, false],
+    });
+  });
+});
