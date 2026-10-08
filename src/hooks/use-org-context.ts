@@ -41,4 +41,3 @@ export function useOrgContext() {
     retry: () => orgsQuery.refetch(),
   };
 }
-
