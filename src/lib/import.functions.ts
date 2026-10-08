@@ -325,34 +325,40 @@ export const saveImportProfile = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertCan(context.supabase, context.userId, data.orgId, "write");
     // One saved layout per account+name: update it, or add it if it's new.
-    const values = { name: data.name, mapping: data.mapping };
-    const [updated] = await auditedWrite(
+    const { data: existing, error: findErr } = await context.supabase
+      .from("import_profiles")
+      .select("id")
+      .eq("org_id", data.orgId)
+      .eq("account_id", data.accountId)
+      .eq("name", data.name)
+      .maybeSingle();
+    if (findErr) throw new Error(findErr.message);
+    const id = existing?.id ?? newId();
+    await auditedWrite(
       context.supabase,
       data.orgId,
       [
-        {
-          table: "import_profiles",
-          op: "update",
-          values: { mapping: data.mapping },
-          match: { account_id: data.accountId, name: data.name },
-        },
+        existing
+          ? {
+              table: "import_profiles",
+              op: "update",
+              values: { mapping: data.mapping },
+              match: { id },
+              minRows: 1,
+            }
+          : {
+              table: "import_profiles",
+              op: "insert",
+              values: { id, account_id: data.accountId, name: data.name, mapping: data.mapping },
+            },
       ],
-      { action: "update", entity: "import_profile", after: values },
+      {
+        action: existing ? "update" : "create",
+        entity: "import_profile",
+        entityId: id,
+        after: { name: data.name },
+      },
     );
-    if (!updated?.count) {
-      await auditedWrite(
-        context.supabase,
-        data.orgId,
-        [
-          {
-            table: "import_profiles",
-            op: "insert",
-            values: { id: newId(), account_id: data.accountId, ...values },
-          },
-        ],
-        { action: "create", entity: "import_profile", after: values },
-      );
-    }
     return { ok: true };
   });
 
