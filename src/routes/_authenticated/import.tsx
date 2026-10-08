@@ -420,7 +420,12 @@ function ImportPage() {
     onChange: (v: number) => void;
     label: string;
   }) => (
-    <select aria-label={label} value={value} onChange={(e) => onChange(Number(e.target.value))} className={inputCls}>
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className={inputCls}
+    >
       {colOptions.map((c) => (
         <option key={c.i} value={c.i}>
           {c.label}
@@ -531,17 +536,19 @@ function ImportPage() {
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div>
                 <label className="text-xs text-muted-foreground">Date column</label>
-                <ColSelect
-                  value={mapping.dateCol}
-                  onChange={(v) => updateMapping({ dateCol: v })}
-                />
+                {colSelect({
+                  value: mapping.dateCol,
+                  onChange: (v) => updateMapping({ dateCol: v }),
+                  label: "Date column",
+                })}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Description column</label>
-                <ColSelect
-                  value={mapping.descCol}
-                  onChange={(v) => updateMapping({ descCol: v })}
-                />
+                {colSelect({
+                  value: mapping.descCol,
+                  onChange: (v) => updateMapping({ descCol: v }),
+                  label: "Description column",
+                })}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Date format</label>
@@ -592,26 +599,29 @@ function ImportPage() {
               {mapping.amountMode === "single" ? (
                 <div>
                   <label className="text-xs text-muted-foreground">Amount column</label>
-                  <ColSelect
-                    value={mapping.amountCol}
-                    onChange={(v) => updateMapping({ amountCol: v })}
-                  />
+                  {colSelect({
+                    value: mapping.amountCol,
+                    onChange: (v) => updateMapping({ amountCol: v }),
+                    label: "Amount column",
+                  })}
                 </div>
               ) : (
                 <>
                   <div>
                     <label className="text-xs text-muted-foreground">Money in column</label>
-                    <ColSelect
-                      value={mapping.creditCol}
-                      onChange={(v) => updateMapping({ creditCol: v })}
-                    />
+                    {colSelect({
+                      value: mapping.creditCol,
+                      onChange: (v) => updateMapping({ creditCol: v }),
+                      label: "Money in column",
+                    })}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Money out column</label>
-                    <ColSelect
-                      value={mapping.debitCol}
-                      onChange={(v) => updateMapping({ debitCol: v })}
-                    />
+                    {colSelect({
+                      value: mapping.debitCol,
+                      onChange: (v) => updateMapping({ debitCol: v }),
+                      label: "Money out column",
+                    })}
                   </div>
                 </>
               )}
