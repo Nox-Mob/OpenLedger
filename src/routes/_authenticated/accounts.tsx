@@ -110,7 +110,7 @@ function AccountsPage() {
         >
           <div className="col-span-2">
             <label className="text-sm font-medium">Name</label>
-            <input
+            <input aria-label="Name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -120,7 +120,7 @@ function AccountsPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
+            <select aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
               <option value="asset">{accountTypeLabel("asset", terms)}</option>
               <option value="liability">{accountTypeLabel("liability", terms)}</option>
               <option value="equity">{accountTypeLabel("equity", terms)}</option>
@@ -130,7 +130,7 @@ function AccountsPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Opening balance</label>
-            <input
+            <input aria-label="Opening balance"
               inputMode="decimal"
               value={opening}
               onChange={(e) => setOpening(e.target.value)}

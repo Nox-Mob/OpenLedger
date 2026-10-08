@@ -180,7 +180,7 @@ function ReportsPage() {
       {tab !== "income" && (
         <div className="mt-4 flex items-center gap-3 text-sm">
           <label className="text-muted-foreground">As of</label>
-          <input
+          <input aria-label="As of"
             type="date"
             value={asOf}
             onChange={(e) => setAsOf(e.target.value)}
@@ -193,14 +193,14 @@ function ReportsPage() {
         <div className="mt-6 max-w-2xl">
           <div className="flex items-center gap-3 text-sm">
             <label className="text-muted-foreground">From</label>
-            <input
+            <input aria-label="From"
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
               className={inputCls}
             />
             <label className="text-muted-foreground">To</label>
-            <input
+            <input aria-label="To"
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}

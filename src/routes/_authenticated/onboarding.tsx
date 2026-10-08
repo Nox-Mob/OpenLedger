@@ -131,7 +131,7 @@ function OnboardingPage() {
               }}
             >
               <label className="block text-sm font-medium">Organization name</label>
-              <input
+              <input aria-label="Organization name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -235,7 +235,7 @@ function OnboardingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Currency</label>
-                  <select
+                  <select aria-label="Currency"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className={inputCls}
@@ -247,7 +247,7 @@ function OnboardingPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Fiscal year starts</label>
-                  <select
+                  <select aria-label="Fiscal year starts"
                     value={fyMonth}
                     onChange={(e) => setFyMonth(Number(e.target.value))}
                     className={inputCls}

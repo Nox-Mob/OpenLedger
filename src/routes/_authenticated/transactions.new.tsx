@@ -244,7 +244,7 @@ function NewTransactionPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Date</label>
-            <input
+            <input aria-label="Date"
               type="date"
               required
               value={date}
@@ -254,7 +254,7 @@ function NewTransactionPage() {
           </div>
           <div>
             <label className="text-sm font-medium">Description</label>
-            <input
+            <input aria-label="Description"
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -275,7 +275,7 @@ function NewTransactionPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Amount</label>
-                <input
+                <input aria-label="Amount"
                   required
                   inputMode="decimal"
                   value={amount}
@@ -307,7 +307,7 @@ function NewTransactionPage() {
             {mode === "transfer" ? (
               <div>
                 <label className="text-sm font-medium">To account</label>
-                <select
+                <select aria-label="To account"
                   required
                   value={transferToId}
                   onChange={(e) => setTransferToId(e.target.value)}

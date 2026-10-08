@@ -135,7 +135,7 @@ function ReconcileIndex() {
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <label className="text-sm font-medium">Account</label>
-            <select
+            <select aria-label="Account"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               className={inputCls}
@@ -164,7 +164,7 @@ function ReconcileIndex() {
               <>
                 <div>
                   <label className="text-sm font-medium">Statement from</label>
-                  <input
+                  <input aria-label="Statement from"
                     type="date"
                     value={form.start}
                     onChange={(e) => setForm({ ...form, start: e.target.value })}
@@ -173,7 +173,7 @@ function ReconcileIndex() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Statement to</label>
-                  <input
+                  <input aria-label="Statement to"
                     type="date"
                     value={form.end}
                     onChange={(e) => setForm({ ...form, end: e.target.value })}
@@ -182,7 +182,7 @@ function ReconcileIndex() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Beginning balance</label>
-                  <input
+                  <input aria-label="Beginning balance"
                     inputMode="decimal"
                     value={form.beginning}
                     onChange={(e) => setForm({ ...form, beginning: e.target.value })}
@@ -197,7 +197,7 @@ function ReconcileIndex() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Ending balance (from statement)</label>
-                  <input
+                  <input aria-label="Ending balance (from statement)"
                     inputMode="decimal"
                     value={form.ending}
                     onChange={(e) => setForm({ ...form, ending: e.target.value })}

@@ -79,7 +79,7 @@ function ProjectsPage() {
       >
         <div className="flex-1">
           <label className="text-sm font-medium">Project name</label>
-          <input
+          <input aria-label="Project name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -89,7 +89,7 @@ function ProjectsPage() {
         </div>
         <div className="w-36">
           <label className="text-sm font-medium">Budget</label>
-          <input
+          <input aria-label="Budget"
             inputMode="decimal"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}

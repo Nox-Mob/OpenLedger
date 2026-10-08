@@ -433,7 +433,7 @@ function ImportPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium">1. Bank account</label>
-            <select
+            <select aria-label="1. Bank account"
               value={accountId}
               onChange={(e) => {
                 setAccountId(e.target.value);
@@ -536,7 +536,7 @@ function ImportPage() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Date format</label>
-                <select
+                <select aria-label="Date format"
                   value={mapping.dateFormat}
                   onChange={(e) => updateMapping({ dateFormat: e.target.value as CsvMapping["dateFormat"] })}
                   className={inputCls}
@@ -549,7 +549,7 @@ function ImportPage() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Amounts are in</label>
-                <select
+                <select aria-label="Amounts are in"
                   value={mapping.amountMode}
                   onChange={(e) => updateMapping({ amountMode: e.target.value as CsvMapping["amountMode"] })}
                   className={inputCls}
@@ -560,7 +560,7 @@ function ImportPage() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Number format</label>
-                <select
+                <select aria-label="Number format"
                   value={mapping.decimalSeparator ?? "dot"}
                   onChange={(e) => updateMapping({ decimalSeparator: e.target.value as CsvMapping["decimalSeparator"] })}
                   className={inputCls}
@@ -644,7 +644,7 @@ function ImportPage() {
               <div className="mt-3 grid gap-3 md:grid-cols-4">
                 <div>
                   <label className="text-xs text-muted-foreground">From</label>
-                  <input
+                  <input aria-label="From"
                     type="date"
                     value={statement.start}
                     onChange={(e) => setStatement({ ...statement, start: e.target.value })}
@@ -653,7 +653,7 @@ function ImportPage() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">To</label>
-                  <input
+                  <input aria-label="To"
                     type="date"
                     value={statement.end}
                     onChange={(e) => setStatement({ ...statement, end: e.target.value })}
@@ -662,7 +662,7 @@ function ImportPage() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">Beginning balance</label>
-                  <input
+                  <input aria-label="Beginning balance"
                     inputMode="decimal"
                     value={statement.beginning}
                     onChange={(e) => setStatement({ ...statement, beginning: e.target.value })}
@@ -672,7 +672,7 @@ function ImportPage() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">Ending balance</label>
-                  <input
+                  <input aria-label="Ending balance"
                     inputMode="decimal"
                     value={statement.ending}
                     onChange={(e) => setStatement({ ...statement, ending: e.target.value })}
