@@ -1,6 +1,7 @@
 // Shared input rules for amounts, dates and names. Every form and server
 // function uses these so the same mistake gets the same message everywhere.
 import { isISODate } from "./dates";
+import { z } from "zod";
 
 export type Check<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -69,3 +70,14 @@ export function checkDate(
     };
   return { ok: true, value: input };
 }
+
+/** Server-side name field: same rules and messages as the forms. */
+export const nameField = (label = "Name") =>
+  z.string().transform((v, ctx) => {
+    const c = checkName(v, label);
+    if (!c.ok) {
+      ctx.addIssue({ code: "custom", message: c.error });
+      return z.NEVER;
+    }
+    return c.value;
+  });

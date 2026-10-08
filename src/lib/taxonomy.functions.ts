@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCan } from "./permissions";
 import type { Db } from "./db";
-import { duplicateNameMessage, sameName } from "./validation";
+import { duplicateNameMessage, nameField, sameName } from "./validation";
 
 /** Names are unique per organization, ignoring case and extra spaces. */
 async function assertNameAvailable(
@@ -65,7 +65,7 @@ export const createAccount = createServerFn({ method: "POST" })
     z
       .object({
         orgId: z.string().uuid(),
-        name: z.string().min(1).max(120),
+        name: nameField("Account name"),
         type: z.enum(["asset", "liability", "equity", "revenue", "expense"]),
         subtype: z.string().max(60).nullish(),
       })
@@ -130,7 +130,7 @@ function makeCrud(table: CrudTable, extraSchema?: z.ZodRawShape) {
     .middleware([requireSupabaseAuth])
     .validator((input) =>
       z
-        .object({ orgId: z.string().uuid(), name: z.string().min(1).max(120), ...extraSchema })
+        .object({ orgId: z.string().uuid(), name: nameField(), ...extraSchema })
         .parse(input),
     )
     .handler(async ({ data, context }) => {
