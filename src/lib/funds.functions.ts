@@ -201,7 +201,17 @@ export const createPledge = createServerFn({ method: "POST" })
       date: data.pledgeDate,
       idempotencyKey: `pledge:${data.idempotencyKey}`,
     });
-    if (tx.duplicate) return { ok: true };
+    if (tx.duplicate) {
+      // A retry after the ledger posting saved but the pledge record didn't: finish it now.
+      const { data: done, error: e3 } = await context.supabase
+        .from("pledges")
+        .select("id")
+        .eq("org_id", data.orgId)
+        .eq("transaction_id", tx.id)
+        .maybeSingle();
+      if (e3) throw new Error(e3.message);
+      if (done) return { ok: true };
+    }
     const pledgeId = newId();
     await auditedWrite(
       context.supabase,
@@ -300,7 +310,17 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
       date: data.date,
       idempotencyKey: `pledge-${data.kind}:${data.idempotencyKey}`,
     });
-    if (tx.duplicate) return { ok: true };
+    if (tx.duplicate) {
+      // A retry after the ledger posting saved but the payment record didn't: finish it now.
+      const { data: done, error: e3 } = await supabase
+        .from("pledge_payments")
+        .select("id")
+        .eq("org_id", data.orgId)
+        .eq("transaction_id", tx.id)
+        .maybeSingle();
+      if (e3) throw new Error(e3.message);
+      if (done) return { ok: true };
+    }
     // The payment record, any status change and their history are saved together.
     const paymentId = newId();
     const remaining = pledgeOutstanding(Number(p.amount_cents), settled + data.amountCents);

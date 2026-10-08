@@ -19,7 +19,10 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // The two classic hook rules. react-hooks 7 also ships React Compiler rules
+      // (static-components, set-state-in-effect, purity); those are tracked on the roadmap.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "no-restricted-imports": [
         "error",
         {
@@ -34,7 +37,7 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      // Reported, not blocking: 114 legacy uses; tighten file by file.
+      // Reported, not blocking: legacy uses; tighten file by file.
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },

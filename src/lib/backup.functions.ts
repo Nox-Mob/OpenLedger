@@ -104,9 +104,12 @@ export const listHistory = createServerFn({ method: "GET" })
     const size = 50;
     let q = context.supabase
       .from("audit_log")
-      .select("id, user_id, action, entity, entity_id, before, after, created_at, kind", {
-        count: "exact",
-      })
+      .select(
+        "id, user_id, action, entity, entity_id, before, after, recorded_change, created_at, kind",
+        {
+          count: "exact",
+        },
+      )
       .eq("org_id", data.orgId)
       .order("created_at", { ascending: false })
       .range(data.page * size, data.page * size + size - 1);
