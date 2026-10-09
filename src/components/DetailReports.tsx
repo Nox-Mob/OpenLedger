@@ -146,7 +146,7 @@ export function LedgerReport(p: {
     : null;
   if (make) {
     make.body = accounts.flatMap((a) => [
-      [a.accountName, "", "Opening balance", "", "", a.openingCents],
+      [a.accountName, "", "Starting balance", "", "", a.openingCents],
       ...a.lines.map((l) => [
         a.accountName,
         l.date,
@@ -155,7 +155,7 @@ export function LedgerReport(p: {
         l.creditCents || "",
         l.balanceCents,
       ]),
-      [a.accountName, "", "Closing balance", "", "", a.closingCents],
+      [a.accountName, "", "Ending balance", "", "", a.closingCents],
     ]);
   }
 
@@ -214,7 +214,7 @@ export function LedgerReport(p: {
               <tbody>
                 <tr className="border-b italic text-muted-foreground">
                   <td className="px-4 py-2" colSpan={4}>
-                    Opening balance
+                    Starting balance
                   </td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.openingCents)}</td>
                 </tr>
@@ -241,7 +241,7 @@ export function LedgerReport(p: {
                 )}
                 <tr className="bg-muted/50 font-semibold">
                   <td className="px-4 py-2" colSpan={2}>
-                    Closing balance
+                    Ending balance
                   </td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.totalDebitCents)}</td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.totalCreditCents)}</td>
@@ -286,7 +286,8 @@ export function FundReport(p: {
           f.closingCents,
         ]),
         file: `fund-activity-${from}-to-${to}`,
-        sheet: async () => (await import("@/lib/report-sheets")).fundActivitySheet(funds, p.terms.fundActivity),
+        sheet: async () =>
+          (await import("@/lib/report-sheets")).fundActivitySheet(funds, p.terms.fundActivity),
       }
     : null;
   return (
@@ -381,7 +382,10 @@ export function StatementCheckReport(p: { org: Org; terms: Terms; pref: Terminol
           ],
           file: `statement-check-${r.accountName}-${r.periodEnd}`,
           sheet: async () =>
-            (await import("@/lib/report-sheets")).statementCheckSheet({ ...r, ...rep }, p.terms.statementCheck),
+            (await import("@/lib/report-sheets")).statementCheckSheet(
+              { ...r, ...rep },
+              p.terms.statementCheck,
+            ),
         }
       : null;
 
@@ -427,7 +431,7 @@ export function StatementCheckReport(p: { org: Org; terms: Terms; pref: Terminol
     <div className="mt-6 max-w-3xl space-y-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <label className="text-muted-foreground" htmlFor="rep-check">
-          Statement check
+          {p.terms.statementCheck}
         </label>
         <select
           id="rep-check"

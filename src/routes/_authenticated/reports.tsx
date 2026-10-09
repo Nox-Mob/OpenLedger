@@ -231,7 +231,8 @@ function ReportsPage() {
       {tab === "ledger" && (
         <LedgerReport
           org={org}
-          terms={terms} pref={terminology}
+          terms={terms}
+          pref={terminology}
           from={ledgerFrom}
           to={ledgerTo}
           setFrom={setLedgerFrom}
@@ -243,7 +244,8 @@ function ReportsPage() {
       {tab === "funds" && (
         <FundReport
           org={org}
-          terms={terms} pref={terminology}
+          terms={terms}
+          pref={terminology}
           from={ledgerFrom}
           to={ledgerTo}
           setFrom={setLedgerFrom}

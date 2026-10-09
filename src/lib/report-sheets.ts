@@ -57,11 +57,14 @@ export function balanceSheetSheet(
   };
 }
 
-export function trialSheet(d: {
-  lines: { name: string; type: string; debitCents: number; creditCents: number }[];
-  totalDebitCents: number;
-  totalCreditCents: number;
-}, title = "Trial balance"): Sheet {
+export function trialSheet(
+  d: {
+    lines: { name: string; type: string; debitCents: number; creditCents: number }[];
+    totalDebitCents: number;
+    totalCreditCents: number;
+  },
+  title = "Trial balance",
+): Sheet {
   return {
     name: title,
     rows: [
@@ -90,7 +93,7 @@ type LedgerAcct = {
 export function ledgerRows(accounts: LedgerAcct[]) {
   const rows: (string | number)[][] = [];
   for (const a of accounts) {
-    rows.push([a.accountName, "", "Opening balance", "", "", a.openingCents]);
+    rows.push([a.accountName, "", "Starting balance", "", "", a.openingCents]);
     for (const l of a.lines)
       rows.push([
         a.accountName,
@@ -100,7 +103,7 @@ export function ledgerRows(accounts: LedgerAcct[]) {
         l.creditCents,
         l.balanceCents,
       ]);
-    rows.push([a.accountName, "", "Closing balance", "", "", a.closingCents]);
+    rows.push([a.accountName, "", "Ending balance", "", "", a.closingCents]);
   }
   return rows;
 }
@@ -148,15 +151,15 @@ export function fundActivitySheet(
 
 export function statementCheckSheet(
   d: {
-  accountName: string;
-  periodEnd: string;
-  beginningBalanceCents: number;
-  endingBalanceCents: number;
-  cleared: { date: string; description: string; amountCents: number }[];
-  outstanding: { date: string; description: string; amountCents: number }[];
-  clearedBalanceCents: number;
-  differenceCents: number;
-},
+    accountName: string;
+    periodEnd: string;
+    beginningBalanceCents: number;
+    endingBalanceCents: number;
+    cleared: { date: string; description: string; amountCents: number }[];
+    outstanding: { date: string; description: string; amountCents: number }[];
+    clearedBalanceCents: number;
+    differenceCents: number;
+  },
   title = "Statement check",
 ): Sheet {
   return {
