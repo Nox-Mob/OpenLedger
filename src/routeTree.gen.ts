@@ -38,6 +38,7 @@ import { Route as AuthenticatedSettingsExportsRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsHistoryRouteImport } from './routes/_authenticated/settings/history'
 import { Route as AuthenticatedSettingsMembersRouteImport } from './routes/_authenticated/settings/members'
 import { Route as AuthenticatedSettingsPreferencesRouteImport } from './routes/_authenticated/settings/preferences'
+import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings/security'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions.index'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions.new'
 
@@ -194,6 +195,12 @@ const AuthenticatedSettingsPreferencesRoute =
     path: '/preferences',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsSecurityRoute =
+  AuthenticatedSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedTransactionsIndexRoute =
   AuthenticatedTransactionsIndexRouteImport.update({
     id: '/transactions/',
@@ -234,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
   '/reconcile/': typeof AuthenticatedReconcileIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -265,6 +273,7 @@ export interface FileRoutesByTo {
   '/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
   '/reconcile': typeof AuthenticatedReconcileIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
@@ -299,6 +308,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/history': typeof AuthenticatedSettingsHistoryRoute
   '/_authenticated/settings/members': typeof AuthenticatedSettingsMembersRoute
   '/_authenticated/settings/preferences': typeof AuthenticatedSettingsPreferencesRoute
+  '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
   '/_authenticated/reconcile/': typeof AuthenticatedReconcileIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/settings/history'
     | '/settings/members'
     | '/settings/preferences'
+    | '/settings/security'
     | '/transactions/new'
     | '/reconcile/'
     | '/settings/'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/settings/history'
     | '/settings/members'
     | '/settings/preferences'
+    | '/settings/security'
     | '/transactions/new'
     | '/reconcile'
     | '/settings'
@@ -397,6 +409,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/history'
     | '/_authenticated/settings/members'
     | '/_authenticated/settings/preferences'
+    | '/_authenticated/settings/security'
     | '/_authenticated/transactions/new'
     | '/_authenticated/reconcile/'
     | '/_authenticated/settings/'
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsPreferencesRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/security': {
+      id: '/_authenticated/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/transactions/': {
       id: '/_authenticated/transactions/'
       path: '/transactions'
@@ -645,6 +665,7 @@ interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsHistoryRoute: typeof AuthenticatedSettingsHistoryRoute
   AuthenticatedSettingsMembersRoute: typeof AuthenticatedSettingsMembersRoute
   AuthenticatedSettingsPreferencesRoute: typeof AuthenticatedSettingsPreferencesRoute
+  AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
@@ -655,6 +676,7 @@ const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsHistoryRoute: AuthenticatedSettingsHistoryRoute,
   AuthenticatedSettingsMembersRoute: AuthenticatedSettingsMembersRoute,
   AuthenticatedSettingsPreferencesRoute: AuthenticatedSettingsPreferencesRoute,
+  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 

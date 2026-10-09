@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { MfaCodeForm } from "@/components/MfaCodeForm";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -156,6 +157,29 @@ function AuthPage() {
     });
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
+
+  if (needsCode)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <main className="w-full max-w-sm rounded-lg border bg-card p-6">
+          <h1 className="font-display text-xl font-semibold">Two-step sign-in</h1>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            Open your authenticator app and enter the code for OpenLedgerApp.
+          </p>
+          <MfaCodeForm onDone={goAfterAuth} />
+          <button
+            type="button"
+            className="mt-4 text-sm underline"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              setNeedsCode(false);
+            }}
+          >
+            Use a different account
+          </button>
+        </main>
+      </div>
+    );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
