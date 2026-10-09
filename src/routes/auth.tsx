@@ -33,6 +33,7 @@ function AuthPage() {
     if (token) void navigate({ to: "/invite/$token", params: { token } });
     else void navigate({ to: "/ledger" });
   }
+  const [needsCode, setNeedsCode] = useState(false);
   // OAuth returns here, keeping the public homepage public while restoring app access.
   useEffect(() => {
     let active = true;
@@ -65,7 +66,6 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [legalAgreement, setLegalAgreement] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
-  const [needsCode, setNeedsCode] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
 
