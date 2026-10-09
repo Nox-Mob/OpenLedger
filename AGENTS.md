@@ -31,9 +31,8 @@
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
-- Releases: follow docs/release-checklist.md; the changelog and docs/architecture.md (`Current as of vX.Y.Z`) are mandatory every release, enforced by src/lib/release.test.ts.
-- MFA: organizations.require_mfa is enforced in the DB (is_org_member/has_org_role/can_write_org AND mfa_ok); only the org row and your own role stay visible so the app can explain why.
-- Release notes: `CHANGELOG.md` is the single public changelog source; planned work goes in the roadmap, not releases.
+- Releases: follow docs/release-checklist.md; CHANGELOG.md (only release notes) and docs/architecture.md (`Current as of vX.Y.Z`) are mandatory, enforced by src/lib/release.test.ts.
+- MFA: org require_mfa enforced in DB via mfa_ok inside membership helpers; org row and own role stay visible to explain why.
 
 - Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.
 - IDs: every new record gets an app-generated UUID (newId()), never a DB default, so identity survives future offline sync.
@@ -45,7 +44,6 @@
 - Budgets/exports/history: cloud-only server functions for now (no port yet); budgets table keeps one row per account+period with a stable app-generated ID (update, never replace), and every export escapes formula-looking text via src/lib/export.ts.
 - Org delete relies on deferrable "no action" FKs and a balance trigger that skips deleted transactions; keep new cascading FKs deferrable.
 - Package manager: npm only (package-lock.json, installed with npm ci); no bun.lock, so every install resolves the same tree.
-- Architecture overview lives in docs/architecture.md; update it when a layer boundary changes.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
 - Inputs: amounts, dates and names go through src/lib/validation.ts on both form and server so every form shows the same message.
