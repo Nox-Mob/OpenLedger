@@ -32,8 +32,12 @@ describe("error pop-ups appear on screen", () => {
   });
 
   it("statement check off", async () => {
-    await popUp(new Error("Statement check cannot be finished: difference is 500 cents, it must be zero."));
-    expect(await screen.findByText("Not finished: the statement check doesn't match yet")).toBeTruthy();
+    await popUp(
+      new Error("Statement check cannot be finished: difference is 500 cents, it must be zero."),
+    );
+    expect(
+      await screen.findByText("Not finished: the statement check doesn't match yet"),
+    ).toBeTruthy();
     expect(await screen.findByText(/still open/)).toBeTruthy();
   });
 
