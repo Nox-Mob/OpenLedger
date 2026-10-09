@@ -88,12 +88,14 @@ function snapshot() {
     tx: [...s.transactions.values()],
     recs: [...s.reconciliations.values()],
     closes: [...s.periodCloses.values()],
-    org: repos.store.orgs ? [...repos.store.orgs.values()] : null,
+    orgs: [...s.orgs.values()],
+    bank: [...s.bank.values()],
     audit: s.audit,
   });
 }
 
-const noErrorPopUp = () => expect(screen.queryByText(/^Not (saved|finished|allowed|restored)/)).toBeNull();
+const noErrorPopUp = () =>
+  expect(screen.queryByText(/^Not (saved|finished|allowed|restored)/)).toBeNull();
 
 describe("unbalanced transaction", () => {
   it("shows the pop-up and records nothing", async () => {
@@ -212,9 +214,9 @@ describe("no permission", () => {
 
   it("treasurer cannot change settings: pop-up, nothing recorded", async () => {
     const before = snapshot();
-    expect(
-      await submit(() => assertCan(roleDb("treasurer"), USER, ORG, "manage_settings")),
-    ).toBe(false);
+    expect(await submit(() => assertCan(roleDb("treasurer"), USER, ORG, "manage_settings"))).toBe(
+      false,
+    );
     expect(await screen.findByText("Not allowed: your role can't do this")).toBeTruthy();
     expect(snapshot()).toBe(before);
   });
