@@ -47,6 +47,6 @@
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
 - Inputs: amounts, dates and names go through src/lib/validation.ts on both form and server so every form shows the same message.
-- Page states: lists use EmptyState/LoadingState/ErrorState from src/components/PageStates.tsx; errors are read with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
+- Page states: lists use PageStates.tsx components; read errors with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
 - Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
-- Periods: month close and reopen only move organizations.books_locked_through (src/lib/services/periods.ts); moving it backward always requires a written reason saved with the change, so no lock change goes unexplained.
+- Periods: month close/reopen only move books_locked_through (services/periods.ts); moving it back needs a saved reason so no lock change goes unexplained.
