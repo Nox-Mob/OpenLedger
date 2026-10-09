@@ -128,7 +128,11 @@ export async function reopenPeriod(
   const org = await repos.orgs.get(orgId);
   if (!org) throw new LedgerRuleError("settings", "Organization not found");
   const current = org.booksLockedThrough;
-  if (!current) throw new LedgerRuleError("settings", "The books are not closed, so there is nothing to reopen.");
+  if (!current)
+    throw new LedgerRuleError(
+      "settings",
+      "The books are not closed, so there is nothing to reopen.",
+    );
   if (reopenThrough && reopenThrough >= current)
     throw new LedgerRuleError(
       "settings",

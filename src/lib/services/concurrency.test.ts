@@ -55,7 +55,9 @@ const actions = (a: string) => repos.store.audit.filter((x) => x.action === a).l
 
 describe("same request twice at once", () => {
   it("double post with one form key records one transaction and one history row", async () => {
-    const results = await Promise.all(Array.from({ length: 5 }, () => postTransaction(repos, sale("form-1"))));
+    const results = await Promise.all(
+      Array.from({ length: 5 }, () => postTransaction(repos, sale("form-1"))),
+    );
     expect(new Set(results.map((r) => r.id)).size).toBe(1);
     expect(results.filter((r) => !r.duplicate)).toHaveLength(1);
     expect(await txCount()).toBe(1);
@@ -63,7 +65,10 @@ describe("same request twice at once", () => {
   });
 
   it("two different forms still record two transactions", async () => {
-    await Promise.all([postTransaction(repos, sale("form-a")), postTransaction(repos, sale("form-b"))]);
+    await Promise.all([
+      postTransaction(repos, sale("form-a")),
+      postTransaction(repos, sale("form-b")),
+    ]);
     expect(await txCount()).toBe(2);
   });
 
@@ -79,7 +84,12 @@ describe("same request twice at once", () => {
 
   it("double year-end close records one close and one history row", async () => {
     await postTransaction(repos, sale("form-c"));
-    const input = { orgId: ORG, userId: USER, fiscalYearEnd: "2025-12-31", retainedEarningsAccountId: EQUITY };
+    const input = {
+      orgId: ORG,
+      userId: USER,
+      fiscalYearEnd: "2025-12-31",
+      retainedEarningsAccountId: EQUITY,
+    };
     const r = await Promise.all([closeFiscalYear(repos, input), closeFiscalYear(repos, input)]);
     expect(r.filter((x) => "duplicate" in x && x.duplicate)).toHaveLength(1);
     expect(await repos.periodCloses.list(ORG)).toHaveLength(1);
@@ -98,7 +108,12 @@ describe("same request twice at once", () => {
 
   it("a post racing a close never lands inside the closed period", async () => {
     await Promise.allSettled([
-      closeMonth(repos, { orgId: ORG, userId: USER, monthEnd: "2025-06-30", acknowledgeWarnings: true }),
+      closeMonth(repos, {
+        orgId: ORG,
+        userId: USER,
+        monthEnd: "2025-06-30",
+        acknowledgeWarnings: true,
+      }),
       postTransaction(repos, sale("form-late")),
     ]);
     // Either the post won (and is in the books) or the close won (and it was rejected).

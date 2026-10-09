@@ -107,7 +107,9 @@ function CloseBooksSettings() {
     setBusy(true);
     setMonthPreview(null);
     try {
-      setMonthPreview(await previewMonthClose({ data: { orgId: org.id, monthEnd: monthEndOf(month) } }));
+      setMonthPreview(
+        await previewMonthClose({ data: { orgId: org.id, monthEnd: monthEndOf(month) } }),
+      );
     } catch (err) {
       showError(err, "Could not check the month");
     } finally {
@@ -237,8 +239,8 @@ function CloseBooksSettings() {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Close a month</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Closing a month locks the books through its last day. Before closing, we check that
-          every bank, cash and credit card account was checked against its statement.
+          Closing a month locks the books through its last day. Before closing, we check that every
+          bank, cash and credit card account was checked against its statement.
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
@@ -270,7 +272,9 @@ function CloseBooksSettings() {
         {monthPreview && (
           <div className="mt-4 rounded-md border bg-accent/40 p-4 text-sm" role="status">
             {monthPreview.alreadyClosed ? (
-              <p>This month is already closed (books locked through {monthPreview.lockedThrough}).</p>
+              <p>
+                This month is already closed (books locked through {monthPreview.lockedThrough}).
+              </p>
             ) : (
               <>
                 {monthPreview.warnings.length ? (
@@ -304,8 +308,8 @@ function CloseBooksSettings() {
         <div className="rounded-lg border bg-card p-5">
           <h2 className="font-display text-lg font-semibold">Reopen books</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Reopening lets people change transactions in a closed period again. A reason is
-            required and is saved in History with your name.
+            Reopening lets people change transactions in a closed period again. A reason is required
+            and is saved in History with your name.
           </p>
           <div className="mt-4 space-y-3">
             <div>

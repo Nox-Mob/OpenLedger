@@ -91,14 +91,24 @@ describe("month-end close", () => {
   it("refuses to close with unacknowledged warnings and changes nothing", async () => {
     const before = repos.store.audit.length;
     await expect(
-      closeMonth(repos, { orgId: ORG, userId: USER, monthEnd: "2026-09-30", acknowledgeWarnings: false }),
+      closeMonth(repos, {
+        orgId: ORG,
+        userId: USER,
+        monthEnd: "2026-09-30",
+        acknowledgeWarnings: false,
+      }),
     ).rejects.toThrow(/warning/);
     expect(await lock()).toBeNull();
     expect(repos.store.audit.length).toBe(before);
   });
 
   it("closes with acknowledged warnings and records them in history", async () => {
-    await closeMonth(repos, { orgId: ORG, userId: USER, monthEnd: "2026-09-30", acknowledgeWarnings: true });
+    await closeMonth(repos, {
+      orgId: ORG,
+      userId: USER,
+      monthEnd: "2026-09-30",
+      acknowledgeWarnings: true,
+    });
     expect(await lock()).toBe("2026-09-30");
     const last = repos.store.audit.at(-1)!;
     expect(last.action).toBe("close_month");
@@ -116,7 +126,12 @@ describe("month-end close", () => {
 
 describe("audited reopen", () => {
   beforeEach(async () => {
-    await closeMonth(repos, { orgId: ORG, userId: USER, monthEnd: "2026-09-30", acknowledgeWarnings: true });
+    await closeMonth(repos, {
+      orgId: ORG,
+      userId: USER,
+      monthEnd: "2026-09-30",
+      acknowledgeWarnings: true,
+    });
   });
 
   it("requires a written reason of at least 10 characters", async () => {
@@ -128,7 +143,12 @@ describe("audited reopen", () => {
 
   it("must move the lock backward", async () => {
     await expect(
-      reopenPeriod(repos, { orgId: ORG, userId: USER, reopenThrough: "2026-10-31", reason: "Missed bank fee" }),
+      reopenPeriod(repos, {
+        orgId: ORG,
+        userId: USER,
+        reopenThrough: "2026-10-31",
+        reason: "Missed bank fee",
+      }),
     ).rejects.toThrow(/before 2026-09-30/);
   });
 
