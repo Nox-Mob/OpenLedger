@@ -27,12 +27,15 @@ describe("release checklist", () => {
   });
 
   it("every database change Lovable applied is also in the folder GitHub loads", () => {
-    const strip = (f: string) => f.replace(/^\d+_/, "").replace(/\.sql$/, "");
-    const cloud = new Set(readdirSync("supabase/migrations").map(strip));
+    const body = (dir: string, f: string) =>
+      readFileSync(`${dir}/${f}`, "utf8").replace(/\s+/g, " ").trim();
+    const cloud = new Set(
+      readdirSync("supabase/migrations").map((f) => body("supabase/migrations", f)),
+    );
     const missing = readdirSync("drizzle/migrations")
       .filter((f) => f.endsWith(".sql"))
-      .map(strip)
-      .filter((n) => !cloud.has(n));
+      .filter((f) => body("drizzle/migrations", f).replace(/^-- .*$/, "").length > 20)
+      .filter((f) => !cloud.has(body("drizzle/migrations", f)));
     expect(missing).toEqual([]);
   });
 

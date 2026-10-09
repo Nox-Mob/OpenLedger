@@ -73,7 +73,9 @@ describe("delete my account", () => {
     );
   });
   it("is blocked while you are the only admin", () => {
-    expect(accountDeletionBlocker([m({ role: "admin", adminCount: 1 })])).toMatch(/only admin of Kitchen/);
+    expect(accountDeletionBlocker([m({ role: "admin", adminCount: 1 })])).toMatch(
+      /only admin of Kitchen/,
+    );
   });
 });
 
