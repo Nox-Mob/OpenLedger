@@ -1,4 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
+import { showError } from "@/lib/show-error";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
@@ -47,7 +48,7 @@ function ExportsPage() {
     try {
       await fn();
     } catch (e) {
-      toast.error(errorMessage(e, "Export failed"));
+      showError(e, "Export failed", "No file was created.");
     } finally {
       setBusy(null);
     }
@@ -207,7 +208,7 @@ function RestoreSection() {
       setCheck(null);
       setText(null);
     } catch (e) {
-      toast.error(errorMessage(e, "Restore failed. Nothing was saved."));
+      showError(e, "Restore failed");
     } finally {
       setBusy(false);
     }

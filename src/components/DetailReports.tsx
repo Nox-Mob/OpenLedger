@@ -1,7 +1,7 @@
 // General ledger / account activity, fund activity and statement check reports.
 import { useQuery } from "@tanstack/react-query";
+import { showError } from "@/lib/show-error";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { generalLedger } from "@/lib/reports.functions";
@@ -50,7 +50,7 @@ function ExportBar({ org, pref, make }: { org: Org; pref: Terminology; make: Exp
       } else if (kind === "csv") ex.downloadCsv(await make.sheet(), `${base}.csv`);
       else await ex.downloadXlsx([await make.sheet()], `${base}.xlsx`, org.currency);
     } catch (e) {
-      toast.error(errorMessage(e, "Could not export"));
+      showError(e, "Could not export", "No file was created.");
     } finally {
       setBusy(false);
     }

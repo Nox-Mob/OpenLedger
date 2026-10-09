@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -118,7 +118,7 @@ function MembersSettings() {
       refresh();
       return true;
     } catch (err) {
-      toast.error(errorMessage(err, "Something went wrong"));
+      showError(err, "Something went wrong");
       return false;
     } finally {
       setBusy(false);
@@ -135,7 +135,7 @@ function MembersSettings() {
       toast.success("Invite link created and copied");
       refresh();
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }

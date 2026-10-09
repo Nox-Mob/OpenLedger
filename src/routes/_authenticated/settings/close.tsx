@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -80,7 +80,7 @@ function CloseBooksSettings() {
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
       toast.success(clear ? "Books unlocked" : "Books locked");
     } catch (err) {
-      toast.error(errorMessage(err, "Could not update the lock"));
+      showError(err, "Could not update the lock");
     } finally {
       setBusy(false);
     }
@@ -94,7 +94,7 @@ function CloseBooksSettings() {
       const p = await previewYearEndClose({ data: { orgId: org.id, fiscalYearEnd } });
       setPreview(p);
     } catch (err) {
-      toast.error(errorMessage(err, "Could not preview the close"));
+      showError(err, "Could not preview the close");
     } finally {
       setBusy(false);
     }
@@ -117,7 +117,7 @@ function CloseBooksSettings() {
       setPreview(null);
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not close the year"));
+      showError(err, "Could not close the year");
     } finally {
       setBusy(false);
     }

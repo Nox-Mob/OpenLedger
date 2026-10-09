@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { showError } from "@/lib/show-error";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,7 +43,7 @@ function TransactionsPage() {
       toast.success("Transaction voided");
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not void transaction"));
+      showError(err, "Could not void transaction");
     }
   }
 

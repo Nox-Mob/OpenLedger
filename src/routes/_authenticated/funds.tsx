@@ -1,5 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -145,7 +145,7 @@ function FundsPage() {
       setFundName("");
       refresh();
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     }
   }
 
@@ -177,7 +177,7 @@ function FundsPage() {
       refresh();
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -244,7 +244,7 @@ function FundsPage() {
                             });
                             refresh();
                           } catch (err) {
-                            toast.error(errorMessage(err));
+                            showError(err);
                           }
                         }}
                       >
@@ -383,7 +383,7 @@ function FundsPage() {
               toast.success("Category created");
               queryClient.invalidateQueries({ queryKey: ["categories"] });
             } catch (err) {
-              toast.error(errorMessage(err));
+              showError(err);
             }
           }}
         />
@@ -398,7 +398,7 @@ function FundsPage() {
               toast.success("Tag created");
               queryClient.invalidateQueries({ queryKey: ["tags"] });
             } catch (err) {
-              toast.error(errorMessage(err));
+              showError(err);
             }
           }}
         />
