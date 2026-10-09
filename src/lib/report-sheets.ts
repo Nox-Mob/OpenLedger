@@ -92,7 +92,14 @@ export function ledgerRows(accounts: LedgerAcct[]) {
   for (const a of accounts) {
     rows.push([a.accountName, "", "Opening balance", "", "", a.openingCents]);
     for (const l of a.lines)
-      rows.push([a.accountName, l.date, l.description, l.debitCents, l.creditCents, l.balanceCents]);
+      rows.push([
+        a.accountName,
+        l.date,
+        l.description,
+        l.debitCents,
+        l.creditCents,
+        l.balanceCents,
+      ]);
     rows.push([a.accountName, "", "Closing balance", "", "", a.closingCents]);
   }
   return rows;

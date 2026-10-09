@@ -381,7 +381,10 @@ export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
         }
       : null;
 
-  const items = (title: string, list: { date: string; description: string; amountCents: number }[]) => (
+  const items = (
+    title: string,
+    list: { date: string; description: string; amountCents: number }[],
+  ) => (
     <div className="overflow-x-auto rounded-lg border bg-card">
       <h2 className="border-b bg-muted/50 px-4 py-2 text-sm font-semibold">
         {title} ({list.length})
@@ -430,7 +433,8 @@ export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
         >
           {(listQ.data ?? []).map((c) => (
             <option key={c.id} value={c.id}>
-              {c.accountName}, {c.periodEnd} ({c.status === "completed" ? "finished" : "in progress"})
+              {c.accountName}, {c.periodEnd} (
+              {c.status === "completed" ? "finished" : "in progress"})
             </option>
           ))}
         </select>

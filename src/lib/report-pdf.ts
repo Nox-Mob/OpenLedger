@@ -290,9 +290,7 @@ export async function exportTablePdf(p: {
     startY: 142,
     margin: { left: 56, right: 56 },
     head: [p.head],
-    body: p.body.map((r) =>
-      r.map((v) => (typeof v === "number" ? money(v, p.org.currency) : v)),
-    ),
+    body: p.body.map((r) => r.map((v) => (typeof v === "number" ? money(v, p.org.currency) : v))),
     theme: "plain",
     styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: 4 },
     headStyles: { fillColor: PAPER, textColor: GREEN, fontStyle: "bold" },
