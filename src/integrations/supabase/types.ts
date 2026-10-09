@@ -643,6 +643,7 @@ export type Database = {
           id: string
           name: string
           org_type: Database["public"]["Enums"]["org_type"]
+          require_mfa: boolean
           term_overrides: Json
           terminology: string
           timezone: string
@@ -657,6 +658,7 @@ export type Database = {
           id?: string
           name: string
           org_type?: Database["public"]["Enums"]["org_type"]
+          require_mfa?: boolean
           term_overrides?: Json
           terminology?: string
           timezone?: string
@@ -671,6 +673,7 @@ export type Database = {
           id?: string
           name?: string
           org_type?: Database["public"]["Enums"]["org_type"]
+          require_mfa?: boolean
           term_overrides?: Json
           terminology?: string
           timezone?: string
@@ -1134,6 +1137,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      delete_organization_atomic: {
+        Args: { p_confirm: string; p_org: string; p_user: string }
+        Returns: undefined
+      }
       has_org_role: {
         Args: {
           _org_id: string
@@ -1146,6 +1153,11 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_org_member_any_aal: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      mfa_ok: { Args: { _org_id: string }; Returns: boolean }
       normalize_name: { Args: { p: string }; Returns: string }
       post_transaction_atomic: {
         Args: { p_audit: Json; p_entries: Json; p_tags: Json; p_tx: Json }
