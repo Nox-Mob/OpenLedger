@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { assertCan } from "./permissions";
 import * as settings from "./services/settings";
+import * as periods from "./services/periods";
 
 // ---------- Books lock + year-end close (admin only) ----------
 // Auth + permission here; workflow in src/lib/services/settings.ts.
@@ -70,5 +71,53 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       userId: context.userId,
       fiscalYearEnd: data.fiscalYearEnd,
       retainedEarningsAccountId: data.retainedEarningsAccountId,
+    });
+  });
+
+/** Month-end close preview: warnings for unchecked bank/cash/card accounts and open checks. */
+export const previewMonthClose = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId: z.string().uuid(), monthEnd: isoDate }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "close_books");
+    return periods.previewMonthClose(
+      createSupabaseRepositories(context.supabase),
+      data.orgId,
+      data.monthEnd,
+    );
+  });
+
+export const closeMonth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({ orgId: z.string().uuid(), monthEnd: isoDate, acknowledgeWarnings: z.boolean() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "close_books");
+    return periods.closeMonth(createSupabaseRepositories(context.supabase), {
+      ...data,
+      userId: context.userId,
+    });
+  });
+
+/** Audited reopen (admin or treasurer): a written reason is required and saved in history. */
+export const reopenBooks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId: z.string().uuid(),
+        reopenThrough: isoDate.nullable(),
+        reason: z.string().max(500),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "close_books");
+    return periods.reopenPeriod(createSupabaseRepositories(context.supabase), {
+      ...data,
+      userId: context.userId,
     });
   });

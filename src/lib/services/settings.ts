@@ -75,6 +75,13 @@ export async function setBooksLock(
   lockedThrough: IsoDate | null,
 ) {
   const before = await repos.orgs.get(orgId);
+  const current = before?.booksLockedThrough ?? null;
+  // Moving the lock back is a reopen: it needs a written reason (services/periods.ts).
+  if (current && (!lockedThrough || lockedThrough < current))
+    throw new LedgerRuleError(
+      "settings",
+      "Reopening closed books needs a written reason. Use Reopen books instead.",
+    );
   await repos.orgs.setBooksLockedThrough(orgId, lockedThrough, {
     orgId,
     userId,

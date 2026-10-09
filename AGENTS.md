@@ -27,7 +27,7 @@
 - Idempotency keys: one per form submit; `bank:<id>`, `opening:<acct>:...`.
 - AI PDF: org opt-in, upload ack, limits, balance or acceptMismatch.
 - Legal acceptance append-only/versioned; U.S.-first; no GDPR claim.
-- Demo: demo@demo.org / demo1234, manual dev seed only.
+- Demo login: manual dev seed only.
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
@@ -47,5 +47,6 @@
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
 - Inputs: amounts, dates and names go through src/lib/validation.ts on both form and server so every form shows the same message.
-- Page states: lists use EmptyState/LoadingState/ErrorState from src/components/PageStates.tsx; errors are read with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
+- Page states: lists use PageStates.tsx components; read errors with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
 - Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
+- Periods: month close/reopen only move books_locked_through (services/periods.ts); moving it back needs a saved reason so no lock change goes unexplained.

@@ -3,8 +3,8 @@
 ## Road to v1.0 (plan approved 2026-10-08, updated 2026-10-08)
 
 - v0.0.6 Safety, controls and reports (released 2026-10-08): MFA, delete my account, session safety, rollback tests, structural direct-write rule, .env check, full dependency audit, keyboard walk-through, release checklist, plus early items: general ledger, account activity, fund and statement check reports, drill-down, cash basis labels, 50k speed test, Export all (Excel and PDF), accounting-format Excel, plain report names, treasurer role, plain-language error pop-ups with on-screen and nothing-recorded tests.
-- v0.0.7 Concurrency and people checks: [ ] same request sent twice at once (double post, double close, double restore), [ ] screen reader pass by a person, [ ] password reset email checked by hand
-- v0.0.8 Periods: [ ] month close with warnings (unreconciled accounts, open statement checks), [ ] audited reopen by admin or treasurer
+- v0.0.7 Concurrency and people checks: [x] same request sent twice at once (double post, double close, double restore), [ ] screen reader pass by a person, [ ] password reset email checked by hand
+- v0.0.8 Periods: [x] month close with warnings (unreconciled accounts, open statement checks), [x] audited reopen by admin or treasurer
 - v0.0.9 Everyday use: [ ] templates and recurring drafts (never auto-posted), [ ] search and filters, [ ] fund and project budgets, [ ] board package (one PDF), [ ] first-run checklist, [ ] diagnostics page
 - v0.1 to v0.9 Hardening: [ ] self-hosted installer, [ ] upgrade tests, [ ] cross-version restore, [ ] user testing with non-accountants, [ ] disclosure policy and contact
 - v1.0 gates: accounting correctness, security tests, real-statement import, backup recovery, install and upgrade, non-accountant usability, support and disclosure pages. Desktop is a separate track.
