@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,7 +54,7 @@ function CloseBooksSettings() {
   });
 
   if (!org) return <OrgPending inShell={false} />;
-  const isAdmin = org.role === "admin";
+  const isAdmin = org.role === "admin" || org.role === "treasurer";
   const status = statusQuery.data;
   const accounts = accountsQuery.data ?? [];
   const equityAccounts = accounts.filter((a) => a.type === "equity" && a.isActive);
@@ -80,7 +80,7 @@ function CloseBooksSettings() {
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
       toast.success(clear ? "Books unlocked" : "Books locked");
     } catch (err) {
-      toast.error(errorMessage(err, "Could not update the lock"));
+      showError(err, "Could not update the lock");
     } finally {
       setBusy(false);
     }
@@ -94,7 +94,7 @@ function CloseBooksSettings() {
       const p = await previewYearEndClose({ data: { orgId: org.id, fiscalYearEnd } });
       setPreview(p);
     } catch (err) {
-      toast.error(errorMessage(err, "Could not preview the close"));
+      showError(err, "Could not preview the close");
     } finally {
       setBusy(false);
     }
@@ -117,7 +117,7 @@ function CloseBooksSettings() {
       setPreview(null);
       queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not close the year"));
+      showError(err, "Could not close the year");
     } finally {
       setBusy(false);
     }
@@ -130,7 +130,7 @@ function CloseBooksSettings() {
         <p className="mt-1 text-sm text-muted-foreground">
           Locking the books through a date stops anyone from adding or changing transactions on or
           before that date.
-          {!isAdmin && " Only admins can change this."}
+          {!isAdmin && " Only admins and treasurers can change this."}
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>

@@ -1,5 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
@@ -205,7 +205,7 @@ function NewTransactionPage() {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       navigate({ to: "/transactions" });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not save transaction"));
+      showError(err, "Could not save transaction");
     } finally {
       submittingRef.current = false;
       setBusy(false);

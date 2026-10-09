@@ -1,4 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
+import { showError } from "@/lib/show-error";
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
@@ -62,7 +63,7 @@ function ProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ["project-summary"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not create project"));
+      showError(err, "Could not create project");
     }
   }
 

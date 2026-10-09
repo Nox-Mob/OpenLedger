@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { MfaCodeForm } from "@/components/MfaCodeForm";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -32,14 +33,24 @@ function AuthPage() {
     if (token) void navigate({ to: "/invite/$token", params: { token } });
     else void navigate({ to: "/ledger" });
   }
+  const [needsCode, setNeedsCode] = useState(false);
   // OAuth returns here, keeping the public homepage public while restoring app access.
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) goAfterAuth();
+      if (!active || !data.session) return;
+      void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data: a }) => {
+        if (a?.nextLevel === "aal2" && a.currentLevel !== "aal2") setNeedsCode(true);
+        else goAfterAuth();
+      });
     });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) goAfterAuth();
+      if (event === "SIGNED_IN" && session) {
+        void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data: a }) => {
+          if (a?.nextLevel === "aal2" && a.currentLevel !== "aal2") setNeedsCode(true);
+          else goAfterAuth();
+        });
+      }
     });
     return () => {
       active = false;
@@ -115,7 +126,9 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        goAfterAuth();
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") setNeedsCode(true);
+        else goAfterAuth();
       } else {
         if (!legalAgreement)
           throw new Error("Agree to the Terms and Privacy Policy to create an account.");
@@ -144,6 +157,29 @@ function AuthPage() {
     });
     if (result.error) setError(result.error.message ?? "Google sign-in failed");
   }
+
+  if (needsCode)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <main className="w-full max-w-sm rounded-lg border bg-card p-6">
+          <h1 className="font-display text-xl font-semibold">Two-step sign-in</h1>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            Open your authenticator app and enter the code for OpenLedgerApp.
+          </p>
+          <MfaCodeForm onDone={goAfterAuth} />
+          <button
+            type="button"
+            className="mt-4 text-sm underline"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              setNeedsCode(false);
+            }}
+          >
+            Use a different account
+          </button>
+        </main>
+      </div>
+    );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

@@ -1,5 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -37,7 +37,7 @@ const STATUS: Record<string, string> = { open: "Open", paid: "Paid", written_off
 function PledgesPage() {
   const { org } = useOrgContext();
   const queryClient = useQueryClient();
-  const canWrite = org?.role === "admin" || org?.role === "member";
+  const canWrite = org?.role === "admin" || org?.role === "treasurer" || org?.role === "member";
 
   const pledgesQuery = useQuery({
     queryKey: ["pledges", org?.id],
@@ -119,7 +119,7 @@ function PledgesPage() {
       setKey(crypto.randomUUID());
       refresh();
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -153,7 +153,7 @@ function PledgesPage() {
       setSettleKey(crypto.randomUUID());
       refresh();
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }

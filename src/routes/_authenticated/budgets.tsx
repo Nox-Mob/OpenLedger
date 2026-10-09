@@ -1,5 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -87,7 +87,7 @@ function BudgetsPage() {
       setDrafts(({ [accountId]: _, ...rest }) => rest);
       qc.invalidateQueries({ queryKey: ["budgets", org!.id] });
     } catch (e) {
-      toast.error(errorMessage(e, "Could not save budget"));
+      showError(e, "Could not save budget");
     }
   }
 

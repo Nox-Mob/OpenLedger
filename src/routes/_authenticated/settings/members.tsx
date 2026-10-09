@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -37,13 +37,50 @@ export const Route = createFileRoute("/_authenticated/settings/members")({
   component: MembersSettings,
 });
 
-type RoleName = "admin" | "member" | "viewer";
+type RoleName = "admin" | "treasurer" | "member" | "viewer";
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: "Full access, including settings and roles",
+  treasurer: "Keeps the books, closes the year, no settings or people",
   member: "Can record and edit transactions",
-  viewer: "Read-only access",
+  viewer: "Can look, but not change anything",
 };
+
+/** What each role can do, in plain words. Mirrors CAPABILITIES in src/lib/permissions.ts. */
+const ROLE_DETAILS: { role: RoleName; label: string; can: string[] }[] = [
+  {
+    role: "member",
+    label: "Member",
+    can: [
+      "See every page and report",
+      "Record transactions, import bank files and check statements",
+      "Cannot change settings, invite people or close the year",
+    ],
+  },
+  {
+    role: "treasurer",
+    label: "Treasurer",
+    can: [
+      "Everything a member can do",
+      "Close the year, lock the books and reopen finished statement checks",
+      "Cannot change settings, invite people or change roles",
+    ],
+  },
+  {
+    role: "admin",
+    label: "Admin",
+    can: [
+      "Everything a member can do",
+      "Everything a treasurer can do",
+      "Change settings and accounts, invite and remove people",
+    ],
+  },
+  {
+    role: "viewer",
+    label: "View only",
+    can: ["See every page and report, and export them", "Cannot record, import or change anything"],
+  },
+];
 
 const selectCls = "rounded-md border border-input bg-background px-2 py-1.5 text-sm";
 const btnCls =
@@ -91,7 +128,7 @@ function MembersSettings() {
       refresh();
       return true;
     } catch (err) {
-      toast.error(errorMessage(err, "Something went wrong"));
+      showError(err, "Something went wrong");
       return false;
     } finally {
       setBusy(false);
@@ -108,7 +145,7 @@ function MembersSettings() {
       toast.success("Invite link created and copied");
       refresh();
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -160,8 +197,9 @@ function MembersSettings() {
                       }
                     >
                       <option value="admin">Admin</option>
+                      <option value="treasurer">Treasurer</option>
                       <option value="member">Member</option>
-                      <option value="viewer">Viewer</option>
+                      <option value="viewer">View only</option>
                     </select>
                   ) : (
                     <span className="rounded-md border border-border px-2 py-1 text-xs font-medium capitalize">
@@ -225,13 +263,31 @@ function MembersSettings() {
               onChange={(e) => setInviteRole(e.target.value as RoleName)}
             >
               <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
+              <option value="viewer">View only</option>
+              <option value="treasurer">Treasurer</option>
               <option value="admin">Admin</option>
             </select>
             <button disabled={busy} className={btnCls} onClick={makeInvite}>
               Create invite link
             </button>
           </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+            {ROLE_DETAILS.map((r) => (
+              <div
+                key={r.role}
+                className={`rounded-md border p-3 text-sm ${inviteRole === r.role ? "border-primary bg-accent/40" : ""}`}
+              >
+                <dt className="font-semibold">{r.label}</dt>
+                <dd>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
+                    {r.can.map((c) => (
+                      <li key={c}>{c}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))}
+          </dl>
           {newLink && (
             <div className="mt-3 rounded-md border bg-muted/50 p-3">
               <div className="text-xs text-muted-foreground">

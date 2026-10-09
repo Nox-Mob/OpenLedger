@@ -11,6 +11,7 @@ import { LedgerRuleError } from "@/lib/domain/ledger";
 import type { Id, IsoDate } from "@/lib/domain/models";
 import type { Repositories } from "@/lib/ports";
 import { postTransaction } from "./ledger";
+import { computeFundActivity } from "@/lib/report-detail";
 
 export async function fundSummary(repos: Repositories, orgId: Id, funds: FundInfo[]) {
   const rows = await repos.transactions.ledgerRows(orgId);
@@ -18,6 +19,18 @@ export async function fundSummary(repos: Repositories, orgId: Id, funds: FundInf
     funds: computeFundBalances(rows, funds),
     netAssets: netAssetsByRestriction(rows, funds),
   };
+}
+
+/** Fund activity for a period (opening, received, spent, released, closing). */
+export async function fundActivity(
+  repos: Repositories,
+  orgId: Id,
+  funds: FundInfo[],
+  from: IsoDate,
+  to: IsoDate,
+) {
+  const rows = await repos.transactions.ledgerRows(orgId, { to });
+  return { from, to, funds: computeFundActivity(rows, funds, from, to) };
 }
 
 /** Net assets account used for releases: prefer one named "Net Assets", else first equity. */

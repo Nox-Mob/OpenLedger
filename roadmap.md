@@ -1,58 +1,29 @@
 # OpenLedgerApp — Roadmap
 
-## Road to v1.0 (plan approved 2026-10-08)
+## Road to v1.0 (plan approved 2026-10-08, updated 2026-10-08)
 
-- v0.0.6 Safety and controls: [x] .env public-keys-only CI check, [x] report-only full dependency audit, [x] architecture doc refresh, [ ] rollback tests for member removal, ownership transfer, org delete, invite claim, settings, [ ] structural direct-write rule, [ ] MFA, [ ] delete my account, [ ] session safety, [ ] manual a11y walk-through
-- v0.0.7 Reports people can trust: general ledger, account activity, statement check report, drill-down, cash basis labels, fund reports, concurrency tests, 10k to 50k performance
-- v0.0.8 Periods and roles: month close and audited reopen, treasurer role, plain-language errors
-- v0.0.9 Everyday use: templates and recurring drafts, search, fund/project budgets, board package, first-run checklist, diagnostics page
-- v0.1 to v0.9 Hardening: installer, upgrade tests, cross-version restore, user testing, disclosure policy
+- v0.0.6 Safety, controls and reports (released 2026-10-08): MFA, delete my account, session safety, rollback tests, structural direct-write rule, .env check, full dependency audit, keyboard walk-through, release checklist, plus early items: general ledger, account activity, fund and statement check reports, drill-down, cash basis labels, 50k speed test, Export all (Excel and PDF), accounting-format Excel, plain report names, treasurer role, plain-language error pop-ups with on-screen and nothing-recorded tests.
+- v0.0.7 Concurrency and people checks: [ ] same request sent twice at once (double post, double close, double restore), [ ] screen reader pass by a person, [ ] password reset email checked by hand
+- v0.0.8 Periods: [ ] month close with warnings (unreconciled accounts, open statement checks), [ ] audited reopen by admin or treasurer
+- v0.0.9 Everyday use: [ ] templates and recurring drafts (never auto-posted), [ ] search and filters, [ ] fund and project budgets, [ ] board package (one PDF), [ ] first-run checklist, [ ] diagnostics page
+- v0.1 to v0.9 Hardening: [ ] self-hosted installer, [ ] upgrade tests, [ ] cross-version restore, [ ] user testing with non-accountants, [ ] disclosure policy and contact
 - v1.0 gates: accounting correctness, security tests, real-statement import, backup recovery, install and upgrade, non-accountant usability, support and disclosure pages. Desktop is a separate track.
 
-## v0.0.4 - Stability and foundations (released 2026-10-07)
+## Released
 
-- [x] History save failures now fail the request instead of reporting success
-- [x] 1a. Postings and voids saved atomically with their history (all storage options)
-- [x] 1b. Remaining audited changes (settings, members, budgets, statement checks, imports, accounts, pledge status) saved atomically via audited_write
-- [x] 2a. History kinds column (change, ledger, system) with backfill
-- [x] 2b. History page filter by kind
-- [x] 3. Remaining workflows behind shared code: every organization-data write goes through a service or audited_write; direct-writes check runs as its own CI step.
-- [x] 4. Declarative role capability table
-- [x] 5. Contract tests: tenant isolation, history, rollback, backup roundtrip; yearly scenario tests with golden totals
-- [x] 6a. npm is the only package manager (bun.lock removed)
-- [x] 6b. Dependency review (docs/dependencies.md), pin core versions, clear loose-type warnings in backup code
-- [x] 7. Backup format v3 (app version, attachments slot; v2 still restores)
-- [x] 8. docs/architecture.md
-
-## v0.0.3 - Funds, members, exports, budgets, observability (released 2026-10-07)
-
-- [x] 14. Nonprofit fund accounting (restricted net assets, releases, pledges, negative fund warning)
-- [x] 16. Invites, remove member, transfer ownership, org deletion (account deletion still open)
-- [x] Server functions use `.validator()` everywhere (no deprecated `.inputValidator()` left)
-- [x] 15. CSV/XLSX exports + signed full backup + restore into a new org (formula-injection escaping)
-- [x] 18. Budgets: yearly or monthly per income/expense account, budget vs actual
-- [x] 21. Observability: admin history (audit log) viewer
-- [x] Clarify the restore file picker and confirmation name; test a moderately sized signed export and restore (1,500 transactions, persistence double; live database guards remain covered separately).
+- v0.0.6 (2026-10-08), v0.0.5 (2026-10-08), v0.0.4 (2026-10-07), v0.0.3 (2026-10-07), v0.0.2, v0.0.1 (2026-10-01). Details in CHANGELOG.md.
 
 ## Future (unscheduled, not assigned to a version)
 
-- Local desktop edition: Tauri + embedded SQLite, offline use, no Docker/Node/internet for end users. Groundwork (ports, SQLite adapter, contract tests) exists; packaging needs a Rust toolchain. Do not advertise desktop installers as available.
+- Local desktop edition: Tauri + embedded SQLite, offline use. Needs native SQLite driver tests first. Do not advertise desktop installers as available.
 - Optional sync between desktop and cloud (chained history log, signed uploads, server re-check).
-- Self-hosted installer: ask cloud-hosted versus self-hosted backend, clone source, write ignored local configuration, optionally provision Docker, apply migrations safely, build/start app.
 - Distribution goal: free local desktop, self-hosted community edition, managed cloud. Cloud pricing and donations undecided.
 
 ## Open backlog
 
-- [ ] 19. MFA - [ ] 20. "Cash basis" labels; A/R, A/P later - [ ] 22. Performance at 10k–50k entries
-- [ ] Account deletion (part of 16)
 - [ ] Budgets, exports and history behind the ports for desktop
-- [ ] 23–32 leftovers: README refresh, terminology note, currency rules, undo wording (switcher, page states, a11y, input checks, catalog protection done in v0.0.5)
-- Deferred: accrual basis, invoices/bills, bank feeds (Plaid), receipt attachments
-
-## Shipped
-
-- v0.0.2 (public website, changelog, rename, dark mode, desktop-ready foundations: domain rules, ports, Supabase/memory/SQLite adapters, app-generated IDs)
-- v0.0.1 (2026-10-01): double-entry ledger, imports, reconciliation, reports, roles, legal, CI. See CHANGELOG.md.
+- [ ] README terminology note, currency rules, undo wording
+- Deferred: accrual basis, A/R and A/P, invoices/bills, bank feeds, receipt attachments
 
 ## Notes
 

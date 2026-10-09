@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { showError } from "@/lib/show-error";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -116,7 +117,7 @@ function ReconcileIndex() {
       });
       navigate({ to: "/reconcile/$id", params: { id } });
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }

@@ -274,3 +274,85 @@ export async function exportBalancePdf(p: {
   footer();
   doc.save(`${org.name} - ${terms.balanceSheet} ${p.asOf}.pdf`);
 }
+
+/** Any tabular report as a PDF. Number cells are cents and print as money. */
+export async function exportTablePdf(p: {
+  org: OrgInfo;
+  pref: Terminology;
+  title: string;
+  subtitle: string;
+  head: string[];
+  body: (string | number)[][];
+  fileName: string;
+}) {
+  const { doc, autoTable, footer } = await setup(p.org, p.title, p.subtitle, p.pref);
+  autoTable(doc, {
+    startY: 142,
+    margin: { left: 56, right: 56 },
+    head: [p.head],
+    body: p.body.map((r) => r.map((v) => (typeof v === "number" ? money(v, p.org.currency) : v))),
+    theme: "plain",
+    styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: 4 },
+    headStyles: { fillColor: PAPER, textColor: GREEN, fontStyle: "bold" },
+    didParseCell: (d: CellHookData) => {
+      if (typeof p.body[d.row.index]?.[d.column.index] === "number" && d.section === "body")
+        d.cell.styles.halign = "right";
+    },
+    bodyStyles: { lineColor: [225, 219, 207], lineWidth: { bottom: 0.5 } },
+  });
+  footer();
+  doc.save(p.fileName);
+}
+
+/** Every report in one PDF, each starting on its own page. Number cells are whole currency units. */
+export async function exportAllPdf(p: {
+  org: OrgInfo;
+  pref: Terminology;
+  subtitle: string;
+  sheets: { name: string; rows: (string | number | null | undefined)[][] }[];
+  fileName: string;
+}) {
+  const first = p.sheets[0];
+  const { doc, autoTable, footer } = await setup(
+    p.org,
+    first?.name ?? "Reports",
+    p.subtitle,
+    p.pref,
+  );
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: p.org.currency }).format(v);
+  p.sheets.forEach((sheet, i) => {
+    let startY = 142;
+    if (i > 0) {
+      doc.addPage();
+      doc.setTextColor(...INK);
+      doc.setFont("times", "bold");
+      doc.setFontSize(20);
+      doc.text(sheet.name, 56, 70);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(...MUTED);
+      doc.text(p.subtitle, 56, 88);
+      startY = 104;
+    }
+    const [head = [], ...body] = sheet.rows;
+    autoTable(doc, {
+      startY,
+      margin: { left: 56, right: 56, bottom: 56 },
+      head: [head.map((c) => String(c ?? ""))],
+      body: body.map((r) => r.map((v) => (typeof v === "number" ? fmt(v) : (v ?? "")))),
+      theme: "plain",
+      styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: 4 },
+      headStyles: { fillColor: PAPER, textColor: GREEN, fontStyle: "bold" },
+      didParseCell: (d: CellHookData) => {
+        if (d.section === "body" && typeof body[d.row.index]?.[d.column.index] === "number") {
+          d.cell.styles.halign = "right";
+          d.cell.styles.font = "courier";
+        }
+      },
+      bodyStyles: { lineColor: [225, 219, 207], lineWidth: { bottom: 0.5 } },
+    });
+  });
+  footer();
+  doc.save(p.fileName);
+}

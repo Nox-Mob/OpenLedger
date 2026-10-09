@@ -85,6 +85,27 @@
       "when": 1791467447866,
       "tag": "0011_catalog_name_and_delete_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791504249575,
+      "tag": "0012_mfa_and_account_deletion",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791517378906,
+      "tag": "0013_treasurer_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791518472024,
+      "tag": "0014_org_guard_api_role_only",
+      "breakpoints": true
     }
   ]
 }

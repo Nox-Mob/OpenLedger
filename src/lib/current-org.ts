@@ -33,7 +33,8 @@ export function pickCurrentOrg<T extends { id: string }>(
 
 export function roleLabel(role: string): string {
   if (role === "admin") return "Admin";
+  if (role === "treasurer") return "Treasurer";
   if (role === "member") return "Member";
-  if (role === "viewer") return "Viewer";
+  if (role === "viewer") return "View only";
   return role;
 }

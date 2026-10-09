@@ -115,6 +115,8 @@ export interface TransactionRepository {
     {
       amountCents: number;
       accountId: Id;
+      transactionId: Id;
+      description: string;
       accountName: string;
       accountType: AccountType;
       projectId: Id | null;

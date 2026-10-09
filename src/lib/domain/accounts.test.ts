@@ -54,7 +54,7 @@ describe("organization switcher", () => {
     expect([roleLabel("admin"), roleLabel("member"), roleLabel("viewer")]).toEqual([
       "Admin",
       "Member",
-      "Viewer",
+      "View only",
     ]);
   });
 });

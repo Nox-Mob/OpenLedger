@@ -1,4 +1,5 @@
 import { checkAmount, checkName } from "@/lib/validation";
+import { showError } from "@/lib/show-error";
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
@@ -86,7 +87,7 @@ function AccountsPage() {
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not create account"));
+      showError(err, "Could not create account");
     }
   }
 
@@ -100,7 +101,16 @@ function AccountsPage() {
   return (
     <AppShell>
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold">Accounts</h1>
+        <div>
+          <h1 className="font-display text-2xl font-bold">Accounts</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Accounts are the buckets your money is sorted into: bank accounts and cash you have,
+            cards and loans you owe, and the kinds of money coming in and going out. Every
+            transaction moves money between two or more of them, so pick the account that best
+            describes where money came from and where it went. Archive an account you no longer use
+            instead of deleting it, so past reports stay correct.
+          </p>
+        </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"

@@ -439,4 +439,31 @@ describe("moderately sized organization backup roundtrip", () => {
       expect(db.tables[table]).toEqual(original[table]);
     expect(db.tables["deleted_organizations"]).toHaveLength(1);
   }, 30000);
+
+  it("a changed backup is refused before any write, with the bad-backup pop-up wording", async () => {
+    const { explainError } = await import("./friendly-errors");
+    const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
+    const source = await readBackupData(db as unknown as UntypedDb, ORG_ID);
+    const exported = await signBackup(
+      keys,
+      source.organization,
+      source.tables,
+      "2026-10-07T00:00:00Z",
+    );
+    const tampered = JSON.parse(JSON.stringify(exported));
+    tampered.tables.entries[0].amount_cents += 100;
+    const original = structuredClone(db.tables);
+    const writesBefore = db.writes.length;
+    let caught: unknown;
+    try {
+      const v = await verifyBackup(tampered, keys.publicRaw);
+      await restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", v);
+    } catch (e) {
+      caught = e;
+    }
+    expect(explainError(caught).kind).toBe("bad_backup");
+    expect(explainError(caught).detail).toContain("Nothing was restored");
+    expect(db.writes.length).toBe(writesBefore);
+    expect(db.tables).toEqual(original);
+  }, 30000);
 });

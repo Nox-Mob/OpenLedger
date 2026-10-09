@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -113,7 +113,7 @@ function OrgProfileSettings() {
       setAiPdf(null);
       toast.success("Organization settings saved");
     } catch (err) {
-      toast.error(errorMessage(err, "Could not save"));
+      showError(err, "Could not save");
     } finally {
       setSaving(false);
     }

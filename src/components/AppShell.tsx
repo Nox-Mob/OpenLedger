@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRouterState } from "@tanstack/react-router";
+import { useAal } from "@/hooks/use-aal";
+import { MfaCodeForm } from "@/components/MfaCodeForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
 import { useOrgContext } from "@/hooks/use-org-context";
@@ -43,6 +46,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { org, orgs, terms, error, retry } = useOrgContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const aal = useAal();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const mfaBlocked =
+    !!org?.requireMfa && aal.data?.current !== "aal2" && pathname !== "/settings/security";
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -137,6 +144,25 @@ export function AppShell({ children }: { children: ReactNode }) {
             message={errorMessage(error)}
             onRetry={retry}
           />
+        ) : aal.data && aal.data.next === "aal2" && aal.data.current !== "aal2" ? (
+          <div className="max-w-sm rounded-lg border bg-card p-6">
+            <h1 className="mb-3 font-display text-xl font-semibold">Two-step sign-in</h1>
+            <MfaCodeForm onDone={() => void queryClient.invalidateQueries()} />
+          </div>
+        ) : mfaBlocked ? (
+          <div role="alert" className="max-w-xl rounded-lg border bg-card p-6">
+            <h1 className="font-display text-xl font-semibold">Two-step sign-in required</h1>
+            <p className="mt-2 text-sm">
+              {org?.name} requires two-step sign-in. Set it up (or sign out and back in with your
+              code) to see its books.
+            </p>
+            <Link
+              to="/settings/security"
+              className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Go to Security
+            </Link>
+          </div>
         ) : (
           children
         )}

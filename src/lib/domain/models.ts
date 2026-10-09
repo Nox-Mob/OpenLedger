@@ -7,7 +7,7 @@ export type IsoTimestamp = string;
 
 export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
 export type OrgType = "nonprofit" | "business";
-export type Role = "admin" | "member" | "viewer";
+export type Role = "admin" | "treasurer" | "member" | "viewer";
 export type TransactionSource =
   | "manual"
   | "import"

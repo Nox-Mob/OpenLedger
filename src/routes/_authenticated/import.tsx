@@ -1,4 +1,5 @@
 import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -258,7 +259,7 @@ function ImportPage() {
         setRows(await markDuplicates(applyMapping(tokens, m)));
       }
     } catch (err) {
-      toast.error(errorMessage(err, "Couldn't read this file"));
+      showError(err, "Couldn't read this file");
       reset();
     } finally {
       setBusy(null);
@@ -344,7 +345,7 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
     } catch (err) {
-      toast.error(errorMessage(err, "Import failed. Nothing was saved."));
+      showError(err, "Import failed");
     } finally {
       setBusy(null);
     }
@@ -360,7 +361,7 @@ function ImportPage() {
       setProfileName("");
       queryClient.invalidateQueries({ queryKey: ["import-profiles"] });
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     }
   }
 
@@ -373,7 +374,7 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["bank"] });
       queryClient.invalidateQueries({ queryKey: ["batches"] });
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     }
   }
 
@@ -395,7 +396,7 @@ function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not post"));
+      showError(err, "Could not post");
     } finally {
       setPosting((p) => {
         const n = new Set(p);

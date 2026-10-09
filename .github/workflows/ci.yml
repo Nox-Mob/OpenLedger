@@ -36,7 +36,7 @@ jobs:
         # Fix by moving the write into a service or audited_write; only cloud-only
         # records may carry a `// cloud-only-write: <reason>` comment.
         run: |
-          npx vitest run src/lib/direct-writes.test.ts --reporter=default --reporter=github-actions || {
+          npx vitest run src/lib/direct-writes.test.ts src/lib/architecture.test.ts --reporter=default --reporter=github-actions || {
             echo "### ❌ A server function writes to the database directly. Move it into shared code (see src/lib/direct-writes.test.ts)." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           }
@@ -101,10 +101,32 @@ jobs:
       - uses: actions/checkout@v4
       - name: Static migration checks (GRANTs + row level security)
         run: node scripts/ci/check-migrations.mjs
+      # Pinned version (no "latest" lookup) plus the token avoids GitHub API rate limits.
+      # Bump SUPABASE_CLI_VERSION deliberately; it also keys the image cache below.
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with:
+          version: 2.120.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Most of this job's time is pulling the database Docker image. Cache it as a tar
+      # keyed on the CLI version (which decides the image tag) and config.toml.
+      - name: Restore cached database image
+        id: db-image-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.120.0-${{ hashFiles('supabase/config.toml') }}
+      - name: Load cached database image
+        if: steps.db-image-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
       - name: Start disposable local database and apply every migration
         run: supabase db start
+      - name: Save database image for the cache
+        if: steps.db-image-cache.outputs.cache-hit != 'true'
+        run: |
+          images=$(docker ps --format '{{.Image}}' | sort -u)
+          echo "Caching: $images"
+          docker save -o /tmp/supabase-images.tar $images
       - name: Run SQL safety checks
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres

@@ -4,6 +4,43 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-10-08
+
+### Added
+
+- Reports: "Export all (PDF)" saves every report in one PDF, each on its own page.
+- Treasurer role, between admin and member: records transactions, closes the year, locks the books and reopens finished statement checks, but cannot change settings or people. The database enforces the same limits.
+- Plain-language error pop-ups for unbalanced transactions, closed periods, statement checks that are off, rejected backups and missing permissions. Each one says clearly that nothing was recorded.
+- Tests: each common failure runs through the real bookkeeping steps; the pop-up appears only when the step is refused, never when it succeeds, and the stored books and history are checked to be unchanged. A changed backup is refused before any write; a database check (treasurer_role.sql) for what treasurers and members can and cannot do.
+- Reports: general ledger and account activity with opening, running and closing balances.
+- Reports: click any account on the income statement, balance sheet or trial balance to see the transactions behind it.
+- Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
+- Reports: statement check report listing matched and outstanding items with the difference.
+- Report names follow the wording setting (for example, Simplest shows "Every Transaction", "Totals Check", "Money by Purpose" and "Bank Statement Check"), and each can be changed in Settings.
+- Excel exports show amounts in Accounting format (currency symbol on the left, thousands separators, negatives in parentheses) in a monospaced font.
+- Reports: "Export all" saves every report in one Excel file, one sheet per report.
+- Accounts page explains what accounts are and how to use them; the invite screen lists what Member, Admin and View only can do.
+- Every report shows its period and "Cash basis", and the new reports export to CSV, Excel and PDF.
+- Tests for the new report math, including a 50,000-line speed check.
+
+### Added
+
+- Two-step sign-in with an authenticator app, in Settings, Security. Admins can require it for the whole organization; the database then hides the books from any session that didn't use it.
+- Delete my account, in Settings, Security. Blocked while you own an organization or are its only admin. History keeps your past changes and shows them as "Deleted user".
+- Release checklist (docs/release-checklist.md): the changelog and the architecture document must be updated before every release, checked by an automated test.
+- Structural code check: server functions, screens and components can't write tables directly, and only approved server files may load the privileged database client.
+- Database checks for invite reuse, last-admin removal, wrong-owner transfer, settings that match nothing, organization delete, removed-member access and two-step sign-in.
+- GitHub fails the build if a private key ever lands in the committed .env file, and reports developer-tool vulnerabilities without blocking.
+
+### Changed
+
+- Deleting an organization now saves its deleted-organization record and the delete in one step.
+- Keyboard focus is now outlined clearly on every page.
+
+### Fixed
+
+- Database: the treasurer settings guard now applies only to signed-in app users, so server and maintenance steps are not blocked.
+
 ## [0.0.5] - 2026-10-08
 
 ### Added

@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from "@/components/PageStates";
+import { showError } from "@/lib/show-error";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,7 +78,7 @@ function ReconcileWorkspace() {
   const matchedBank = new Set(matches.map((m) => m.bankId));
   const unmatchedBank = bankRows.filter((b) => !matchedBank.has(b.id));
   const unmatchedEntries = entries.filter((e) => !matchedEntry.has(e.id));
-  const isAdmin = org.role === "admin";
+  const isAdmin = org.role === "admin" || org.role === "treasurer";
 
   async function run(fn: () => Promise<unknown>, ok?: string) {
     setBusy(true);
@@ -87,7 +88,7 @@ function ReconcileWorkspace() {
       await qc.invalidateQueries({ queryKey: ["reconciliation", id] });
       qc.invalidateQueries({ queryKey: ["reconciliations"] });
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }
