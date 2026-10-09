@@ -297,7 +297,9 @@ export const deleteOrganization = createServerFn({ method: "POST" })
 export const getMyAccountDeletion = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    return { blocker: accountDeletionBlocker(await myMemberships(context.supabase, context.userId)) };
+    return {
+      blocker: accountDeletionBlocker(await myMemberships(context.supabase, context.userId)),
+    };
   });
 
 async function myMemberships(supabase: Db, userId: string) {

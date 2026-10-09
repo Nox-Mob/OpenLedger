@@ -115,8 +115,8 @@ function TwoStep() {
         Two-step sign-in
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        After your password, you also enter a 6-digit code from an authenticator app on your
-        phone (for example Google Authenticator, Microsoft Authenticator or 1Password).
+        After your password, you also enter a 6-digit code from an authenticator app on your phone
+        (for example Google Authenticator, Microsoft Authenticator or 1Password).
       </p>
       {factors.isPending && <LoadingState label="Loading" />}
       {factors.isError && (
@@ -224,7 +224,10 @@ function RequireForOrg() {
 function DeleteAccount() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const status = useQuery({ queryKey: ["account-deletion"], queryFn: () => getMyAccountDeletion() });
+  const status = useQuery({
+    queryKey: ["account-deletion"],
+    queryFn: () => getMyAccountDeletion(),
+  });
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -244,7 +247,10 @@ function DeleteAccount() {
   }
 
   return (
-    <section className="rounded-lg border border-destructive/40 bg-card p-5" aria-labelledby="del-title">
+    <section
+      className="rounded-lg border border-destructive/40 bg-card p-5"
+      aria-labelledby="del-title"
+    >
       <h2 id="del-title" className="font-display text-lg font-semibold">
         Delete my account
       </h2>

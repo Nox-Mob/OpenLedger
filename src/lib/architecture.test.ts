@@ -33,7 +33,15 @@ function files(dir: string): string[] {
 
 /** True when a call chain like x.from("t")...insert(...) starts with .from(). */
 function chainHasFrom(e: ts.Expression): boolean {
-  while (ts.isCallExpression(e) || ts.isPropertyAccessExpression(e)) {
+  while (
+    ts.isCallExpression(e) ||
+    ts.isPropertyAccessExpression(e) ||
+    ts.isParenthesizedExpression(e)
+  ) {
+    if (ts.isParenthesizedExpression(e)) {
+      e = e.expression;
+      continue;
+    }
     if (
       ts.isCallExpression(e) &&
       ts.isPropertyAccessExpression(e.expression) &&
@@ -77,7 +85,11 @@ describe("architecture boundaries", () => {
   it("server functions only write tables when marked cloud-only", () => {
     const bad = all
       .filter((f) => f.rel.endsWith(".functions.ts"))
-      .flatMap((f) => tableWrites(f.src, f.rel).filter((w) => !w.marked).map((w) => `${f.rel}:${w.line}`));
+      .flatMap((f) =>
+        tableWrites(f.src, f.rel)
+          .filter((w) => !w.marked)
+          .map((w) => `${f.rel}:${w.line}`),
+      );
     expect(bad).toEqual([]);
   });
 
@@ -89,7 +101,9 @@ describe("architecture boundaries", () => {
   });
 
   it("only approved server files load the admin client", () => {
-    const bad = all.filter((f) => loadsAdminClient(f.src) && !ADMIN_ALLOWED.has(f.rel)).map((f) => f.rel);
+    const bad = all
+      .filter((f) => loadsAdminClient(f.src) && !ADMIN_ALLOWED.has(f.rel))
+      .map((f) => f.rel);
     expect(bad).toEqual([]);
   });
 
@@ -98,7 +112,9 @@ describe("architecture boundaries", () => {
       { line: 5, marked: false },
     ]);
     expect(tableWrites('await (db.from("a")).insert({})')).toHaveLength(1);
-    expect(tableWrites('// cloud-only-write: profile\ndb.from("p").upsert({})')[0]!.marked).toBe(true);
+    expect(tableWrites('// cloud-only-write: profile\ndb.from("p").upsert({})')[0]!.marked).toBe(
+      true,
+    );
     expect(tableWrites("list.delete(1); map.update(x)")).toEqual([]);
     expect(loadsAdminClient('await import("@/integrations/supabase/client.server")')).toBe(true);
   });
