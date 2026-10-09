@@ -18,6 +18,10 @@ export async function ledger(repos: Repositories, orgId: Id, to?: IsoDate): Prom
   const rows = await repos.transactions.ledgerRows(orgId, to ? { to } : undefined);
   return rows.map((r) => ({
     amountCents: r.amountCents,
+    accountId: r.accountId,
+    transactionId: r.transactionId,
+    description: r.description,
+    fundId: r.fundId,
     accountName: r.accountName,
     accountType: r.accountType,
     projectId: r.projectId,

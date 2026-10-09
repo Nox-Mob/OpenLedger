@@ -9,6 +9,10 @@ export interface LedgerRow {
   accountType: AccountType;
   projectId?: string | null;
   transactionDate: string;
+  accountId?: string;
+  transactionId?: string;
+  description?: string;
+  fundId?: string | null;
 }
 
 export interface Line {

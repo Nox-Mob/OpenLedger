@@ -234,6 +234,8 @@ export function createMemoryRepositories(s: MemoryStore = createMemoryStore()): 
               return {
                 amountCents: e.amountCents,
                 accountId: e.accountId,
+                transactionId: t.id,
+                description: t.description,
                 accountName: a.name,
                 accountType: a.type,
                 projectId: e.projectId,
