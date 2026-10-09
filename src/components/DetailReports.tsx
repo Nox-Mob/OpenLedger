@@ -144,7 +144,6 @@ export function LedgerReport(p: {
       }
     : null;
   if (make) {
-    // Built lazily-free: rows are plain data, cheap to compute.
     make.body = accounts.flatMap((a) => [
       [a.accountName, "", "Opening balance", "", "", a.openingCents],
       ...a.lines.map((l) => [
