@@ -10,6 +10,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
 - Reports: statement check report listing matched and outstanding items with the difference.
 - Report names follow the wording setting (for example, Simplest shows "Every Transaction", "Totals Check", "Money by Purpose" and "Bank Statement Check"), and each can be changed in Settings.
+- Reports: "Export all" saves every report in one Excel file, one sheet per report.
+- Accounts page explains what accounts are and how to use them; the invite screen lists what Member, Admin and View only can do.
 - Every report shows its period and "Cash basis", and the new reports export to CSV, Excel and PDF.
 - Tests for the new report math, including a 50,000-line speed check.
 

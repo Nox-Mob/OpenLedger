@@ -135,6 +135,7 @@ function ReportsPage() {
   });
 
   const [exporting, setExporting] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   if (!org) return <OrgPending />;
 
   const income = incomeQuery.data;
@@ -179,7 +180,6 @@ function ReportsPage() {
       toast.error(errorMessage(e, "Could not export"));
     }
   }
-  const [exportingAll, setExportingAll] = useState(false);
   /** Every report in one Excel workbook, one sheet each, using the dates on screen. */
   async function exportAll() {
     if (!org) return;
