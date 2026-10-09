@@ -8,6 +8,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Reports: "Export all (PDF)" saves every report in one PDF, each on its own page.
 - Treasurer role, between admin and member: records transactions, closes the year, locks the books and reopens finished statement checks, but cannot change settings or people. The database enforces the same limits.
 - Plain-language error pop-ups for unbalanced transactions, closed periods, statement checks that are off, rejected backups and missing permissions. Each one says clearly that nothing was recorded.
+- Tests: on-screen checks that each common error pop-up appears and says nothing was recorded; a database check (treasurer_role.sql) for what treasurers and members can and cannot do.
 - Reports: general ledger and account activity with opening, running and closing balances.
 - Reports: click any account on the income statement, balance sheet or trial balance to see the transactions behind it.
 - Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
