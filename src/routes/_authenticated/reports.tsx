@@ -181,7 +181,7 @@ function ReportsPage() {
     }
   }
   /** Every report in one Excel workbook, one sheet each, using the dates on screen. */
-  async function exportAll() {
+  async function exportAll(kind: "xlsx" | "pdf" = "xlsx") {
     if (!org) return;
     setExportingAll(true);
     try {
@@ -202,11 +202,17 @@ function ReportsPage() {
         s.ledgerSheet(terms.generalLedger, gl.accounts),
         ...(fa ? [s.fundActivitySheet(fa.funds, terms.fundActivity)] : []),
       ];
-      await ex.downloadXlsx(
-        sheets,
-        `${ex.safeFileName(`${org.name}-all-reports-${from}-to-${to}`)}.xlsx`,
-        org.currency,
-      );
+      const base = ex.safeFileName(`${org.name}-all-reports-${from}-to-${to}`);
+      if (kind === "pdf") {
+        const pdf = await import("@/lib/report-pdf");
+        await pdf.exportAllPdf({
+          org,
+          pref: terminology,
+          subtitle: `${from} to ${to}, balances as of ${asOf} · Cash basis`,
+          sheets,
+          fileName: `${base}.pdf`,
+        });
+      } else await ex.downloadXlsx(sheets, `${base}.xlsx`, org.currency);
       toast.success("All reports exported");
     } catch (e) {
       toast.error(errorMessage(e, "Could not export all reports"));
@@ -234,13 +240,22 @@ function ReportsPage() {
         <h1 className="font-display text-2xl font-bold">Reports</h1>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={exportAll}
+            onClick={() => exportAll("xlsx")}
             disabled={exportingAll}
             className={btn}
             title="One Excel file with every report, using the dates you picked"
           >
             <Download className="h-4 w-4" />
-            {exportingAll ? "Preparing…" : "Export all"}
+            {exportingAll ? "Preparing…" : "Export all (Excel)"}
+          </button>
+          <button
+            onClick={() => exportAll("pdf")}
+            disabled={exportingAll}
+            className={btn}
+            title="One PDF with every report, each on its own page"
+          >
+            <Download className="h-4 w-4" />
+            {exportingAll ? "Preparing…" : "Export all (PDF)"}
           </button>
         </div>
         <div className={`flex flex-wrap gap-2 ${detail ? "hidden" : ""}`}>

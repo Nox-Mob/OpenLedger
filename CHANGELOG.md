@@ -5,6 +5,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ## [Unreleased]
 
 ### Added
+- Reports: "Export all (PDF)" saves every report in one PDF, each on its own page.
 - Reports: general ledger and account activity with opening, running and closing balances.
 - Reports: click any account on the income statement, balance sheet or trial balance to see the transactions behind it.
 - Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
