@@ -38,6 +38,7 @@ Pulled in early: all v0.0.7 reports (general ledger, account activity, statement
 2. Search and filters across transactions.
 3. Budget vs actual for funds and projects; board report package (one PDF).
 4. Guided first-run checklist; support and diagnostics page (version, database type, last backup).
+5. Tutorial on/off switch: a guided walkthrough for getting started (starting balances, checking and other accounts, adding transactions, importing and checking statements) and for the ongoing routine (regular entries, monthly statement check and month close, year-end). Can be turned off and back on any time.
 
 ## v0.1.0 to v0.9.x - Hardening
 
