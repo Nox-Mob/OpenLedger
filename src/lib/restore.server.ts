@@ -5,6 +5,10 @@ import type { UntypedDb } from "./db";
 import { newId } from "./domain/ledger";
 import { checkRestorable, remapTables, type VerifiedBackup } from "./domain/backup";
 
+// One shared lazy load, so restores running at the same time all use the same client.
+let adminPromise: Promise<typeof import("@/integrations/supabase/client.server")> | null = null;
+const adminModule = () => (adminPromise ??= import("@/integrations/supabase/client.server"));
+
 type Row = Record<string, unknown>;
 const CHUNK = 500;
 
@@ -327,7 +331,7 @@ export async function restoreIntoNewOrg(
     }
 
     // History: original rows as read-only "restored" entries, then one restore marker.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await adminModule();
     const history = T("audit_log").map((h) => ({
       id: newId(),
       org_id: orgId,
@@ -370,7 +374,7 @@ export async function restoreIntoNewOrg(
     return { orgId, name };
   } catch (err) {
     // Roll back the half-built organization (same path as owner delete).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await adminModule();
     await supabaseAdmin
       .from("deleted_organizations")
       .insert({ id: newId(), org_id: orgId, name, deleted_by: userId });

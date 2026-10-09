@@ -415,7 +415,12 @@ describe.each(adapters)("%s adapter", (name, make) => {
     expect(status.closes).toHaveLength(1);
     await expect(settings.previewYearEndClose(repos, ORG, "2026-12-31")).rejects.toThrow(/closed/);
     await expect(postTransaction(repos, sale({ transactionDate: "2026-06-01" }))).rejects.toThrow();
-    await reopenPeriod(repos, { orgId: ORG, userId: USER, reopenThrough: null, reason: "Contract test reopen" });
+    await reopenPeriod(repos, {
+      orgId: ORG,
+      userId: USER,
+      reopenThrough: null,
+      reason: "Contract test reopen",
+    });
     expect((await repos.orgs.get(ORG))?.booksLockedThrough).toBeNull();
   });
 

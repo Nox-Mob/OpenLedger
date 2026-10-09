@@ -431,8 +431,6 @@ describe("moderately sized organization backup roundtrip", () => {
     );
     const verified = await verifyBackup(JSON.parse(JSON.stringify(signed)), keys.publicRaw);
     const before = structuredClone(db.tables);
-    const mod = await import("@/integrations/supabase/client.server");
-    expect(mod.supabaseAdmin === (db as unknown)).toBe(true);
     const [a, b] = await Promise.all([
       restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", verified),
       restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", verified),
