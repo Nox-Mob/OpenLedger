@@ -68,10 +68,7 @@ const ROLE_DETAILS: { role: RoleName; label: string; can: string[] }[] = [
   {
     role: "viewer",
     label: "View only",
-    can: [
-      "See every page and report, and export them",
-      "Cannot record, import or change anything",
-    ],
+    can: ["See every page and report, and export them", "Cannot record, import or change anything"],
   },
 ];
 
