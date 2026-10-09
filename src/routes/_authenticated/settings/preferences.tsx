@@ -1,5 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useOrgContext } from "@/hooks/use-org-context";
@@ -48,7 +48,7 @@ function PreferencesSettings() {
       setDraft(null);
       toast.success("Your wording saved");
     } catch (e) {
-      toast.error(errorMessage(e, "Could not save"));
+      showError(e, "Could not save");
     } finally {
       setSaving(false);
     }

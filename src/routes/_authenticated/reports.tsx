@@ -1,4 +1,4 @@
-import { errorMessage } from "@/lib/errors";
+import { showError } from "@/lib/show-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -151,7 +151,7 @@ function ReportsPage() {
       else if (tab === "balance" && balance)
         await pdf.exportBalancePdf({ org, terms, pref: terminology, asOf, data: balance });
     } catch (e) {
-      toast.error(errorMessage(e, "Could not create PDF"));
+      showError(e, "Could not create PDF", "No file was created.");
     } finally {
       setExporting(false);
     }
@@ -177,7 +177,7 @@ function ReportsPage() {
       if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
       else await ex.downloadXlsx([sheet], `${base}.xlsx`, org.currency);
     } catch (e) {
-      toast.error(errorMessage(e, "Could not export"));
+      showError(e, "Could not export", "No file was created.");
     }
   }
   /** Every report in one Excel workbook, one sheet each, using the dates on screen. */
@@ -215,7 +215,7 @@ function ReportsPage() {
       } else await ex.downloadXlsx(sheets, `${base}.xlsx`, org.currency);
       toast.success("All reports exported");
     } catch (e) {
-      toast.error(errorMessage(e, "Could not export all reports"));
+      showError(e, "Could not export all reports", "No file was created.");
     } finally {
       setExportingAll(false);
     }

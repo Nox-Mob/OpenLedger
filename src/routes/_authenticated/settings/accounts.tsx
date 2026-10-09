@@ -1,4 +1,5 @@
 import { OrgPending } from "@/components/AppShell";
+import { showError } from "@/lib/show-error";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -85,7 +86,7 @@ function AccountsSetup() {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast.success(next ? `${row.name} active` : `${row.name} archived`);
     } catch (err) {
-      toast.error(errorMessage(err, "Could not update account"));
+      showError(err, "Could not update account");
     } finally {
       setBusy(null);
     }
@@ -108,7 +109,7 @@ function AccountsSetup() {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       toast.success(`${row.name} deleted`);
     } catch (err) {
-      toast.error(errorMessage(err, "Could not delete account"));
+      showError(err, "Could not delete account");
     } finally {
       setBusy(null);
     }

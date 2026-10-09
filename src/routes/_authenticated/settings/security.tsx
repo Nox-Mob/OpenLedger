@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { showError } from "@/lib/show-error";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -72,7 +73,7 @@ function TwoStep() {
       if (error) throw error;
       setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not start setup"));
+      showError(err, "Could not start setup");
     } finally {
       setBusy(false);
     }
@@ -93,7 +94,7 @@ function TwoStep() {
       await refresh();
       toast.success("Two-step sign-in is on");
     } catch (err) {
-      toast.error(errorMessage(err));
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -102,7 +103,7 @@ function TwoStep() {
   async function turnOff(id: string) {
     if (!window.confirm("Turn off two-step sign-in for your account?")) return;
     const { error } = await supabase.auth.mfa.unenroll({ factorId: id });
-    if (error) return void toast.error(errorMessage(error));
+    if (error) return void showError(error);
     await refresh();
     toast.success("Two-step sign-in is off");
   }
@@ -193,7 +194,7 @@ function RequireForOrg() {
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       toast.success(next ? "Two-step sign-in now required" : "Two-step sign-in no longer required");
     } catch (err) {
-      toast.error(errorMessage(err, "Could not change this"));
+      showError(err, "Could not change this");
     } finally {
       setBusy(false);
     }
@@ -241,7 +242,7 @@ function DeleteAccount() {
       toast.success("Your account was deleted");
       navigate({ to: "/" });
     } catch (err) {
-      toast.error(errorMessage(err, "Could not delete your account"));
+      showError(err, "Could not delete your account");
       setBusy(false);
     }
   }

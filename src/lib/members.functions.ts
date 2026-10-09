@@ -89,7 +89,7 @@ export const createInvite = createServerFn({ method: "POST" })
     z
       .object({
         orgId: uuid,
-        role: z.enum(["admin", "member", "viewer"]),
+        role: z.enum(["admin", "treasurer", "member", "viewer"]),
         days: z.number().int().min(1).max(30).default(7),
       })
       .parse(input),

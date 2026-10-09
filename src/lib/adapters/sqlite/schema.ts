@@ -14,7 +14,7 @@ CREATE TABLE organizations (
 );
 CREATE TABLE user_roles (
   user_id TEXT NOT NULL, org_id TEXT NOT NULL REFERENCES organizations(id),
-  role TEXT NOT NULL CHECK (role IN ('admin','member','viewer')), PRIMARY KEY (user_id, org_id)
+  role TEXT NOT NULL CHECK (role IN ('admin','treasurer','member','viewer')), PRIMARY KEY (user_id, org_id)
 );
 CREATE TABLE accounts (
   id TEXT PRIMARY KEY, org_id TEXT NOT NULL REFERENCES organizations(id), name TEXT NOT NULL,
