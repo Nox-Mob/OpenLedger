@@ -101,3 +101,20 @@ describe("accountTypeLabel", () => {
     expect(accountTypeLabel("mystery", t)).toBe("mystery");
   });
 });
+
+describe("report names", () => {
+  it("uses plain names at the simplest level", () => {
+    const t = getTerms("nonprofit", "simplest");
+    expect(t.trialBalance).toBe("Totals Check");
+    expect(t.generalLedger).toBe("Every Transaction");
+    expect(t.fundActivity).toBe("Money by Purpose");
+    expect(t.statementCheck).toBe("Bank Statement Check");
+    expect(t.accountActivity("Checking")).toBe("History for Checking");
+  });
+  it("uses accounting names at the double-entry level", () => {
+    const t = getTerms("business", "accounting");
+    expect(t.trialBalance).toBe("Trial Balance");
+    expect(t.generalLedger).toBe("General Ledger");
+    expect(t.statementCheck).toBe("Reconciliation Report");
+  });
+});

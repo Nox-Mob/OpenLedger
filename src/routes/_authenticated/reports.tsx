@@ -160,7 +160,7 @@ function ReportsPage() {
         : tab === "balance" && balance
           ? s.balanceSheetSheet(terms.balanceSheet, balance, terms)
           : tab === "trial" && trialQuery.data
-            ? s.trialSheet(trialQuery.data)
+            ? s.trialSheet(trialQuery.data, terms.trialBalance)
             : null;
     if (!sheet) return;
     const base = ex.safeFileName(
@@ -179,10 +179,10 @@ function ReportsPage() {
   const tabs: [Tab, string][] = [
     ["income", terms.incomeStatement],
     ["balance", terms.balanceSheet],
-    ["trial", "Trial balance"],
-    ["ledger", "General ledger"],
-    ...(org.orgType === "nonprofit" ? ([["funds", "Funds"]] as [Tab, string][]) : []),
-    ["statement", "Statement checks"],
+    ["trial", terms.trialBalance],
+    ["ledger", terms.generalLedger],
+    ...(org.orgType === "nonprofit" ? ([["funds", terms.fundActivity]] as [Tab, string][]) : []),
+    ["statement", terms.statementCheck],
   ];
   const btn =
     "inline-flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50";
@@ -231,7 +231,7 @@ function ReportsPage() {
       {tab === "ledger" && (
         <LedgerReport
           org={org}
-          pref={terminology}
+          terms={terms} pref={terminology}
           from={ledgerFrom}
           to={ledgerTo}
           setFrom={setLedgerFrom}
@@ -243,14 +243,14 @@ function ReportsPage() {
       {tab === "funds" && (
         <FundReport
           org={org}
-          pref={terminology}
+          terms={terms} pref={terminology}
           from={ledgerFrom}
           to={ledgerTo}
           setFrom={setLedgerFrom}
           setTo={setLedgerTo}
         />
       )}
-      {tab === "statement" && <StatementCheckReport org={org} pref={terminology} />}
+      {tab === "statement" && <StatementCheckReport org={org} terms={terms} pref={terminology} />}
 
       {(tab === "balance" || tab === "trial") && (
         <div className="mt-4 flex items-center gap-3 text-sm">

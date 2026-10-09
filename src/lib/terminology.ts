@@ -22,7 +22,11 @@ export type TermKey =
   | "netIncome"
   | "incomeStatement"
   | "balanceSheet"
-  | "journal";
+  | "journal"
+  | "trialBalance"
+  | "generalLedger"
+  | "fundActivity"
+  | "statementCheck";
 
 export type TermOverrides = Partial<Record<TermKey, Terminology>>;
 
@@ -83,6 +87,26 @@ export const TERM_ITEMS: TermItem[] = [
     label: "Advanced entry",
     business: ["Transaction", "Transaction", "Journal Entry"],
   },
+  {
+    key: "trialBalance",
+    label: "Totals check report",
+    business: ["Totals Check", "Account Totals", "Trial Balance"],
+  },
+  {
+    key: "generalLedger",
+    label: "Every transaction report",
+    business: ["Every Transaction", "Account History", "General Ledger"],
+  },
+  {
+    key: "fundActivity",
+    label: "Fund report",
+    business: ["Money by Purpose", "Fund Activity", "Fund Activity"],
+  },
+  {
+    key: "statementCheck",
+    label: "Bank statement report",
+    business: ["Bank Statement Check", "Statement Check", "Reconciliation Report"],
+  },
 ];
 
 export function termOptions(item: TermItem, orgType: OrgType): Triple {
@@ -114,6 +138,12 @@ export interface Terms {
   debit: string;
   credit: string;
   journal: string;
+  trialBalance: string;
+  generalLedger: string;
+  fundActivity: string;
+  statementCheck: string;
+  /** Account activity title for one account. */
+  accountActivity: (name: string) => string;
   /** Derived: plain alias at simplest level. */
   reconcile: string;
 }
@@ -145,6 +175,16 @@ export function getTerms(
     debit,
     credit,
     journal: w.journal,
+    trialBalance: w.trialBalance,
+    generalLedger: w.generalLedger,
+    fundActivity: w.fundActivity,
+    statementCheck: w.statementCheck,
+    accountActivity: (name) =>
+      levels.generalLedger === "simplest"
+        ? `History for ${name}`
+        : levels.generalLedger === "simple"
+          ? `Account History: ${name}`
+          : `Account Activity: ${name}`,
     reconcile: levels.debitCredit === "simplest" ? "Check against statement" : "Reconcile",
   };
 }

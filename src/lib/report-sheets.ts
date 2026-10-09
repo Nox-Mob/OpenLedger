@@ -61,9 +61,9 @@ export function trialSheet(d: {
   lines: { name: string; type: string; debitCents: number; creditCents: number }[];
   totalDebitCents: number;
   totalCreditCents: number;
-}): Sheet {
+}, title = "Trial balance"): Sheet {
   return {
-    name: "Trial balance",
+    name: title,
     rows: [
       ["Account", "Type", "Debit", "Credit"],
       ...d.lines.map((l) => [l.name, l.type, n(l.debitCents), n(l.creditCents)]),
@@ -127,9 +127,10 @@ export function fundActivitySheet(
     releasedCents: number;
     closingCents: number;
   }[],
+  title = "Fund activity",
 ): Sheet {
   return {
-    name: "Fund activity",
+    name: title,
     rows: [
       ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
       ...funds.map((f) => [
@@ -145,7 +146,8 @@ export function fundActivitySheet(
   };
 }
 
-export function statementCheckSheet(d: {
+export function statementCheckSheet(
+  d: {
   accountName: string;
   periodEnd: string;
   beginningBalanceCents: number;
@@ -154,9 +156,11 @@ export function statementCheckSheet(d: {
   outstanding: { date: string; description: string; amountCents: number }[];
   clearedBalanceCents: number;
   differenceCents: number;
-}): Sheet {
+},
+  title = "Statement check",
+): Sheet {
   return {
-    name: "Statement check",
+    name: title,
     rows: [
       ["Status", "Date", "Description", "Amount"],
       ["Statement", "", "Beginning balance", n(d.beginningBalanceCents)],
