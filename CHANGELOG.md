@@ -7,6 +7,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ## [0.0.6] - 2026-10-08
 
 ### Added
+
 - Reports: "Export all (PDF)" saves every report in one PDF, each on its own page.
 - Treasurer role, between admin and member: records transactions, closes the year, locks the books and reopens finished statement checks, but cannot change settings or people. The database enforces the same limits.
 - Plain-language error pop-ups for unbalanced transactions, closed periods, statement checks that are off, rejected backups and missing permissions. Each one says clearly that nothing was recorded.
@@ -37,6 +38,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Keyboard focus is now outlined clearly on every page.
 
 ### Fixed
+
 - Database: the treasurer settings guard now applies only to signed-in app users, so server and maintenance steps are not blocked.
 
 ## [0.0.5] - 2026-10-08

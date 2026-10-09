@@ -28,23 +28,23 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 
 ## Status by area
 
-| Area                                                                     | Status                                                                                                 |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Double-entry posting, void, immutability                                 | Implemented and tested (domain, contract tests, database checks)                                       |
-| Change and history saved in one database transaction                     | Implemented and tested for postings, voids, statement checks, year-end close and audited_write changes |
-| Tenant isolation (RLS)                                                   | Implemented and tested (database checks run in CI)                                                     |
-| Permissions table (admin, treasurer, member, view only)                  | Implemented and tested (every cell pinned, treasurer database check)                                   |
-| Plain-language error pop-ups (nothing recorded on failure)               | Implemented and tested (on-screen tests, unchanged-books checks)                                       |
+| Area                                                                                                   | Status                                                                                                 |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Double-entry posting, void, immutability                                                               | Implemented and tested (domain, contract tests, database checks)                                       |
+| Change and history saved in one database transaction                                                   | Implemented and tested for postings, voids, statement checks, year-end close and audited_write changes |
+| Tenant isolation (RLS)                                                                                 | Implemented and tested (database checks run in CI)                                                     |
+| Permissions table (admin, treasurer, member, view only)                                                | Implemented and tested (every cell pinned, treasurer database check)                                   |
+| Plain-language error pop-ups (nothing recorded on failure)                                             | Implemented and tested (on-screen tests, unchanged-books checks)                                       |
 | Reports: general ledger, account activity, funds, statement check, drill-down, Export all (Excel, PDF) | Implemented and tested (pure math, 50k-line speed test)                                                |
-| Two-step sign-in (org can require it)                                    | Implemented and tested (database checks, rule tests)                                                   |
-| Delete my account; organization delete in one step                       | Implemented and tested                                                                                 |
-| Architecture boundaries (no direct table writes, admin client allowlist) | Enforced by src/lib/architecture.test.ts in CI                                                         |
-| Signed backups and restore into a new organization                       | Implemented and tested (memory adapter roundtrip, tamper rejection)                                    |
-| Budgets, exports, history viewer                                         | Implemented, cloud-only (no port yet)                                                                  |
-| SQLite adapter                                                           | Implemented, partly verified (sql.js only, not a native desktop driver)                                |
-| Desktop edition (Tauri), offline use                                     | Planned, unscheduled. Do not advertise.                                                                |
-| Desktop and cloud sync                                                   | Not supported                                                                                          |
-| Multi-currency, payroll, invoicing, bank feeds                           | Not supported                                                                                          |
+| Two-step sign-in (org can require it)                                                                  | Implemented and tested (database checks, rule tests)                                                   |
+| Delete my account; organization delete in one step                                                     | Implemented and tested                                                                                 |
+| Architecture boundaries (no direct table writes, admin client allowlist)                               | Enforced by src/lib/architecture.test.ts in CI                                                         |
+| Signed backups and restore into a new organization                                                     | Implemented and tested (memory adapter roundtrip, tamper rejection)                                    |
+| Budgets, exports, history viewer                                                                       | Implemented, cloud-only (no port yet)                                                                  |
+| SQLite adapter                                                                                         | Implemented, partly verified (sql.js only, not a native desktop driver)                                |
+| Desktop edition (Tauri), offline use                                                                   | Planned, unscheduled. Do not advertise.                                                                |
+| Desktop and cloud sync                                                                                 | Not supported                                                                                          |
+| Multi-currency, payroll, invoicing, bank feeds                                                         | Not supported                                                                                          |
 
 ## Where rules live
 
@@ -80,7 +80,7 @@ Every data change and its history entry are written in one database transaction;
 ## Build and CI
 
 - Release steps: docs/release-checklist.md.
-- Treasurers may change only the books lock date on an organization; a database trigger refuses any other organization change from a non-admin app user.
+- Organization settings: a database trigger refuses settings changes from signed-in non-admin users (treasurers may still lock books and close the year); server and maintenance steps are not blocked.
 
 - npm 11+ only (`package-lock.json`, `npm ci`), Node 24 in CI.
 - CI runs: tests, direct-writes check, type check, lint, formatting, migration checks (GRANTs and RLS), disposable-database safety checks (`supabase/tests/*.sql`), runtime dependency audit, build.

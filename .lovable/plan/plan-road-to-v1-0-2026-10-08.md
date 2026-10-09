@@ -8,36 +8,29 @@ Based on the security and controls review and the 1.0 feature review. Both say: 
 
 | Finding | Action | Release |
 | --- | --- | --- |
-| .env is tracked in Git | Keep it (Lovable needs it). It only holds public keys. Add a CI check that fails if any private key shape ever appears in it; document why it is tracked | v0.0.6 |
-| Prove "change and history roll back together" everywhere | Add a failure test for every remaining high-impact change: member removal, ownership transfer, org delete, invite claim, settings | v0.0.6 |
-| Direct-write check is text matching only | Add a code-structure rule that also catches multi-line calls, helper functions and admin-client use outside approved files | v0.0.6 |
-| Dev-only packages not audited | Add a separate full audit that reports but does not block | v0.0.6 |
+| .env is tracked in Git | Keep it (Lovable needs it). It only holds public keys. Add a CI check that fails if any private key shape ever appears in it; document why it is tracked | v0.0.6 (done) |
+| Prove "change and history roll back together" everywhere | Add a failure test for every remaining high-impact change: member removal, ownership transfer, org delete, invite claim, settings | v0.0.6 (done) |
+| Direct-write check is text matching only | Add a code-structure rule that also catches multi-line calls, helper functions and admin-client use outside approved files | v0.0.6 (done) |
+| Dev-only packages not audited | Add a separate full audit that reports but does not block | v0.0.6 (done) |
 | Architecture doc out of date | Done in this change | now |
-| Concurrent requests (double close, double post) | Tests that send the same request twice at once | v0.0.7 |
+| Concurrent requests (double close, double post) | Tests that send the same request twice at once | v0.0.7 (still open) |
 | SQLite tested with sql.js only | Native driver tests before any desktop release | Desktop track |
 
-## v0.0.6 - Safety and controls
+## v0.0.6 - Safety, controls and reports (released 2026-10-08)
 
-1. Items from the table above marked v0.0.6.
-2. Two-step sign-in (MFA), optional per user, admin can require it.
-3. Delete my account (blocked while you own an organization).
-4. Session safety: removed members lose access right away; password reset tested end to end.
-5. Manual keyboard and screen reader walk-through.
+Done: MFA (org can require it), delete my account, session safety, rollback tests, structural direct-write rule, .env check, full dependency audit, keyboard walk-through, release checklist.
+Pulled in early: all v0.0.7 reports (general ledger, account activity, statement check, drill-down, cash basis labels, fund reports, 50k speed test), Export all to Excel and PDF, accounting-format Excel, plain report names in Settings, treasurer role and plain-language error pop-ups from v0.0.8.
 
-## v0.0.7 - Reports people can trust
+## v0.0.7 - Concurrency and people checks
 
-1. General ledger and account activity reports with running balances.
-2. Statement check report (matched and outstanding items).
-3. Click any report total to see the transactions behind it.
-4. Every report states its period and "cash basis", and exports to CSV, Excel and PDF.
-5. Fund balance and fund activity reports.
-6. Speed at 10,000 to 50,000 ledger lines.
+1. Tests that send the same request twice at once: double post, double close, double restore.
+2. Screen reader walk-through by a person.
+3. Password reset email checked end to end by hand.
 
-## v0.0.8 - Periods and roles
+## v0.0.8 - Periods
 
-1. Month close with warnings (unreconciled accounts, open statement checks); audited reopen by an admin.
-2. Treasurer/bookkeeper role added to the permissions table (between admin and member).
-3. Plain-language errors for the common failures (unbalanced, period closed, statement off, bad backup, no permission).
+1. Month close with warnings (unreconciled accounts, open statement checks).
+2. Audited reopen by an admin or treasurer.
 
 ## v0.0.9 - Everyday use
 
