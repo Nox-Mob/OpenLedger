@@ -274,3 +274,32 @@ export async function exportBalancePdf(p: {
   footer();
   doc.save(`${org.name} - ${terms.balanceSheet} ${p.asOf}.pdf`);
 }
+
+/** Any tabular report as a PDF. Number cells are cents and print as money. */
+export async function exportTablePdf(p: {
+  org: OrgInfo;
+  pref: Terminology;
+  title: string;
+  subtitle: string;
+  head: string[];
+  body: (string | number)[][];
+  fileName: string;
+}) {
+  const { doc, autoTable, footer } = await setup(p.org, p.title, p.subtitle, p.pref);
+  autoTable(doc, {
+    startY: 142,
+    margin: { left: 56, right: 56 },
+    head: [p.head],
+    body: p.body.map((r) => r.map((v) => (typeof v === "number" ? money(v, p.org.currency) : v))),
+    theme: "plain",
+    styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: 4 },
+    headStyles: { fillColor: PAPER, textColor: GREEN, fontStyle: "bold" },
+    didParseCell: (d: CellHookData) => {
+      if (typeof p.body[d.row.index]?.[d.column.index] === "number" && d.section === "body")
+        d.cell.styles.halign = "right";
+    },
+    bodyStyles: { lineColor: [225, 219, 207], lineWidth: { bottom: 0.5 } },
+  });
+  footer();
+  doc.save(p.fileName);
+}

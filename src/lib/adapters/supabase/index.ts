@@ -386,7 +386,7 @@ export function createSupabaseRepositories(db: Db): Repositories {
           let q = sb
             .from("entries")
             .select(
-              "id, amount_cents, account_id, project_id, fund_id, accounts!inner(name, type), transactions!inner(org_id, status, source, transaction_date)",
+              "id, amount_cents, account_id, transaction_id, project_id, fund_id, accounts!inner(name, type), transactions!inner(org_id, status, source, transaction_date, description)",
             )
             .eq("transactions.org_id", orgId)
             .eq("transactions.status", "posted")
@@ -401,6 +401,8 @@ export function createSupabaseRepositories(db: Db): Repositories {
             out.push({
               amountCents: Number(r.amount_cents),
               accountId: r.account_id,
+              transactionId: r.transaction_id,
+              description: r.transactions.description ?? "",
               accountName: r.accounts.name,
               accountType: r.accounts.type,
               projectId: r.project_id ?? null,

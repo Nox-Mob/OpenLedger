@@ -5,6 +5,14 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ## [Unreleased]
 
 ### Added
+- Reports: general ledger and account activity with opening, running and closing balances.
+- Reports: click any account on the income statement, balance sheet or trial balance to see the transactions behind it.
+- Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
+- Reports: statement check report listing matched and outstanding items with the difference.
+- Every report shows its period and "Cash basis", and the new reports export to CSV, Excel and PDF.
+- Tests for the new report math, including a 50,000-line speed check.
+
+### Added
 
 - Two-step sign-in with an authenticator app, in Settings, Security. Admins can require it for the whole organization; the database then hides the books from any session that didn't use it.
 - Delete my account, in Settings, Security. Blocked while you own an organization or are its only admin. History keeps your past changes and shows them as "Deleted user".

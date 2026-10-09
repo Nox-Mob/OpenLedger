@@ -7,7 +7,7 @@ import { assertCan } from "./permissions";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { pledgeOutstanding, type PledgeStatus } from "./domain/funds";
-import { fundSummary, postPledge, releaseFund, settlePledge } from "./services/funds";
+import { fundActivity, fundSummary, postPledge, releaseFund, settlePledge } from "./services/funds";
 import { auditedWrite } from "./audited-write";
 
 const uuid = z.string().uuid();
@@ -362,4 +362,19 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
       },
     );
     return { ok: true };
+  });
+
+export const getFundActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId: uuid, from: date, to: date }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "read");
+    const funds = await loadFunds(context.supabase, data.orgId);
+    return fundActivity(
+      createSupabaseRepositories(context.supabase),
+      data.orgId,
+      funds,
+      data.from,
+      data.to,
+    );
   });

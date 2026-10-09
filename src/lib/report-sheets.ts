@@ -71,3 +71,100 @@ export function trialSheet(d: {
     ],
   };
 }
+
+type LedgerAcct = {
+  accountName: string;
+  accountType: string;
+  openingCents: number;
+  closingCents: number;
+  lines: {
+    date: string;
+    description: string;
+    debitCents: number;
+    creditCents: number;
+    balanceCents: number;
+  }[];
+};
+
+/** Rows shared by the ledger spreadsheet and PDF (amounts in cents). */
+export function ledgerRows(accounts: LedgerAcct[]) {
+  const rows: (string | number)[][] = [];
+  for (const a of accounts) {
+    rows.push([a.accountName, "", "Opening balance", "", "", a.openingCents]);
+    for (const l of a.lines)
+      rows.push([
+        a.accountName,
+        l.date,
+        l.description,
+        l.debitCents,
+        l.creditCents,
+        l.balanceCents,
+      ]);
+    rows.push([a.accountName, "", "Closing balance", "", "", a.closingCents]);
+  }
+  return rows;
+}
+
+const c = (v: string | number) => (typeof v === "number" ? n(v) : v);
+
+export function ledgerSheet(title: string, accounts: LedgerAcct[]): Sheet {
+  return {
+    name: title,
+    rows: [
+      ["Account", "Date", "Description", "Debit", "Credit", "Balance"],
+      ...ledgerRows(accounts).map((r) => r.map(c)),
+    ],
+  };
+}
+
+export function fundActivitySheet(
+  funds: {
+    name: string;
+    isRestricted: boolean;
+    openingCents: number;
+    receivedCents: number;
+    spentCents: number;
+    releasedCents: number;
+    closingCents: number;
+  }[],
+): Sheet {
+  return {
+    name: "Fund activity",
+    rows: [
+      ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
+      ...funds.map((f) => [
+        f.name,
+        f.isRestricted ? "Yes" : "No",
+        n(f.openingCents),
+        n(f.receivedCents),
+        n(f.spentCents),
+        n(f.releasedCents),
+        n(f.closingCents),
+      ]),
+    ],
+  };
+}
+
+export function statementCheckSheet(d: {
+  accountName: string;
+  periodEnd: string;
+  beginningBalanceCents: number;
+  endingBalanceCents: number;
+  cleared: { date: string; description: string; amountCents: number }[];
+  outstanding: { date: string; description: string; amountCents: number }[];
+  clearedBalanceCents: number;
+  differenceCents: number;
+}): Sheet {
+  return {
+    name: "Statement check",
+    rows: [
+      ["Status", "Date", "Description", "Amount"],
+      ["Statement", "", "Beginning balance", n(d.beginningBalanceCents)],
+      ...d.cleared.map((e) => ["Matched", e.date, e.description, n(e.amountCents)]),
+      ...d.outstanding.map((e) => ["Outstanding", e.date, e.description, n(e.amountCents)]),
+      ["Statement", "", "Cleared balance", n(d.clearedBalanceCents)],
+      ["Statement", "", "Ending balance", n(d.endingBalanceCents)],
+      ["Statement", "", "Difference", n(d.differenceCents)],
+    ],
+  };
+}
