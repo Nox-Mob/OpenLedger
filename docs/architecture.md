@@ -28,18 +28,21 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 
 ## Status by area
 
-| Area                                                 | Status                                                                                                 |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Double-entry posting, void, immutability             | Implemented and tested (domain, contract tests, database checks)                                       |
-| Change and history saved in one database transaction | Implemented and tested for postings, voids, statement checks, year-end close and audited_write changes |
-| Tenant isolation (RLS)                               | Implemented and tested (database checks run in CI)                                                     |
-| Permissions table                                    | Implemented and tested (every cell pinned)                                                             |
-| Signed backups and restore into a new organization   | Implemented and tested (memory adapter roundtrip, tamper rejection)                                    |
-| Budgets, exports, history viewer                     | Implemented, cloud-only (no port yet)                                                                  |
-| SQLite adapter                                       | Implemented, partly verified (sql.js only, not a native desktop driver)                                |
-| Desktop edition (Tauri), offline use                 | Planned, unscheduled. Do not advertise.                                                                |
-| Desktop and cloud sync                               | Not supported                                                                                          |
-| Multi-currency, payroll, invoicing, bank feeds       | Not supported                                                                                          |
+| Area                                                                     | Status                                                                                                 |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Double-entry posting, void, immutability                                 | Implemented and tested (domain, contract tests, database checks)                                       |
+| Change and history saved in one database transaction                     | Implemented and tested for postings, voids, statement checks, year-end close and audited_write changes |
+| Tenant isolation (RLS)                                                   | Implemented and tested (database checks run in CI)                                                     |
+| Permissions table                                                        | Implemented and tested (every cell pinned)                                                             |
+| Two-step sign-in (org can require it)                                    | Implemented and tested (database checks, rule tests)                                                   |
+| Delete my account; organization delete in one step                       | Implemented and tested                                                                                 |
+| Architecture boundaries (no direct table writes, admin client allowlist) | Enforced by src/lib/architecture.test.ts in CI                                                         |
+| Signed backups and restore into a new organization                       | Implemented and tested (memory adapter roundtrip, tamper rejection)                                    |
+| Budgets, exports, history viewer                                         | Implemented, cloud-only (no port yet)                                                                  |
+| SQLite adapter                                                           | Implemented, partly verified (sql.js only, not a native desktop driver)                                |
+| Desktop edition (Tauri), offline use                                     | Planned, unscheduled. Do not advertise.                                                                |
+| Desktop and cloud sync                                                   | Not supported                                                                                          |
+| Multi-currency, payroll, invoicing, bank feeds                           | Not supported                                                                                          |
 
 ## Where rules live
 
@@ -66,7 +69,15 @@ Every data change and its history entry are written in one database transaction;
 
 - Format v3: signed Ed25519 manifest over chained per-row SHA-256 hashes, app version recorded. Restore always creates a new organization with new IDs, re-runs domain checks, and deletes the partial organization if anything fails. CSV and Excel exports are read-only copies, not backups. See `src/lib/domain/backup.ts`.
 
+## Sign-in and sessions
+
+- Access is checked on every request by row level security, so a removed member loses access on their next request.
+- When an organization requires two-step sign-in, its books are hidden in the database from sessions that didn't use it; `assertCan` gives the clear message.
+- Deleting an account leaves history, transactions and closes in place with the old user id (no link to the sign-in table), shown as "Deleted user".
+
 ## Build and CI
+
+- Release steps: docs/release-checklist.md.
 
 - npm 11+ only (`package-lock.json`, `npm ci`), Node 24 in CI.
 - CI runs: tests, direct-writes check, type check, lint, formatting, migration checks (GRANTs and RLS), disposable-database safety checks (`supabase/tests/*.sql`), runtime dependency audit, build.

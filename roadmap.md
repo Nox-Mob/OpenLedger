@@ -2,7 +2,7 @@
 
 ## Road to v1.0 (plan approved 2026-10-08)
 
-- v0.0.6 Safety and controls: [x] .env public-keys-only CI check, [x] report-only full dependency audit, [x] architecture doc refresh, [ ] rollback tests for member removal, ownership transfer, org delete, invite claim, settings, [ ] structural direct-write rule, [ ] MFA, [ ] delete my account, [ ] session safety, [ ] manual a11y walk-through
+- v0.0.6 Safety and controls (done, ready to release): [x] .env public-keys-only CI check, [x] report-only full dependency audit, [x] architecture doc refresh, [x] rollback tests for member removal, ownership transfer, org delete, invite claim, settings, [x] structural direct-write rule, [x] MFA, [x] delete my account, [x] session safety (removed members, MFA sessions), [x] keyboard walk-through (focus order, visible focus), [x] release checklist. Open: screen reader pass by a person; password reset email can only be checked by hand
 - v0.0.7 Reports people can trust: general ledger, account activity, statement check report, drill-down, cash basis labels, fund reports, concurrency tests, 10k to 50k performance
 - v0.0.8 Periods and roles: month close and audited reopen, treasurer role, plain-language errors
 - v0.0.9 Everyday use: templates and recurring drafts, search, fund/project budgets, board package, first-run checklist, diagnostics page

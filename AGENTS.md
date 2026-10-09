@@ -31,6 +31,8 @@
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
+- Releases: follow docs/release-checklist.md; the changelog and docs/architecture.md (`Current as of vX.Y.Z`) are mandatory every release, enforced by src/lib/release.test.ts.
+- MFA: organizations.require_mfa is enforced in the DB (is_org_member/has_org_role/can_write_org AND mfa_ok); only the org row and your own role stay visible so the app can explain why.
 - Release notes: `CHANGELOG.md` is the single public changelog source; planned work goes in the roadmap, not releases.
 
 - Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.

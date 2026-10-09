@@ -4,6 +4,20 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+### Added
+
+- Two-step sign-in with an authenticator app, in Settings, Security. Admins can require it for the whole organization; the database then hides the books from any session that didn't use it.
+- Delete my account, in Settings, Security. Blocked while you own an organization or are its only admin. History keeps your past changes and shows them as "Deleted user".
+- Release checklist (docs/release-checklist.md): the changelog and the architecture document must be updated before every release, checked by an automated test.
+- Structural code check: server functions, screens and components can't write tables directly, and only approved server files may load the privileged database client.
+- Database checks for invite reuse, last-admin removal, wrong-owner transfer, settings that match nothing, organization delete, removed-member access and two-step sign-in.
+- GitHub fails the build if a private key ever lands in the committed .env file, and reports developer-tool vulnerabilities without blocking.
+
+### Changed
+
+- Deleting an organization now saves its deleted-organization record and the delete in one step.
+- Keyboard focus is now outlined clearly on every page.
+
 ## [0.0.5] - 2026-10-08
 
 ### Added
