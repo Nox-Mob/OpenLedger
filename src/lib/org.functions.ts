@@ -14,6 +14,7 @@ import { assertCan } from "./permissions";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { newId } from "./domain/ledger";
 import { updateOrganization as updateOrgSettings } from "./services/settings";
+import { requireMfaBlocker } from "./domain/members";
 import { deleteBlocker, NO_USAGE, type AccountUsage } from "./domain/accounts";
 
 /** Non-ledger records that point at each account (entries are counted separately). */
@@ -44,7 +45,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("user_roles")
       .select(
-        "role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled)",
+        "role, organizations(id, name, org_type, currency, fiscal_year_start_month, timezone, terminology, term_overrides, ai_pdf_enabled, require_mfa)",
       )
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
@@ -59,6 +60,7 @@ export const getMyOrgs = createServerFn({ method: "GET" })
         terminology: normalizeTerminology(row.organizations?.terminology),
         termOverrides: cleanOverrides(row.organizations?.term_overrides),
         aiPdfEnabled: !!row.organizations?.ai_pdf_enabled,
+        requireMfa: !!row.organizations?.require_mfa,
         role: row.role as string,
       }))
       .filter((o) => o.id);
@@ -456,6 +458,29 @@ export const deleteUnusedAccount = createServerFn({ method: "POST" })
         entity: "account",
         entityId: acct.id,
         before: { name: acct.name, type: acct.type, subtype: acct.subtype },
+      },
+    );
+    return { ok: true };
+  });
+
+export const setRequireMfa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId: z.string().uuid(), enabled: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId, claims } = context;
+    await requireOrgAdmin(supabase, userId, data.orgId);
+    const blocker = requireMfaBlocker(data.enabled, (claims as { aal?: string }).aal);
+    if (blocker) throw new Error(blocker);
+    await auditedWrite(
+      supabase,
+      data.orgId,
+      [{ table: "organizations", op: "update", values: { require_mfa: data.enabled }, minRows: 1 }],
+      {
+        action: data.enabled ? "require_mfa_on" : "require_mfa_off",
+        entity: "organization",
+        entityId: data.orgId,
+        after: { requireMfa: data.enabled },
+        kind: "system",
       },
     );
     return { ok: true };
