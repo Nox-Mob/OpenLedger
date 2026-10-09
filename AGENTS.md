@@ -27,7 +27,7 @@
 - Idempotency keys: one per form submit; `bank:<id>`, `opening:<acct>:...`.
 - AI PDF: org opt-in, upload ack, limits, balance or acceptMismatch.
 - Legal acceptance append-only/versioned; U.S.-first; no GDPR claim.
-- Demo: demo@demo.org / demo1234, manual dev seed only.
+- Demo login: manual dev seed only.
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
