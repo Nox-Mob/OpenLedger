@@ -111,7 +111,7 @@ describe("architecture boundaries", () => {
     expect(tableWrites('db\n  .from("a")\n  .select("x")\n  .eq("id", 1)\n  .update({})')).toEqual([
       { line: 5, marked: false },
     ]);
-    expect(tableWrites('await (db.from("a")).insert({})')).toHaveLength(1);
+    expect(tableWrites('const r = (db.from("a")).insert({})')).toHaveLength(1);
     expect(tableWrites('// cloud-only-write: profile\ndb.from("p").upsert({})')[0]!.marked).toBe(
       true,
     );
