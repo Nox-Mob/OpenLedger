@@ -155,7 +155,7 @@ describe("statement check off", () => {
 
   it("refuses to finish, stays open, records nothing", async () => {
     const r = await start(999);
-    const cash = [...repos.store.transactions.values()][0].entries.find(
+    const cash = [...repos.store.transactions.values()][0]!.entries.find(
       (e) => e.accountId === CASH,
     )!;
     await recon.setCleared(repos, r, [cash.id], true, USER);
@@ -170,7 +170,7 @@ describe("statement check off", () => {
 
   it("finishes at zero with no error pop-up", async () => {
     const r = await start(1000);
-    const cash = [...repos.store.transactions.values()][0].entries.find(
+    const cash = [...repos.store.transactions.values()][0]!.entries.find(
       (e) => e.accountId === CASH,
     )!;
     await recon.setCleared(repos, r, [cash.id], true, USER);
