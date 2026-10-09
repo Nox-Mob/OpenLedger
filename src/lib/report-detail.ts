@@ -33,8 +33,8 @@ export interface LedgerFilter {
   to: string;
   /** Income and expense accounts start each fiscal year at zero. */
   fiscalYearStart: string;
-  accountName?: string;
-  fundId?: string;
+  accountName?: string | undefined;
+  fundId?: string | undefined;
 }
 
 /**
