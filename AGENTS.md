@@ -49,3 +49,4 @@
 - Inputs: amounts, dates and names go through src/lib/validation.ts on both form and server so every form shows the same message.
 - Page states: lists use EmptyState/LoadingState/ErrorState from src/components/PageStates.tsx; errors are read with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
 - Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
+- Periods: month close and reopen only move organizations.books_locked_through (src/lib/services/periods.ts); moving it backward always requires a written reason saved with the change, so no lock change goes unexplained.
