@@ -23,3 +23,15 @@ describe("exports", () => {
     expect(safeFileName("Acme / Books 2026")).toBe("Acme-Books-2026");
   });
 });
+
+import { accountingFormat } from "./export";
+describe("Excel accounting format", () => {
+  it("puts the currency symbol at the far left with thousands separators", () => {
+    expect(accountingFormat("USD")).toBe(
+      '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)',
+    );
+  });
+  it("uses the organization's currency symbol", () => {
+    expect(accountingFormat("EUR")).toContain('"€"* #,##0.00');
+  });
+});
