@@ -48,14 +48,44 @@ export function downloadCsv(sheet: Sheet, fileName: string) {
   download(new Blob(["\ufeff" + toCsv(sheet.rows)], { type: "text/csv;charset=utf-8" }), fileName);
 }
 
-export async function downloadXlsx(sheets: Sheet[], fileName: string) {
+/**
+ * Excel "Accounting" number format: currency symbol at the far left, thousands
+ * separators, two decimals, negatives in parentheses and zero shown as a dash.
+ */
+export function accountingFormat(currency = "USD"): string {
+  let symbol = currency;
+  try {
+    symbol =
+      new Intl.NumberFormat("en-US", { style: "currency", currency })
+        .formatToParts(0)
+        .find((p) => p.type === "currency")?.value ?? currency;
+  } catch {
+    // Unknown code: fall back to the code itself.
+  }
+  const sym = `"${symbol.replace(/"/g, "")}"`;
+  return `_(${sym}* #,##0.00_);_(${sym}* (#,##0.00);_(${sym}* "-"??_);_(@_)`;
+}
+
+/** Monospaced font for amounts so digits line up in columns. */
+export const AMOUNT_FONT = { name: "Consolas" };
+
+/** Every number cell in an export is money; text and dates are left as they are. */
+export async function downloadXlsx(sheets: Sheet[], fileName: string, currency = "USD") {
+  const numFmt = accountingFormat(currency);
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
   wb.creator = "OpenLedgerApp";
   for (const s of sheets) {
     const ws = wb.addWorksheet(s.name.slice(0, 31) || "Sheet");
-    for (const r of s.rows)
-      ws.addRow(r.map((c) => (typeof c === "string" ? escapeFormula(c) : (c ?? null))));
+    for (const r of s.rows) {
+      const row = ws.addRow(r.map((c) => (typeof c === "string" ? escapeFormula(c) : (c ?? null))));
+      r.forEach((c, i) => {
+        if (typeof c !== "number") return;
+        const cell = row.getCell(i + 1);
+        cell.numFmt = numFmt;
+        cell.font = AMOUNT_FONT;
+      });
+    }
     ws.getRow(1).font = { bold: true };
     ws.columns.forEach((col) => (col.width = 18));
   }

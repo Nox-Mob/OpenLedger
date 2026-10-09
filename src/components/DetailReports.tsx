@@ -48,7 +48,7 @@ function ExportBar({ org, pref, make }: { org: Org; pref: Terminology; make: Exp
         const pdf = await import("@/lib/report-pdf");
         await pdf.exportTablePdf({ org, pref, ...make, fileName: `${base}.pdf` });
       } else if (kind === "csv") ex.downloadCsv(await make.sheet(), `${base}.csv`);
-      else await ex.downloadXlsx([await make.sheet()], `${base}.xlsx`);
+      else await ex.downloadXlsx([await make.sheet()], `${base}.xlsx`, org.currency);
     } catch (e) {
       toast.error(errorMessage(e, "Could not export"));
     } finally {

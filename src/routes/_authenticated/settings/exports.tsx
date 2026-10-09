@@ -91,7 +91,7 @@ function ExportsPage() {
     };
     const base = ex.safeFileName(`${org!.name}-transactions`);
     if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
-    else await ex.downloadXlsx([sheet], `${base}.xlsx`);
+    else await ex.downloadXlsx([sheet], `${base}.xlsx`, org!.currency);
   }
 
   async function backup() {

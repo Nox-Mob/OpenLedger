@@ -175,7 +175,7 @@ function ReportsPage() {
     );
     try {
       if (kind === "csv") ex.downloadCsv(sheet, `${base}.csv`);
-      else await ex.downloadXlsx([sheet], `${base}.xlsx`);
+      else await ex.downloadXlsx([sheet], `${base}.xlsx`, org.currency);
     } catch (e) {
       toast.error(errorMessage(e, "Could not export"));
     }
@@ -205,6 +205,7 @@ function ReportsPage() {
       await ex.downloadXlsx(
         sheets,
         `${ex.safeFileName(`${org.name}-all-reports-${from}-to-${to}`)}.xlsx`,
+        org.currency,
       );
       toast.success("All reports exported");
     } catch (e) {
