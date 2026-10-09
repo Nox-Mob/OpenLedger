@@ -11,7 +11,7 @@ import { listAccounts } from "@/lib/taxonomy.functions";
 import { computeStatementCheck } from "@/lib/report-detail";
 import { formatCents } from "@/lib/money";
 import { errorMessage } from "@/lib/errors";
-import type { Terminology } from "@/lib/terminology";
+import type { Terminology, Terms } from "@/lib/terminology";
 
 interface Org {
   id: string;
@@ -111,6 +111,7 @@ const basis = (from: string, to: string) =>
 
 export function LedgerReport(p: {
   org: Org;
+  terms: Terms;
   pref: Terminology;
   from: string;
   to: string;
@@ -131,7 +132,7 @@ export function LedgerReport(p: {
         data: { orgId: org.id, from, to, ...(accountName ? { accountName } : {}) },
       }),
   });
-  const title = accountName ? `Account activity: ${accountName}` : "General ledger";
+  const title = accountName ? p.terms.accountActivity(accountName) : p.terms.generalLedger;
   const accounts = q.data?.accounts ?? [];
   const make: Exporter | null = q.data
     ? {
@@ -145,7 +146,7 @@ export function LedgerReport(p: {
     : null;
   if (make) {
     make.body = accounts.flatMap((a) => [
-      [a.accountName, "", "Opening balance", "", "", a.openingCents],
+      [a.accountName, "", "Starting balance", "", "", a.openingCents],
       ...a.lines.map((l) => [
         a.accountName,
         l.date,
@@ -154,7 +155,7 @@ export function LedgerReport(p: {
         l.creditCents || "",
         l.balanceCents,
       ]),
-      [a.accountName, "", "Closing balance", "", "", a.closingCents],
+      [a.accountName, "", "Ending balance", "", "", a.closingCents],
     ]);
   }
 
@@ -171,7 +172,7 @@ export function LedgerReport(p: {
           onChange={(e) => p.setAccountName(e.target.value)}
           className={inputCls}
         >
-          <option value="">All accounts (general ledger)</option>
+          <option value="">All accounts</option>
           {(accountsQ.data ?? []).map((a) => (
             <option key={a.id} value={a.name}>
               {a.name}
@@ -213,7 +214,7 @@ export function LedgerReport(p: {
               <tbody>
                 <tr className="border-b italic text-muted-foreground">
                   <td className="px-4 py-2" colSpan={4}>
-                    Opening balance
+                    Starting balance
                   </td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.openingCents)}</td>
                 </tr>
@@ -240,7 +241,7 @@ export function LedgerReport(p: {
                 )}
                 <tr className="bg-muted/50 font-semibold">
                   <td className="px-4 py-2" colSpan={2}>
-                    Closing balance
+                    Ending balance
                   </td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.totalDebitCents)}</td>
                   <td className="tnum px-4 py-2 text-right">{formatCents(a.totalCreditCents)}</td>
@@ -257,6 +258,7 @@ export function LedgerReport(p: {
 
 export function FundReport(p: {
   org: Org;
+  terms: Terms;
   pref: Terminology;
   from: string;
   to: string;
@@ -271,9 +273,9 @@ export function FundReport(p: {
   const funds = q.data?.funds ?? [];
   const make: Exporter | null = q.data
     ? {
-        title: "Fund activity",
+        title: p.terms.fundActivity,
         subtitle: basis(from, to),
-        head: ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
+        head: ["Fund", "Restricted", "Start", "Received", "Spent", "Released", "End"],
         body: funds.map((f) => [
           f.name,
           f.isRestricted ? "Yes" : "No",
@@ -284,7 +286,8 @@ export function FundReport(p: {
           f.closingCents,
         ]),
         file: `fund-activity-${from}-to-${to}`,
-        sheet: async () => (await import("@/lib/report-sheets")).fundActivitySheet(funds),
+        sheet: async () =>
+          (await import("@/lib/report-sheets")).fundActivitySheet(funds, p.terms.fundActivity),
       }
     : null;
   return (
@@ -295,7 +298,9 @@ export function FundReport(p: {
           <ExportBar org={org} pref={p.pref} make={make} />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Fund activity · {basis(from, to)}</p>
+      <p className="text-xs text-muted-foreground">
+        {p.terms.fundActivity} · {basis(from, to)}
+      </p>
       {q.isLoading ? (
         <LoadingState label="Loading funds" />
       ) : q.error ? (
@@ -308,11 +313,11 @@ export function FundReport(p: {
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-2">Fund</th>
-                <th className="px-4 py-2 text-right">Opening</th>
+                <th className="px-4 py-2 text-right">Start</th>
                 <th className="px-4 py-2 text-right">Received</th>
                 <th className="px-4 py-2 text-right">Spent</th>
                 <th className="px-4 py-2 text-right">Released</th>
-                <th className="px-4 py-2 text-right">Closing</th>
+                <th className="px-4 py-2 text-right">End</th>
               </tr>
             </thead>
             <tbody>
@@ -343,7 +348,7 @@ export function FundReport(p: {
   );
 }
 
-export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
+export function StatementCheckReport(p: { org: Org; terms: Terms; pref: Terminology }) {
   const { org } = p;
   const listQ = useQuery({
     queryKey: ["reconciliations", org.id],
@@ -364,7 +369,7 @@ export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
   const make: Exporter | null =
     r && rep
       ? {
-          title: "Statement check",
+          title: p.terms.statementCheck,
           subtitle: sub,
           head: ["Status", "Date", "Description", "Amount"],
           body: [
@@ -377,7 +382,10 @@ export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
           ],
           file: `statement-check-${r.accountName}-${r.periodEnd}`,
           sheet: async () =>
-            (await import("@/lib/report-sheets")).statementCheckSheet({ ...r, ...rep }),
+            (await import("@/lib/report-sheets")).statementCheckSheet(
+              { ...r, ...rep },
+              p.terms.statementCheck,
+            ),
         }
       : null;
 
@@ -423,7 +431,7 @@ export function StatementCheckReport(p: { org: Org; pref: Terminology }) {
     <div className="mt-6 max-w-3xl space-y-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <label className="text-muted-foreground" htmlFor="rep-check">
-          Statement check
+          {p.terms.statementCheck}
         </label>
         <select
           id="rep-check"

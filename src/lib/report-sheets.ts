@@ -57,13 +57,16 @@ export function balanceSheetSheet(
   };
 }
 
-export function trialSheet(d: {
-  lines: { name: string; type: string; debitCents: number; creditCents: number }[];
-  totalDebitCents: number;
-  totalCreditCents: number;
-}): Sheet {
+export function trialSheet(
+  d: {
+    lines: { name: string; type: string; debitCents: number; creditCents: number }[];
+    totalDebitCents: number;
+    totalCreditCents: number;
+  },
+  title = "Trial balance",
+): Sheet {
   return {
-    name: "Trial balance",
+    name: title,
     rows: [
       ["Account", "Type", "Debit", "Credit"],
       ...d.lines.map((l) => [l.name, l.type, n(l.debitCents), n(l.creditCents)]),
@@ -90,7 +93,7 @@ type LedgerAcct = {
 export function ledgerRows(accounts: LedgerAcct[]) {
   const rows: (string | number)[][] = [];
   for (const a of accounts) {
-    rows.push([a.accountName, "", "Opening balance", "", "", a.openingCents]);
+    rows.push([a.accountName, "", "Starting balance", "", "", a.openingCents]);
     for (const l of a.lines)
       rows.push([
         a.accountName,
@@ -100,7 +103,7 @@ export function ledgerRows(accounts: LedgerAcct[]) {
         l.creditCents,
         l.balanceCents,
       ]);
-    rows.push([a.accountName, "", "Closing balance", "", "", a.closingCents]);
+    rows.push([a.accountName, "", "Ending balance", "", "", a.closingCents]);
   }
   return rows;
 }
@@ -127,11 +130,12 @@ export function fundActivitySheet(
     releasedCents: number;
     closingCents: number;
   }[],
+  title = "Fund activity",
 ): Sheet {
   return {
-    name: "Fund activity",
+    name: title,
     rows: [
-      ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
+      ["Fund", "Restricted", "Start", "Received", "Spent", "Released", "End"],
       ...funds.map((f) => [
         f.name,
         f.isRestricted ? "Yes" : "No",
@@ -145,18 +149,21 @@ export function fundActivitySheet(
   };
 }
 
-export function statementCheckSheet(d: {
-  accountName: string;
-  periodEnd: string;
-  beginningBalanceCents: number;
-  endingBalanceCents: number;
-  cleared: { date: string; description: string; amountCents: number }[];
-  outstanding: { date: string; description: string; amountCents: number }[];
-  clearedBalanceCents: number;
-  differenceCents: number;
-}): Sheet {
+export function statementCheckSheet(
+  d: {
+    accountName: string;
+    periodEnd: string;
+    beginningBalanceCents: number;
+    endingBalanceCents: number;
+    cleared: { date: string; description: string; amountCents: number }[];
+    outstanding: { date: string; description: string; amountCents: number }[];
+    clearedBalanceCents: number;
+    differenceCents: number;
+  },
+  title = "Statement check",
+): Sheet {
   return {
-    name: "Statement check",
+    name: title,
     rows: [
       ["Status", "Date", "Description", "Amount"],
       ["Statement", "", "Beginning balance", n(d.beginningBalanceCents)],
