@@ -115,7 +115,7 @@ export const reopenBooks = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertCan(context.supabase, context.userId, data.orgId, "reopen_books");
+    await assertCan(context.supabase, context.userId, data.orgId, "close_books");
     return periods.reopenPeriod(createSupabaseRepositories(context.supabase), {
       ...data,
       userId: context.userId,

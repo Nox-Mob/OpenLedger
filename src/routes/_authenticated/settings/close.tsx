@@ -9,6 +9,9 @@ import {
   setBooksLock,
   previewYearEndClose,
   closeFiscalYear,
+  previewMonthClose,
+  closeMonth,
+  reopenBooks,
 } from "@/lib/close.functions";
 import { getAccountSetup } from "@/lib/org.functions";
 import { formatCents } from "@/lib/money";
@@ -41,6 +44,12 @@ function CloseBooksSettings() {
     netIncomeCents: number;
   } | null>(null);
   const [fyEnd, setFyEnd] = useState<string | null>(null);
+  const [month, setMonth] = useState("");
+  const [monthPreview, setMonthPreview] = useState<Awaited<
+    ReturnType<typeof previewMonthClose>
+  > | null>(null);
+  const [reopenTo, setReopenTo] = useState("");
+  const [reason, setReason] = useState("");
 
   const statusQuery = useQuery({
     queryKey: ["books-status", org?.id],
@@ -72,7 +81,7 @@ function CloseBooksSettings() {
   }
   const fiscalYearEnd = fyEnd ?? defaultFiscalYearEnd();
 
-  async function saveLock(clear = false) {
+  async function saveLock(clear: boolean) {
     if (!org) return;
     setBusy(true);
     try {
@@ -81,6 +90,65 @@ function CloseBooksSettings() {
       toast.success(clear ? "Books unlocked" : "Books locked");
     } catch (err) {
       showError(err, "Could not update the lock");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // "YYYY-MM" from the month picker to that month's last day.
+  function monthEndOf(ym: string): string {
+    const [y, m] = ym.split("-").map(Number);
+    const last = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+    return `${ym}-${String(last).padStart(2, "0")}`;
+  }
+
+  async function runMonthPreview() {
+    if (!org || !month) return;
+    setBusy(true);
+    setMonthPreview(null);
+    try {
+      setMonthPreview(await previewMonthClose({ data: { orgId: org.id, monthEnd: monthEndOf(month) } }));
+    } catch (err) {
+      showError(err, "Could not check the month");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runMonthClose() {
+    if (!org || !monthPreview) return;
+    setBusy(true);
+    try {
+      const r = await closeMonth({
+        data: {
+          orgId: org.id,
+          monthEnd: monthPreview.monthEnd,
+          acknowledgeWarnings: monthPreview.warnings.length > 0,
+        },
+      });
+      if ("duplicate" in r && r.duplicate) toast.info("That month was already closed.");
+      else toast.success(`Month closed. Books locked through ${monthPreview.monthEnd}.`);
+      setMonthPreview(null);
+      queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
+    } catch (err) {
+      showError(err, "Could not close the month. Nothing was changed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runReopen() {
+    if (!org) return;
+    setBusy(true);
+    try {
+      await reopenBooks({ data: { orgId: org.id, reopenThrough: reopenTo || null, reason } });
+      toast.success(reopenTo ? `Books reopened after ${reopenTo}.` : "Books fully reopened.");
+      setReason("");
+      setReopenTo("");
+      setLockDate("");
+      queryClient.invalidateQueries({ queryKey: ["books-status", org.id] });
+    } catch (err) {
+      showError(err, "Could not reopen the books. Nothing was changed");
     } finally {
       setBusy(false);
     }
@@ -155,15 +223,6 @@ function CloseBooksSettings() {
               >
                 Lock
               </button>
-              {lockedThrough && (
-                <button
-                  onClick={() => saveLock(true)}
-                  disabled={busy}
-                  className="rounded-md border border-input px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
-                >
-                  Unlock
-                </button>
-              )}
             </>
           )}
         </div>
@@ -174,6 +233,118 @@ function CloseBooksSettings() {
           </p>
         )}
       </div>
+
+      <div className="rounded-lg border bg-card p-5">
+        <h2 className="font-display text-lg font-semibold">Close a month</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Closing a month locks the books through its last day. Before closing, we check that
+          every bank, cash and credit card account was checked against its statement.
+        </p>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="text-sm font-medium" htmlFor="close-month">
+              Month
+            </label>
+            <input
+              id="close-month"
+              type="month"
+              className="mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
+              value={month}
+              onChange={(e) => {
+                setMonth(e.target.value);
+                setMonthPreview(null);
+              }}
+              disabled={!isAdmin}
+            />
+          </div>
+          {isAdmin && (
+            <button
+              onClick={runMonthPreview}
+              disabled={busy || !month}
+              className="rounded-md border border-input px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+            >
+              Check month
+            </button>
+          )}
+        </div>
+        {monthPreview && (
+          <div className="mt-4 rounded-md border bg-accent/40 p-4 text-sm" role="status">
+            {monthPreview.alreadyClosed ? (
+              <p>This month is already closed (books locked through {monthPreview.lockedThrough}).</p>
+            ) : (
+              <>
+                {monthPreview.warnings.length ? (
+                  <>
+                    <p className="font-medium">
+                      {monthPreview.warnings.length} thing(s) to review before closing:
+                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {monthPreview.warnings.map((w, i) => (
+                        <li key={i}>{w.message}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p>Everything checks out. Ready to close through {monthPreview.monthEnd}.</p>
+                )}
+                <button
+                  onClick={runMonthClose}
+                  disabled={busy}
+                  className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {monthPreview.warnings.length ? "Close anyway" : "Close this month"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {lockedThrough && isAdmin && (
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold">Reopen books</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Reopening lets people change transactions in a closed period again. A reason is
+            required and is saved in History with your name.
+          </p>
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="text-sm font-medium" htmlFor="reopen-to">
+                Keep closed through (leave empty to reopen everything)
+              </label>
+              <input
+                id="reopen-to"
+                type="date"
+                max={lockedThrough}
+                className="mt-1 block rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={reopenTo}
+                onChange={(e) => setReopenTo(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium" htmlFor="reopen-reason">
+                Reason for reopening
+              </label>
+              <textarea
+                id="reopen-reason"
+                rows={2}
+                maxLength={500}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="For example: a September bank fee was missed"
+              />
+            </div>
+            <button
+              onClick={runReopen}
+              disabled={busy || reason.trim().length < 10}
+              className="rounded-md border border-input px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+            >
+              Reopen books
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Close a fiscal year</h2>
