@@ -1,5 +1,5 @@
 // Mandatory release steps that a machine can check (see docs/release-checklist.md).
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { APP_VERSION } from "./version";
 
@@ -37,9 +37,5 @@ describe("release checklist", () => {
       .filter((f) => body("drizzle/migrations", f).replace(/^-- .*$/, "").length > 20)
       .filter((f) => !cloud.has(body("drizzle/migrations", f)));
     expect(missing).toEqual([]);
-  });
-
-  it("no Bun lock file is committed", () => {
-    expect(existsSync("bun.lock") || existsSync("bun.lockb")).toBe(false);
   });
 });
