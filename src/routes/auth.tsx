@@ -36,10 +36,19 @@ function AuthPage() {
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) goAfterAuth();
+      if (!active || !data.session) return;
+      void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data: a }) => {
+        if (a?.nextLevel === "aal2" && a.currentLevel !== "aal2") setNeedsCode(true);
+        else goAfterAuth();
+      });
     });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) goAfterAuth();
+      if (event === "SIGNED_IN" && session) {
+        void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data: a }) => {
+          if (a?.nextLevel === "aal2" && a.currentLevel !== "aal2") setNeedsCode(true);
+          else goAfterAuth();
+        });
+      }
     });
     return () => {
       active = false;
@@ -55,6 +64,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [legalAgreement, setLegalAgreement] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [needsCode, setNeedsCode] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
 
@@ -115,7 +125,9 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        goAfterAuth();
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") setNeedsCode(true);
+        else goAfterAuth();
       } else {
         if (!legalAgreement)
           throw new Error("Agree to the Terms and Privacy Policy to create an account.");
