@@ -4,7 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell, OrgPending } from "@/components/AppShell";
 import { useOrgContext } from "@/hooks/use-org-context";
-import { incomeStatement, balanceSheet, trialBalance } from "@/lib/reports.functions";
+import {
+  incomeStatement,
+  balanceSheet,
+  trialBalance,
+  generalLedger,
+} from "@/lib/reports.functions";
+import { getFundActivity } from "@/lib/funds.functions";
 import { fiscalYearStart } from "@/lib/dates";
 import { formatCents, todayISO } from "@/lib/money";
 import { Download } from "lucide-react";
@@ -173,6 +179,40 @@ function ReportsPage() {
       toast.error(errorMessage(e, "Could not export"));
     }
   }
+  const [exportingAll, setExportingAll] = useState(false);
+  /** Every report in one Excel workbook, one sheet each, using the dates on screen. */
+  async function exportAll() {
+    if (!org) return;
+    setExportingAll(true);
+    try {
+      const orgId = org.id;
+      const [inc, bal, tb, gl, fa] = await Promise.all([
+        incomeStatement({ data: { orgId, from, to } }),
+        balanceSheet({ data: { orgId, asOf } }),
+        trialBalance({ data: { orgId, asOf } }),
+        generalLedger({ data: { orgId, from, to } }),
+        org.orgType === "nonprofit" ? getFundActivity({ data: { orgId, from, to } }) : null,
+      ]);
+      const ex = await import("@/lib/export");
+      const s = await import("@/lib/report-sheets");
+      const sheets = [
+        s.incomeSheet(terms.incomeStatement, inc, terms),
+        s.balanceSheetSheet(terms.balanceSheet, bal, terms),
+        s.trialSheet(tb, terms.trialBalance),
+        s.ledgerSheet(terms.generalLedger, gl.accounts),
+        ...(fa ? [s.fundActivitySheet(fa.funds, terms.fundActivity)] : []),
+      ];
+      await ex.downloadXlsx(
+        sheets,
+        `${ex.safeFileName(`${org.name}-all-reports-${from}-to-${to}`)}.xlsx`,
+      );
+      toast.success("All reports exported");
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not export all reports"));
+    } finally {
+      setExportingAll(false);
+    }
+  }
   const sheetReady =
     tab === "income" ? !!income : tab === "balance" ? !!balance : !!trialQuery.data;
   const detail = tab === "ledger" || tab === "funds" || tab === "statement";
@@ -191,6 +231,17 @@ function ReportsPage() {
     <AppShell>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-2xl font-bold">Reports</h1>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={exportAll}
+            disabled={exportingAll}
+            className={btn}
+            title="One Excel file with every report, using the dates you picked"
+          >
+            <Download className="h-4 w-4" />
+            {exportingAll ? "Preparing…" : "Export all"}
+          </button>
+        </div>
         <div className={`flex flex-wrap gap-2 ${detail ? "hidden" : ""}`}>
           <button onClick={() => exportSheet("csv")} disabled={!sheetReady} className={btn}>
             CSV
