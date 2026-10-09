@@ -1133,6 +1133,10 @@ export type Database = {
         Args: { p_audit: Json; p_ops: Json; p_org: string; p_user?: string }
         Returns: Json
       }
+      can_close_books: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_write_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
@@ -1170,7 +1174,7 @@ export type Database = {
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
-      app_role: "admin" | "member" | "viewer"
+      app_role: "admin" | "treasurer" | "member" | "viewer"
       import_format: "csv" | "ofx" | "qfx" | "pdf"
       org_type: "nonprofit" | "business"
       reconcile_mode: "simple" | "full"
@@ -1313,7 +1317,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "revenue", "expense"],
-      app_role: ["admin", "member", "viewer"],
+      app_role: ["admin", "treasurer", "member", "viewer"],
       import_format: ["csv", "ofx", "qfx", "pdf"],
       org_type: ["nonprofit", "business"],
       reconcile_mode: ["simple", "full"],
