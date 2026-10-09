@@ -12,6 +12,7 @@ import {
   inRange,
   type LedgerRow,
 } from "@/lib/report-math";
+import { computeGeneralLedger } from "@/lib/report-detail";
 
 /** Posted ledger rows only (void and legacy 'closing' are excluded by the port). */
 export async function ledger(repos: Repositories, orgId: Id, to?: IsoDate): Promise<LedgerRow[]> {
@@ -79,4 +80,24 @@ export async function projectSummary(repos: Repositories, orgId: Id) {
 export async function cashHistory(repos: Repositories, orgId: Id, days: number) {
   const to = await orgToday(repos, orgId);
   return computeCashSeries(await ledger(repos, orgId, to), addDays(to, -days), to);
+}
+
+/** General ledger, or account activity when `accountName` is given. */
+export async function generalLedger(
+  repos: Repositories,
+  orgId: Id,
+  f: { from: IsoDate; to: IsoDate; accountName?: string | undefined; fundId?: string | undefined },
+) {
+  const org = await orgOrThrow(repos, orgId);
+  const rows = await ledger(repos, orgId, f.to);
+  return {
+    from: f.from,
+    to: f.to,
+    accounts: computeGeneralLedger(rows, {
+      ...f,
+      accountName: f.accountName,
+      fundId: f.fundId,
+      fiscalYearStart: fiscalYearStart(f.to, org.fiscalYearStartMonth || 1),
+    }),
+  };
 }

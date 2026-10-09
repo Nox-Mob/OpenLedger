@@ -165,7 +165,7 @@ export function computeStatementCheck(
   rec: { beginningBalanceCents: number; endingBalanceCents: number },
   entries: CheckItem[],
 ) {
-  const sign = normalSign(accountType === "asset" || accountType === "expense" ? "asset" : "liability");
+  const sign = normalSign(accountType);
   const cleared = entries.filter((e) => e.cleared);
   const outstanding = entries.filter((e) => !e.cleared);
   const total = (l: CheckItem[]) => sign * l.reduce((s, e) => s + e.amountCents, 0);

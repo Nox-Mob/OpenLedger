@@ -45,3 +45,20 @@ export const cashHistory = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) =>
     reports.cashHistory(createSupabaseRepositories(context.supabase), data.orgId, data.days),
   );
+
+export const generalLedger = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId,
+        from: isoDate,
+        to: isoDate,
+        accountName: z.string().max(200).optional(),
+        fundId: z.string().uuid().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) =>
+    reports.generalLedger(createSupabaseRepositories(context.supabase), data.orgId, data),
+  );
