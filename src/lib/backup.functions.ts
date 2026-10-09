@@ -136,19 +136,26 @@ export const listHistory = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const ids = [...new Set((rows ?? []).map((r) => r.user_id).filter(Boolean))] as string[];
     const names = new Map<string, string>();
+    const known = new Set<string>();
     if (ids.length) {
       const { data: profiles } = await context.supabase
         .from("profiles")
         .select("id, display_name")
         .in("id", ids);
-      for (const p of profiles ?? []) if (p.display_name) names.set(p.id, p.display_name);
+      for (const p of profiles ?? []) {
+        known.add(p.id);
+        if (p.display_name) names.set(p.id, p.display_name);
+      }
     }
     return {
       total: count ?? 0,
       pageSize: size,
       rows: (rows ?? []).map((r) => ({
         ...r,
-        who: r.user_id ? (names.get(r.user_id) ?? `User ${r.user_id.slice(0, 8)}`) : "System",
+        who: r.user_id
+          ? (names.get(r.user_id) ??
+            (known.has(r.user_id) ? `User ${r.user_id.slice(0, 8)}` : "Deleted user"))
+          : "System",
       })),
     };
   });
