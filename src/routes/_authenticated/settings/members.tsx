@@ -42,8 +42,38 @@ type RoleName = "admin" | "member" | "viewer";
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: "Full access, including settings and roles",
   member: "Can record and edit transactions",
-  viewer: "Read-only access",
+  viewer: "Can look, but not change anything",
 };
+
+/** What each role can do, in plain words. Mirrors CAPABILITIES in src/lib/permissions.ts. */
+const ROLE_DETAILS: { role: RoleName; label: string; can: string[] }[] = [
+  {
+    role: "member",
+    label: "Member",
+    can: [
+      "See every page and report",
+      "Record transactions, import bank files and check statements",
+      "Cannot change settings, invite people or close the year",
+    ],
+  },
+  {
+    role: "admin",
+    label: "Admin",
+    can: [
+      "Everything a member can do",
+      "Change settings and accounts, invite and remove people",
+      "Close the year, lock the books and reopen finished statement checks",
+    ],
+  },
+  {
+    role: "viewer",
+    label: "View only",
+    can: [
+      "See every page and report, and export them",
+      "Cannot record, import or change anything",
+    ],
+  },
+];
 
 const selectCls = "rounded-md border border-input bg-background px-2 py-1.5 text-sm";
 const btnCls =
@@ -161,7 +191,7 @@ function MembersSettings() {
                     >
                       <option value="admin">Admin</option>
                       <option value="member">Member</option>
-                      <option value="viewer">Viewer</option>
+                      <option value="viewer">View only</option>
                     </select>
                   ) : (
                     <span className="rounded-md border border-border px-2 py-1 text-xs font-medium capitalize">
@@ -225,13 +255,30 @@ function MembersSettings() {
               onChange={(e) => setInviteRole(e.target.value as RoleName)}
             >
               <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
+              <option value="viewer">View only</option>
               <option value="admin">Admin</option>
             </select>
             <button disabled={busy} className={btnCls} onClick={makeInvite}>
               Create invite link
             </button>
           </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+            {ROLE_DETAILS.map((r) => (
+              <div
+                key={r.role}
+                className={`rounded-md border p-3 text-sm ${inviteRole === r.role ? "border-primary bg-accent/40" : ""}`}
+              >
+                <dt className="font-semibold">{r.label}</dt>
+                <dd>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
+                    {r.can.map((c) => (
+                      <li key={c}>{c}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))}
+          </dl>
           {newLink && (
             <div className="mt-3 rounded-md border bg-muted/50 p-3">
               <div className="text-xs text-muted-foreground">
