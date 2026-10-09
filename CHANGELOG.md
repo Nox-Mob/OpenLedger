@@ -9,6 +9,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 - Reports: click any account on the income statement, balance sheet or trial balance to see the transactions behind it.
 - Reports: fund activity (opening, received, spent, released, closing) for nonprofits.
 - Reports: statement check report listing matched and outstanding items with the difference.
+- Report names follow the wording setting (for example, Simplest shows "Every Transaction", "Totals Check", "Money by Purpose" and "Bank Statement Check"), and each can be changed in Settings.
 - Every report shows its period and "Cash basis", and the new reports export to CSV, Excel and PDF.
 - Tests for the new report math, including a 50,000-line speed check.
 

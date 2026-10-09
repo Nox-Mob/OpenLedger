@@ -135,7 +135,7 @@ export function fundActivitySheet(
   return {
     name: title,
     rows: [
-      ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
+      ["Fund", "Restricted", "Start", "Received", "Spent", "Released", "End"],
       ...funds.map((f) => [
         f.name,
         f.isRestricted ? "Yes" : "No",

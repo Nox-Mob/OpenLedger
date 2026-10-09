@@ -275,7 +275,7 @@ export function FundReport(p: {
     ? {
         title: p.terms.fundActivity,
         subtitle: basis(from, to),
-        head: ["Fund", "Restricted", "Opening", "Received", "Spent", "Released", "Closing"],
+        head: ["Fund", "Restricted", "Start", "Received", "Spent", "Released", "End"],
         body: funds.map((f) => [
           f.name,
           f.isRestricted ? "Yes" : "No",
@@ -313,11 +313,11 @@ export function FundReport(p: {
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-2">Fund</th>
-                <th className="px-4 py-2 text-right">Opening</th>
+                <th className="px-4 py-2 text-right">Start</th>
                 <th className="px-4 py-2 text-right">Received</th>
                 <th className="px-4 py-2 text-right">Spent</th>
                 <th className="px-4 py-2 text-right">Released</th>
-                <th className="px-4 py-2 text-right">Closing</th>
+                <th className="px-4 py-2 text-right">End</th>
               </tr>
             </thead>
             <tbody>
