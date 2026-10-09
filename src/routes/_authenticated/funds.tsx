@@ -96,7 +96,7 @@ function SimpleListManager({
 function FundsPage() {
   const { org } = useOrgContext();
   const queryClient = useQueryClient();
-  const canWrite = org?.role === "admin" || org?.role === "member";
+  const canWrite = org?.role === "admin" || org?.role === "treasurer" || org?.role === "member";
 
   const summaryQuery = useQuery({
     queryKey: ["fund-summary", org?.id],

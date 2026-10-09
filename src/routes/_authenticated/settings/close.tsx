@@ -54,7 +54,7 @@ function CloseBooksSettings() {
   });
 
   if (!org) return <OrgPending inShell={false} />;
-  const isAdmin = org.role === "admin";
+  const isAdmin = org.role === "admin" || org.role === "treasurer";
   const status = statusQuery.data;
   const accounts = accountsQuery.data ?? [];
   const equityAccounts = accounts.filter((a) => a.type === "equity" && a.isActive);
@@ -130,7 +130,7 @@ function CloseBooksSettings() {
         <p className="mt-1 text-sm text-muted-foreground">
           Locking the books through a date stops anyone from adding or changing transactions on or
           before that date.
-          {!isAdmin && " Only admins can change this."}
+          {!isAdmin && " Only admins and treasurers can change this."}
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>

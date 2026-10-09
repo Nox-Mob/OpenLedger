@@ -37,10 +37,11 @@ export const Route = createFileRoute("/_authenticated/settings/members")({
   component: MembersSettings,
 });
 
-type RoleName = "admin" | "member" | "viewer";
+type RoleName = "admin" | "treasurer" | "member" | "viewer";
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: "Full access, including settings and roles",
+  treasurer: "Keeps the books, closes the year, no settings or people",
   member: "Can record and edit transactions",
   viewer: "Can look, but not change anything",
 };
@@ -57,12 +58,21 @@ const ROLE_DETAILS: { role: RoleName; label: string; can: string[] }[] = [
     ],
   },
   {
+    role: "treasurer",
+    label: "Treasurer",
+    can: [
+      "Everything a member can do",
+      "Close the year, lock the books and reopen finished statement checks",
+      "Cannot change settings, invite people or change roles",
+    ],
+  },
+  {
     role: "admin",
     label: "Admin",
     can: [
       "Everything a member can do",
+      "Everything a treasurer can do",
       "Change settings and accounts, invite and remove people",
-      "Close the year, lock the books and reopen finished statement checks",
     ],
   },
   {
@@ -187,6 +197,7 @@ function MembersSettings() {
                       }
                     >
                       <option value="admin">Admin</option>
+                      <option value="treasurer">Treasurer</option>
                       <option value="member">Member</option>
                       <option value="viewer">View only</option>
                     </select>
@@ -253,6 +264,7 @@ function MembersSettings() {
             >
               <option value="member">Member</option>
               <option value="viewer">View only</option>
+              <option value="treasurer">Treasurer</option>
               <option value="admin">Admin</option>
             </select>
             <button disabled={busy} className={btnCls} onClick={makeInvite}>

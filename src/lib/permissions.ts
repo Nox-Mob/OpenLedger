@@ -3,7 +3,7 @@ import type { Db } from "@/lib/db";
 // Server functions call assertCan() after requireSupabaseAuth; the database
 // mirrors the same rules in RLS policies and triggers so nothing slips around.
 
-export const ROLES = ["admin", "member", "viewer"] as const;
+export const ROLES = ["admin", "treasurer", "member", "viewer"] as const;
 export type OrgRole = (typeof ROLES)[number];
 
 export type OrgAction =
@@ -16,12 +16,12 @@ export type OrgAction =
 
 /** Declarative capability table. Change permissions here only; tests pin every cell. */
 export const CAPABILITIES: Readonly<Record<OrgAction, readonly OrgRole[]>> = {
-  read: ["admin", "member", "viewer"],
-  write: ["admin", "member"],
-  reopen_reconciliation: ["admin"],
+  read: ["admin", "treasurer", "member", "viewer"],
+  write: ["admin", "treasurer", "member"],
+  reopen_reconciliation: ["admin", "treasurer"],
   manage_settings: ["admin"],
   manage_members: ["admin"],
-  close_books: ["admin"],
+  close_books: ["admin", "treasurer"],
 };
 
 export function can(role: string | null | undefined, action: OrgAction): boolean {

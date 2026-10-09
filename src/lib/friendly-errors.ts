@@ -37,7 +37,11 @@ export function explainError(
   const msg = errorMessage(err, "");
   const name = err instanceof Error ? err.name : "";
 
-  if (/not balanced|at least (two|2) (lines|entries)|both a debit and a credit|one positive and one negative/i.test(msg)) {
+  if (
+    /not balanced|at least (two|2) (lines|entries)|both a debit and a credit|one positive and one negative/i.test(
+      msg,
+    )
+  ) {
     const sum = msg.match(/sum to (-?\d+) cents/i);
     const off = sum ? ` It is off by ${dollars(Number(sum[1]))}.` : "";
     return {

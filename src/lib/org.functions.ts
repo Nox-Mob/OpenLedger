@@ -164,7 +164,7 @@ export const updateMemberRole = createServerFn({ method: "POST" })
       .object({
         orgId: z.string().uuid(),
         userId: z.string().uuid(),
-        role: z.enum(["admin", "member", "viewer"]),
+        role: z.enum(["admin", "treasurer", "member", "viewer"]),
       })
       .parse(input),
   )

@@ -12,9 +12,9 @@ describe("plain-language errors", () => {
   });
 
   it("database balance error is recognised too", () => {
-    expect(explainError(new Error("Transaction abc must have at least 2 entries (has 1)")).kind).toBe(
-      "unbalanced",
-    );
+    expect(
+      explainError(new Error("Transaction abc must have at least 2 entries (has 1)")).kind,
+    ).toBe("unbalanced");
   });
 
   it("closed period names the lock date", () => {

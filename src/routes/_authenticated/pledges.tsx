@@ -37,7 +37,7 @@ const STATUS: Record<string, string> = { open: "Open", paid: "Paid", written_off
 function PledgesPage() {
   const { org } = useOrgContext();
   const queryClient = useQueryClient();
-  const canWrite = org?.role === "admin" || org?.role === "member";
+  const canWrite = org?.role === "admin" || org?.role === "treasurer" || org?.role === "member";
 
   const pledgesQuery = useQuery({
     queryKey: ["pledges", org?.id],

@@ -3,7 +3,7 @@ import { can, ForbiddenError } from "./permissions";
 
 describe("role authorization matrix", () => {
   it("everyone can read", () => {
-    for (const role of ["admin", "member", "viewer"]) {
+    for (const role of ["admin", "treasurer", "member", "viewer"]) {
       expect(can(role, "read")).toBe(true);
     }
   });
@@ -15,6 +15,12 @@ describe("role authorization matrix", () => {
   });
 
   it("admin-only actions", () => {
+    for (const action of ["reopen_reconciliation", "close_books"] as const) {
+      expect(can("treasurer", action)).toBe(true);
+    }
+    expect(can("treasurer", "write")).toBe(true);
+    expect(can("treasurer", "manage_settings")).toBe(false);
+    expect(can("treasurer", "manage_members")).toBe(false);
     for (const action of [
       "reopen_reconciliation",
       "manage_settings",
@@ -45,12 +51,12 @@ describe("capability table snapshot", () => {
       Object.entries(CAPABILITIES).map(([a, roles]) => [a, ROLES.map((r) => roles.includes(r))]),
     );
     expect(grid).toEqual({
-      read: [true, true, true],
-      write: [true, true, false],
-      reopen_reconciliation: [true, false, false],
-      manage_settings: [true, false, false],
-      manage_members: [true, false, false],
-      close_books: [true, false, false],
+      read: [true, true, true, true],
+      write: [true, true, true, false],
+      reopen_reconciliation: [true, true, false, false],
+      manage_settings: [true, false, false, false],
+      manage_members: [true, false, false, false],
+      close_books: [true, true, false, false],
     });
   });
 });
