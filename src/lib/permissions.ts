@@ -28,6 +28,15 @@ export function can(role: string | null | undefined, action: OrgAction): boolean
   return !!role && (CAPABILITIES[action] as readonly string[]).includes(role);
 }
 
+export class MfaRequiredError extends Error {
+  constructor() {
+    super(
+      "This organization requires two-step sign-in. Turn it on in Settings, Security, then sign in again.",
+    );
+    this.name = "MfaRequiredError";
+  }
+}
+
 export class ForbiddenError extends Error {
   constructor(action: OrgAction) {
     super(`Your role doesn't allow this action (${action}). Ask an organization admin.`);
@@ -44,11 +53,16 @@ export async function assertCan(
 ): Promise<OrgRole> {
   const { data: roleRow } = await supabase
     .from("user_roles")
-    .select("role")
+    .select("role, organizations(require_mfa)")
     .eq("user_id", userId)
     .eq("org_id", orgId)
     .maybeSingle();
   const role = roleRow?.role as OrgRole | undefined;
   if (!can(role, action)) throw new ForbiddenError(action);
+  // The database enforces this too; checking here gives a clear message instead of empty data.
+  if (roleRow?.organizations?.require_mfa) {
+    const { data: ok } = await supabase.rpc("mfa_ok", { _org_id: orgId });
+    if (!ok) throw new MfaRequiredError();
+  }
   return role as OrgRole;
 }

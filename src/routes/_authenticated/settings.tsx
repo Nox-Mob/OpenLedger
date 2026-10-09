@@ -23,6 +23,7 @@ const SECTIONS = [
   { to: "/settings/exports", label: "Exports and backup", exact: false },
   { to: "/settings/history", label: "History", exact: false },
   { to: "/settings/preferences", label: "Your preferences", exact: false },
+  { to: "/settings/security", label: "Security", exact: false },
 ] as const;
 
 function SettingsLayout() {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountDeletionBlocker,
+  requireMfaBlocker,
   assertCanDeleteOrg,
   assertCanRemove,
   assertCanTransfer,
@@ -50,5 +52,40 @@ describe("members", () => {
     expect(() => assertCanDeleteOrg("owner", "owner", "Acme", " Acme ")).not.toThrow();
     expect(() => assertCanDeleteOrg("a2", "owner", "Acme", "Acme")).toThrow();
     expect(() => assertCanDeleteOrg("owner", "owner", "Acme", "acme")).toThrow(/exactly/);
+  });
+});
+
+describe("delete my account", () => {
+  const m = (o: Partial<import("./members").MyMembership>) => ({
+    orgName: "Kitchen",
+    role: "member" as const,
+    isOwner: false,
+    adminCount: 2,
+    ...o,
+  });
+  it("is allowed for a plain member or one of several admins", () => {
+    expect(accountDeletionBlocker([m({}), m({ role: "admin" })])).toBeNull();
+    expect(accountDeletionBlocker([])).toBeNull();
+  });
+  it("is blocked while you own an organization", () => {
+    expect(accountDeletionBlocker([m({ isOwner: true, role: "admin" })])).toBe(
+      "You own Kitchen. Transfer ownership or delete the organization first.",
+    );
+  });
+  it("is blocked while you are the only admin", () => {
+    expect(accountDeletionBlocker([m({ role: "admin", adminCount: 1 })])).toMatch(
+      /only admin of Kitchen/,
+    );
+  });
+});
+
+describe("require two-step sign-in for an organization", () => {
+  it("can only be turned on by someone signed in with it", () => {
+    expect(requireMfaBlocker(true, "aal1")).not.toBeNull();
+    expect(requireMfaBlocker(true, undefined)).not.toBeNull();
+    expect(requireMfaBlocker(true, "aal2")).toBeNull();
+  });
+  it("can always be turned off", () => {
+    expect(requireMfaBlocker(false, "aal1")).toBeNull();
   });
 });

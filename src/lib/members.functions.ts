@@ -9,6 +9,7 @@ import { newId } from "./domain/ledger";
 import {
   assertCanDeleteOrg,
   assertCanRemove,
+  accountDeletionBlocker,
   assertCanTransfer,
   assertInviteUsable,
   inviteStatus,
@@ -281,17 +282,72 @@ export const deleteOrganization = createServerFn({ method: "POST" })
     const org = await orgRow(context.supabase, data.orgId);
     assertCanDeleteOrg(context.userId, org.created_by, org.name, data.confirmName);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Keep a record outside the org (its own audit rows go with it).
-    // cloud-only-write: per-user or service record, not organization books
-    const { error: logErr } = await supabaseAdmin.from("deleted_organizations").insert({
-      id: newId(),
-      org_id: org.id,
-      name: org.name,
-      deleted_by: context.userId,
+    // The deleted-org record and the delete are one database transaction.
+    const { error } = await supabaseAdmin.rpc("delete_organization_atomic", {
+      p_org: org.id,
+      p_user: context.userId,
+      p_confirm: data.confirmName,
     });
-    if (logErr) throw new Error(logErr.message);
-    // cloud-only-write: per-user or service record, not organization books
-    const { error } = await supabaseAdmin.from("organizations").delete().eq("id", org.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- Delete my account ----------
+
+export const getMyAccountDeletion = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    return {
+      blocker: accountDeletionBlocker(await myMemberships(context.supabase, context.userId)),
+    };
+  });
+
+async function myMemberships(supabase: Db, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("org_id, role, organizations(name, created_by)")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return Promise.all(
+    (data ?? []).map(async (r) => {
+      const members = await orgMembers(supabase, r.org_id);
+      return {
+        orgId: r.org_id,
+        orgName: r.organizations?.name ?? "an organization",
+        role: r.role,
+        isOwner: r.organizations?.created_by === userId,
+        adminCount: members.filter((m) => m.role === "admin").length,
+      };
+    }),
+  );
+}
+
+export const deleteMyAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ confirm: z.literal("DELETE") }).parse(input))
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const memberships = await myMemberships(supabase, userId);
+    const blocker = accountDeletionBlocker(memberships);
+    if (blocker) throw new Error(blocker);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Leave each organization with a history entry, then remove the sign-in account.
+    for (const m of memberships) {
+      await auditedWrite(
+        supabaseAdmin,
+        m.orgId,
+        [{ table: "user_roles", op: "delete", match: { user_id: userId }, minRows: 1 }],
+        {
+          action: "account_deleted",
+          entity: "user_role",
+          entityId: userId,
+          before: { role: m.role },
+          kind: "system",
+        },
+        userId,
+      );
+    }
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -83,3 +83,28 @@ export function assertCanDeleteOrg(
     throw new MemberRuleError("confirm_mismatch", "Type the organization name exactly to confirm.");
   }
 }
+
+export interface MyMembership {
+  orgName: string;
+  role: Role;
+  isOwner: boolean;
+  adminCount: number;
+}
+
+/** Why a person can't delete their own sign-in account yet, or null when they can. */
+export function accountDeletionBlocker(memberships: MyMembership[]): string | null {
+  const owned = memberships.find((m) => m.isOwner);
+  if (owned)
+    return `You own ${owned.orgName}. Transfer ownership or delete the organization first.`;
+  const lastAdmin = memberships.find((m) => m.role === "admin" && m.adminCount <= 1);
+  if (lastAdmin)
+    return `You are the only admin of ${lastAdmin.orgName}. Make someone else an admin first.`;
+  return null;
+}
+
+/** Turning on "require two-step sign-in" is only allowed for someone already using it. */
+export function requireMfaBlocker(enable: boolean, callerAal: string | undefined): string | null {
+  if (enable && callerAal !== "aal2")
+    return "Turn on two-step sign-in for your own account and sign in with it before requiring it for everyone.";
+  return null;
+}

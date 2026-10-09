@@ -36,7 +36,7 @@ jobs:
         # Fix by moving the write into a service or audited_write; only cloud-only
         # records may carry a `// cloud-only-write: <reason>` comment.
         run: |
-          npx vitest run src/lib/direct-writes.test.ts --reporter=default --reporter=github-actions || {
+          npx vitest run src/lib/direct-writes.test.ts src/lib/architecture.test.ts --reporter=default --reporter=github-actions || {
             echo "### ❌ A server function writes to the database directly. Move it into shared code (see src/lib/direct-writes.test.ts)." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           }
