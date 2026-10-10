@@ -4,6 +4,8 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-10-10
+
 ### Added
 
 - Month-end close (Settings, Close the books): pick a month, see warnings for bank, cash and credit card accounts not checked against a statement through month end and for unfinished statement checks, then close. Closing with warnings needs a confirmation, and the warnings are saved in history.
