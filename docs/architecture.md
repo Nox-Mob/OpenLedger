@@ -57,6 +57,7 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 Every data change and its history entry are written in one database transaction; if either fails, both roll back.
 
 - Postings and voids: `post_transaction_atomic` / `void_transaction_atomic`.
+- Month close and reopen (`src/lib/services/periods.ts`): move the books lock with its history entry in one call; moving it back requires a written reason. Concurrency tests (`services/concurrency.test.ts`) prove double submits record once.
 - Year-end close: the close record, the books lock and the history entry in one call (`PeriodCloseRepository.closeAndLock`).
 - Everything else: `audited_write(org, ops, audit)`, called through `src/lib/audited-write.ts` or port methods that take an optional `audit` argument. It runs as the caller, so RLS still applies, works only on an allowlist of tables, and stores the change the database actually applied in `audit_log.recorded_change`.
 - Users cannot insert, edit or delete history rows; the history helper refuses to run outside `audited_write`.
