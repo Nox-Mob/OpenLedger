@@ -49,4 +49,4 @@
 - Page states: lists use PageStates.tsx components; read errors with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
 - Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
 - Periods: month close/reopen only move books_locked_through (services/periods.ts); moving it back needs a saved reason so no lock change goes unexplained.
-- Edition: isDesktop() (src/lib/edition.ts) is the only desktop check; see docs/desktop.md.
+- Edition: isDesktop() is the only desktop check; every exported server fn is wrapped in desktopAware() so desktop runs services locally (docs/desktop.md).
