@@ -2,16 +2,30 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyOrgs, getMyProfile } from "@/lib/org.functions";
 import { pickCurrentOrg, useCurrentOrgId } from "@/lib/current-org";
 import { getTerms, normalizeTerminology, type OrgType, type Terminology } from "@/lib/terminology";
+import { isDesktop, LOCAL_USER_ID } from "@/lib/edition";
+
+/** Desktop reads organizations from the local file; the shape matches the cloud list. */
+async function localOrgs() {
+  const { localRepos } = await import("@/lib/desktop/local-repos");
+  const orgs = await (await localRepos()).orgs.listForUser(LOCAL_USER_ID);
+  return orgs.map((o) => ({
+    ...o,
+    terminology: normalizeTerminology(o.terminology),
+    requireMfa: false,
+    role: o.role as string,
+  }));
+}
 
 export function useOrgContext() {
   const currentOrgId = useCurrentOrgId();
+  const desktop = isDesktop();
   const orgsQuery = useQuery({
     queryKey: ["orgs"],
-    queryFn: () => getMyOrgs(),
+    queryFn: () => (desktop ? localOrgs() : getMyOrgs()),
   });
   const profileQuery = useQuery({
     queryKey: ["profile"],
-    queryFn: () => getMyProfile(),
+    queryFn: () => (desktop ? Promise.resolve(null) : getMyProfile()),
   });
 
   const orgs = orgsQuery.data ?? [];

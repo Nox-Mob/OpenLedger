@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, Building2, HeartHandshake } from "lucide-react";
 import { createOrganization } from "@/lib/org.functions";
 import { setStoredOrgId } from "@/lib/current-org";
+import { isDesktop, LOCAL_USER_ID } from "@/lib/edition";
 import { catalogFor } from "@/lib/account-catalog";
 import { getTerms } from "@/lib/terminology";
 import { AccountChecklist } from "@/components/AccountChecklist";
@@ -84,17 +85,25 @@ function OnboardingPage() {
     setBusy(true);
     setError(null);
     try {
-      const { id } = await createOrganization({
-        data: {
-          name,
-          orgType,
-          accountKeys: [...keys],
-          currency,
-          fiscalYearStartMonth: fyMonth,
-          terminology,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-      });
+      const input = {
+        name,
+        orgType,
+        accountKeys: [...keys],
+        currency,
+        fiscalYearStartMonth: fyMonth,
+        terminology,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+      let id: string;
+      if (isDesktop()) {
+        const [{ localRepos }, { createOrganizationWithAccounts }] = await Promise.all([
+          import("@/lib/desktop/local-repos"),
+          import("@/lib/services/organizations"),
+        ]);
+        id = await createOrganizationWithAccounts(await localRepos(), LOCAL_USER_ID, input);
+      } else {
+        ({ id } = await createOrganization({ data: input }));
+      }
       setStoredOrgId(id);
       await queryClient.invalidateQueries({ queryKey: ["orgs"] });
       navigate({ to: "/ledger" });

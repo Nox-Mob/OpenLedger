@@ -26,6 +26,7 @@ import { OrgSwitcher } from "@/components/OrgSwitcher";
 import { useOrgContext } from "@/hooks/use-org-context";
 import { ErrorState, LoadingState } from "@/components/PageStates";
 import { errorMessage } from "@/lib/errors";
+import { isDesktop } from "@/lib/edition";
 
 const NAV = [
   { to: "/ledger", label: "Dashboard", icon: LayoutDashboard },
@@ -127,13 +128,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <ThemeToggle className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" />
           </div>
-          <button
-            onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent"
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            Sign out
-          </button>
+          {!isDesktop() && (
+            <button
+              onClick={signOut}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Sign out
+            </button>
+          )}
         </div>
       </aside>
 
