@@ -30,7 +30,7 @@
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
-- Releases: follow docs/release-checklist.md; CHANGELOG.md (only release notes) and docs/architecture.md (`Current as of vX.Y.Z`) are mandatory, enforced by src/lib/release.test.ts.
+- Releases: two steps per docs/release-checklist.md; version bump, changelog date and architecture `Current as of vX.Y.Z` happen only after the maintainer confirms GitHub CI is green, enforced by src/lib/release.test.ts. Desktop installers build as draft releases from main only after all CI passes (.github/workflows/desktop-release.yml).
 - MFA: org require_mfa enforced in DB via mfa_ok inside membership helpers; org row and own role stay visible to explain why.
 
 - Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.
