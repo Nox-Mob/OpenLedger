@@ -37,8 +37,20 @@ jobs:
           deb=$(ls src-tauri/target/release/bundle/deb/*.deb | head -1)
           echo "Installing $deb"
           sudo apt-get install -y "./$deb"
-          bin=$(dpkg -c "$deb" | awk '{print $6}' | grep '^./usr/bin/' | head -1 | sed 's|^\.||')
-          test -x "$bin" || { echo "### ❌ Installed package has no program in /usr/bin" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          # Ask the installed package for its files; keep only real programs in /usr/bin
+          # (the folder itself is also listed). No `head` here: under pipefail it can
+          # stop the pipe early and fail the step.
+          pkg=$(dpkg-deb -f "$deb" Package)
+          bin=""
+          for f in $(dpkg -L "$pkg"); do
+            case "$f" in /usr/bin/?*) [ -f "$f" ] && [ -x "$f" ] && { bin="$f"; break; } ;; esac
+          done
+          if [ -z "$bin" ]; then
+            echo "### ❌ Installed package $pkg has no program in /usr/bin" >> "$GITHUB_STEP_SUMMARY"
+            dpkg -L "$pkg"
+            exit 1
+          fi
+          echo "Program: $bin"
           echo "BIN=$bin" >> "$GITHUB_ENV"
       - name: First start creates the local database
         env:
@@ -48,8 +60,8 @@ jobs:
           dbus-run-session -- xvfb-run -a "$BIN" > app.log 2>&1 &
           db=""
           for i in $(seq 1 60); do
-            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null | head -1)
-            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1; then break; fi
+            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null || true); db=${db%%$'\n'*}
+            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1 2>/dev/null; then break; fi
             db=""; sleep 2
           done
           pkill -f "$BIN" || true
