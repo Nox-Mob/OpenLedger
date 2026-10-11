@@ -60,8 +60,8 @@ jobs:
           dbus-run-session -- xvfb-run -a "$BIN" > app.log 2>&1 &
           db=""
           for i in $(seq 1 60); do
-            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null | head -1)
-            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1; then break; fi
+            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null || true); db=${db%%$'\n'*}
+            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1 2>/dev/null; then break; fi
             db=""; sleep 2
           done
           pkill -f "$BIN" || true
