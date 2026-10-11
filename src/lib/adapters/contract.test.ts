@@ -1,5 +1,6 @@
 // Adapter contract: every storage adapter must pass the same workflows through the ports.
 // Add a new adapter here and it is held to the same behavior as the others.
+import { reopenPeriod } from "@/lib/services/periods";
 import { beforeEach, describe, expect, it } from "vitest";
 import initSqlJs from "sql.js";
 import type { Repositories } from "@/lib/ports";
@@ -414,7 +415,12 @@ describe.each(adapters)("%s adapter", (name, make) => {
     expect(status.closes).toHaveLength(1);
     await expect(settings.previewYearEndClose(repos, ORG, "2026-12-31")).rejects.toThrow(/closed/);
     await expect(postTransaction(repos, sale({ transactionDate: "2026-06-01" }))).rejects.toThrow();
-    await settings.setBooksLock(repos, ORG, USER, null);
+    await reopenPeriod(repos, {
+      orgId: ORG,
+      userId: USER,
+      reopenThrough: null,
+      reason: "Contract test reopen",
+    });
     expect((await repos.orgs.get(ORG))?.booksLockedThrough).toBeNull();
   });
 

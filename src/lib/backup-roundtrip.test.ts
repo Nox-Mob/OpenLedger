@@ -420,6 +420,37 @@ describe("moderately sized organization backup roundtrip", () => {
       ).toEqual(original[table]);
   }, 30000);
 
+  it("restoring the same backup twice at once makes two complete, separate organizations", async () => {
+    const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
+    const source = await readBackupData(db as unknown as UntypedDb, ORG_ID);
+    const signed = await signBackup(
+      keys,
+      source.organization,
+      source.tables,
+      "2026-10-07T00:00:00Z",
+    );
+    const verified = await verifyBackup(JSON.parse(JSON.stringify(signed)), keys.publicRaw);
+    const before = structuredClone(db.tables);
+    const [a, b] = await Promise.all([
+      restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", verified),
+      restoreIntoNewOrg(db as unknown as UntypedDb, "restoring-user", verified),
+    ]);
+    expect(a.orgId).not.toBe(b.orgId);
+    const txs = db.tables["transactions"] ?? [];
+    for (const id of [a.orgId, b.orgId])
+      expect(txs.filter((t) => t["org_id"] === id)).toHaveLength(1500);
+    // No record id is shared between the two copies or with the original.
+    for (const t of TABLES) {
+      const ids = (db.tables[t] ?? []).map((r) => r["id"]).filter((x) => x !== undefined);
+      expect(new Set(ids).size, t).toBe(ids.length);
+    }
+    // The original books are untouched.
+    for (const t of TABLES)
+      expect((db.tables[t] ?? []).filter((r) => r["org_id"] === ORG_ID)).toEqual(
+        (before[t] ?? []).filter((r) => r["org_id"] === ORG_ID),
+      );
+  });
+
   it("removes the partial organization after a later restore write fails", async () => {
     const keys = await keysFromSeed("test-only-backup-seed".repeat(4));
     const source = await readBackupData(db as unknown as UntypedDb, ORG_ID);

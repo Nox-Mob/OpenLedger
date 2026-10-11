@@ -4,6 +4,22 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-10-10
+
+### Added
+
+- Month-end close (Settings, Close the books): pick a month, see warnings for bank, cash and credit card accounts not checked against a statement through month end and for unfinished statement checks, then close. Closing with warnings needs a confirmation, and the warnings are saved in history.
+- Audited reopen: admins and treasurers can reopen closed books only with a written reason (at least 10 characters), saved in history with who did it and which closed years were reopened.
+- Concurrency tests: the same post, void, year-end close or month close sent at the same moment records once; a post racing a close never lands inside the closed period; restoring one backup twice at once makes two complete, separate organizations with no shared records.
+
+### Changed
+
+- The plain Unlock button is gone. Moving the books lock backward now always goes through Reopen books with a reason.
+
+### Fixed
+
+- Two restores running at the same moment could load different database clients; the restore now loads one shared client.
+
 ## [0.0.6] - 2026-10-08
 
 ### Added
