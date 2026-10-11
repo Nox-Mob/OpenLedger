@@ -44,3 +44,11 @@ Status: storage layer done and tested; the Tauri shell itself is not built yet.
 - Still cloud-only: member management, sign-in/legal acceptance, file import parsing and
   AI PDF reading, categories/tags/funds setup. These need ports before the desktop UI can use them.
 - Sync between desktop and cloud is not designed yet; app-generated UUIDs keep that possible.
+
+## Startup flow
+
+- `npm run tauri dev` runs `dev:desktop` (`--mode desktop`, which loads `.env.desktop` with `VITE_EDITION=desktop`); `build:desktop` builds a static single-page app into `.output/public`.
+- `isDesktop()` (`src/lib/edition.ts`) is the only edition check. On desktop, website and sign-in pages redirect via `desktopEntryRedirect`: no local organization opens `/onboarding`, otherwise `/ledger` for the last-used organization.
+- The signed-in layout uses one fixed local user (`LOCAL_USER_ID`) as admin; no sign-in or legal acceptance gate.
+- Organization setup saves through `createOrganizationWithAccounts` with the local SQLite file (`src/lib/desktop/local-repos.ts`).
+- Other pages still load data through cloud server functions; each needs to switch to `src/lib/services/*` with local repositories before it works offline.

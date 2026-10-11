@@ -1,9 +1,11 @@
+import { desktopEntryRedirect } from "@/lib/desktop/entry-redirect";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, ArrowRight, Server, Cloud } from "lucide-react";
 import { WebsiteShell } from "@/components/WebsiteShell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/get-started")({
+  beforeLoad: desktopEntryRedirect,
   head: () => ({
     meta: [
       { title: "Get Started - OpenLedgerApp" },
