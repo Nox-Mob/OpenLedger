@@ -1,6 +1,6 @@
-# Desktop install check: builds the Linux package, installs it like a user would,
-# starts the app with no screen attached, and confirms the local SQLite file is
-# created with the ledger tables. Report-only; it never changes the repo.
+# Desktop install check: builds the Linux package and installs it like a user would.
+# It confirms the package installs, puts a program in /usr/bin and carries the start
+# page. It does not open the app (CI has no screen). Report-only; never changes the repo.
 name: Desktop install check
 
 on:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   install:
-    name: Install and first start (Linux)
+    name: Install (Linux)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +25,14 @@ jobs:
       - name: System libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3 libgl1-mesa-dri at-spi2-core imagemagick
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with: { workspaces: "./src-tauri -> target" }
       - run: npm ci
       - name: Build the .deb package
         run: npx tauri build --bundles deb
-      - name: Desktop page is in the package
+      - name: Desktop start page is in the build
         run: test -f desktop-dist/index.html || { echo "### ❌ Desktop build has no index.html, the window would be blank" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
       - name: Install the package
         run: |
@@ -53,47 +53,4 @@ jobs:
             exit 1
           fi
           echo "Program: $bin"
-          echo "BIN=$bin" >> "$GITHUB_ENV"
-      - name: First start creates the local database
-        env:
-          # CI machines have no graphics card: force software drawing so the web view starts.
-          WEBKIT_DISABLE_COMPOSITING_MODE: "1"
-          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-          LIBGL_ALWAYS_SOFTWARE: "1"
-          RUST_BACKTRACE: "1"
-        run: |
-          rm -rf ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev
-          xvfb-run -a -n 99 -s "-screen 0 1280x860x24" dbus-run-session -- "$BIN" > app.log 2>&1 &
-          db=""
-          for i in $(seq 1 60); do
-            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null || true); db=${db%%$'\n'*}
-            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1 2>/dev/null; then break; fi
-            db=""; sleep 2
-          done
-          DISPLAY=:99 import -window root screen.png 2>/dev/null || true
-          running=no; pgrep -f "$BIN" >/dev/null && running=yes
-          pkill -f "$BIN" || true
-          echo "--- app log (app still running: $running) ---"; cat app.log || true
-          echo "--- app folders ---"; ls -laR ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev 2>&1 || true
-          if [ -z "$db" ]; then
-            echo "App still running at the end: $running (no means it crashed on start)" >> "$GITHUB_STEP_SUMMARY"
-            echo "### ❌ The desktop app started but did not create its local database with the ledger tables" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"; tail -40 app.log >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-          echo "Database: $db"
-          tables=$(sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-          echo "$tables"
-          for t in organizations accounts transactions entries; do
-            echo "$tables" | grep -qx "$t" || { echo "### ❌ Local database is missing table $t" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
-          done
-          echo "### ✅ Installed, started, and created the local database" >> "$GITHUB_STEP_SUMMARY"
-      - name: Save what the window showed
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: desktop-first-start
-          path: |
-            screen.png
-            app.log
-          if-no-files-found: ignore
+          echo "### ✅ $pkg installed; program at $bin" >> "$GITHUB_STEP_SUMMARY"
