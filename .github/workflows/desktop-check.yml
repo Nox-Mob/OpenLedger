@@ -25,13 +25,15 @@ jobs:
       - name: System libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3 libgl1-mesa-dri at-spi2-core
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3 libgl1-mesa-dri at-spi2-core imagemagick
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with: { workspaces: "./src-tauri -> target" }
       - run: npm ci
       - name: Build the .deb package
         run: npx tauri build --bundles deb
+      - name: Desktop page is in the package
+        run: test -f desktop-dist/index.html || { echo "### ❌ Desktop build has no index.html, the window would be blank" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
       - name: Install the package
         run: |
           deb=$(ls src-tauri/target/release/bundle/deb/*.deb | head -1)
@@ -61,13 +63,14 @@ jobs:
           RUST_BACKTRACE: "1"
         run: |
           rm -rf ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev
-          dbus-run-session -- xvfb-run -a "$BIN" > app.log 2>&1 &
+          xvfb-run -a -n 99 -s "-screen 0 1280x860x24" dbus-run-session -- "$BIN" > app.log 2>&1 &
           db=""
           for i in $(seq 1 60); do
             db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null || true); db=${db%%$'\n'*}
             if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1 2>/dev/null; then break; fi
             db=""; sleep 2
           done
+          DISPLAY=:99 import -window root screen.png 2>/dev/null || true
           running=no; pgrep -f "$BIN" >/dev/null && running=yes
           pkill -f "$BIN" || true
           echo "--- app log (app still running: $running) ---"; cat app.log || true
@@ -85,3 +88,12 @@ jobs:
             echo "$tables" | grep -qx "$t" || { echo "### ❌ Local database is missing table $t" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
           done
           echo "### ✅ Installed, started, and created the local database" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save what the window showed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-first-start
+          path: |
+            screen.png
+            app.log
+          if-no-files-found: ignore

@@ -4,7 +4,7 @@
   "version": "../package.json",
   "identifier": "com.openledgerapp.dev",
   "build": {
-    "frontendDist": "../.output/public",
+    "frontendDist": "../desktop-dist",
     "devUrl": "http://localhost:8080",
     "beforeDevCommand": "npm run dev:desktop",
     "beforeBuildCommand": "npm run build:desktop"
