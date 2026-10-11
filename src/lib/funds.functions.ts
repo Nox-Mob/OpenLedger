@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { Db } from "@/lib/db";
 // Fund accounting server functions: auth + assertCan, then the shared services.
 import { createServerFn } from "@tanstack/react-start";
@@ -27,7 +28,7 @@ async function loadFunds(supabase: Db, orgId: string) {
   }));
 }
 
-export const getFundSummary = createServerFn({ method: "GET" })
+const getFundSummaryCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -35,8 +36,9 @@ export const getFundSummary = createServerFn({ method: "GET" })
     const funds = await loadFunds(context.supabase, data.orgId);
     return fundSummary(createSupabaseRepositories(context.supabase), data.orgId, funds);
   });
+export const getFundSummary = desktopAware("getFundSummary", getFundSummaryCloud);
 
-export const setFundRestricted = createServerFn({ method: "POST" })
+const setFundRestrictedCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ orgId: uuid, fundId: uuid, isRestricted: z.boolean() }).parse(input),
@@ -72,8 +74,9 @@ export const setFundRestricted = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const setFundRestricted = desktopAware("setFundRestricted", setFundRestrictedCloud);
 
-export const releaseFromRestriction = createServerFn({ method: "POST" })
+const releaseFromRestrictionCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -97,6 +100,10 @@ export const releaseFromRestriction = createServerFn({ method: "POST" })
       idempotencyKey: `release:${data.idempotencyKey}`,
     });
   });
+export const releaseFromRestriction = desktopAware(
+  "releaseFromRestriction",
+  releaseFromRestrictionCloud,
+);
 
 // ---------- Pledges ----------
 
@@ -126,7 +133,7 @@ async function receivableAccount(
   return id;
 }
 
-export const listPledges = createServerFn({ method: "GET" })
+const listPledgesCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -167,8 +174,9 @@ export const listPledges = createServerFn({ method: "GET" })
       };
     });
   });
+export const listPledges = desktopAware("listPledges", listPledgesCloud);
 
-export const createPledge = createServerFn({ method: "POST" })
+const createPledgeCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -243,8 +251,9 @@ export const createPledge = createServerFn({ method: "POST" })
     );
     return { ok: true, id: pledgeId };
   });
+export const createPledge = desktopAware("createPledge", createPledgeCloud);
 
-export const settlePledgeFn = createServerFn({ method: "POST" })
+const settlePledgeFnCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -363,8 +372,9 @@ export const settlePledgeFn = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const settlePledgeFn = desktopAware("settlePledgeFn", settlePledgeFnCloud);
 
-export const getFundActivity = createServerFn({ method: "GET" })
+const getFundActivityCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid, from: date, to: date }).parse(input))
   .handler(async ({ data, context }) => {
@@ -378,3 +388,4 @@ export const getFundActivity = createServerFn({ method: "GET" })
       data.to,
     );
   });
+export const getFundActivity = desktopAware("getFundActivity", getFundActivityCloud);

@@ -7,6 +7,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 ### Added
 
 - Desktop start: the desktop app skips the public website, sign-in and legal acceptance. First launch opens organization setup, which saves to the local file; later launches open the ledger for the last-used organization. Run with `npm run tauri dev` (uses the new `dev:desktop` and `build:desktop` scripts).
+- Desktop data: pages read and save through the shared workflows against the local file instead of the cloud: accounts, transactions, bank rows, reports, books close and reopen, and statement checks. Features not yet stored locally say so and record nothing.
 
 ## [0.0.7] - 2026-10-10
 

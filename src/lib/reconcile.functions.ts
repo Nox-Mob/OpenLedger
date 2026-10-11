@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { Db } from "@/lib/db";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -19,15 +20,16 @@ async function load(context: Ctx, id: string, action: Parameters<typeof assertCa
   return { repos, rec };
 }
 
-export const listReconciliations = createServerFn({ method: "GET" })
+const listReconciliationsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ orgId: uuid }).parse(i))
   .handler(async ({ data, context }) =>
     recon.listReconciliations(createSupabaseRepositories(context.supabase), data.orgId),
   );
+export const listReconciliations = desktopAware("listReconciliations", listReconciliationsCloud);
 
 /** Suggest defaults for a new reconciliation on an account. */
-export const suggestReconciliation = createServerFn({ method: "GET" })
+const suggestReconciliationCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ orgId: uuid, accountId: uuid }).parse(i))
   .handler(async ({ data, context }) =>
@@ -37,8 +39,12 @@ export const suggestReconciliation = createServerFn({ method: "GET" })
       data.accountId,
     ),
   );
+export const suggestReconciliation = desktopAware(
+  "suggestReconciliation",
+  suggestReconciliationCloud,
+);
 
-export const startReconciliation = createServerFn({ method: "POST" })
+const startReconciliationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) =>
     z
@@ -63,16 +69,18 @@ export const startReconciliation = createServerFn({ method: "POST" })
       userId: context.userId,
     });
   });
+export const startReconciliation = desktopAware("startReconciliation", startReconciliationCloud);
 
-export const getReconciliation = createServerFn({ method: "GET" })
+const getReconciliationCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { repos, rec } = await load(context, data.id, "read");
     return recon.getReconciliation(repos, rec);
   });
+export const getReconciliation = desktopAware("getReconciliation", getReconciliationCloud);
 
-export const setCleared = createServerFn({ method: "POST" })
+const setClearedCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) =>
     z.object({ id: uuid, entryIds: z.array(uuid).min(1).max(1000), cleared: z.boolean() }).parse(i),
@@ -81,37 +89,48 @@ export const setCleared = createServerFn({ method: "POST" })
     const { repos, rec } = await load(context, data.id, "write");
     return recon.setCleared(repos, rec, data.entryIds, data.cleared, context.userId);
   });
+export const setCleared = desktopAware("setCleared", setClearedCloud);
 
 /** Simple mode: clear every entry that matches a bank row in the period. */
-export const acceptMatches = createServerFn({ method: "POST" })
+const acceptMatchesCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { repos, rec } = await load(context, data.id, "write");
     return recon.acceptMatches(repos, rec, context.userId);
   });
+export const acceptMatches = desktopAware("acceptMatches", acceptMatchesCloud);
 
-export const completeReconciliation = createServerFn({ method: "POST" })
+const completeReconciliationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { repos, rec } = await load(context, data.id, "write");
     return recon.completeReconciliation(repos, rec, context.userId);
   });
+export const completeReconciliation = desktopAware(
+  "completeReconciliation",
+  completeReconciliationCloud,
+);
 
 /** Admin-only. Only the most recent completed reconciliation for an account can be reopened. */
-export const reopenReconciliation = createServerFn({ method: "POST" })
+const reopenReconciliationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { repos, rec } = await load(context, data.id, "reopen_reconciliation");
     return recon.reopenReconciliation(repos, rec, context.userId);
   });
+export const reopenReconciliation = desktopAware("reopenReconciliation", reopenReconciliationCloud);
 
-export const discardReconciliation = createServerFn({ method: "POST" })
+const discardReconciliationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) => z.object({ id: uuid }).parse(i))
   .handler(async ({ data, context }) => {
     const { repos, rec } = await load(context, data.id, "write");
     return recon.discardReconciliation(repos, rec, context.userId);
   });
+export const discardReconciliation = desktopAware(
+  "discardReconciliation",
+  discardReconciliationCloud,
+);

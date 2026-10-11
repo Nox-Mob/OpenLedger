@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { Db } from "@/lib/db";
 import { auditedWrite } from "./audited-write";
 import { isValidTimeZone } from "./dates";
@@ -39,7 +40,7 @@ async function accountUsage(supabase: Db, orgId: string) {
   return out;
 }
 
-export const getMyOrgs = createServerFn({ method: "GET" })
+const getMyOrgsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
@@ -65,8 +66,9 @@ export const getMyOrgs = createServerFn({ method: "GET" })
       }))
       .filter((o) => o.id);
   });
+export const getMyOrgs = desktopAware("getMyOrgs", getMyOrgsCloud);
 
-export const getMyProfile = createServerFn({ method: "GET" })
+const getMyProfileCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await context.supabase
@@ -80,8 +82,9 @@ export const getMyProfile = createServerFn({ method: "GET" })
       termOverrides: cleanOverrides(data?.term_overrides),
     };
   });
+export const getMyProfile = desktopAware("getMyProfile", getMyProfileCloud);
 
-export const setMyTermOverrides = createServerFn({ method: "POST" })
+const setMyTermOverridesCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ termOverrides: overridesSchema }).parse(input))
   .handler(async ({ data, context }) => {
@@ -92,12 +95,13 @@ export const setMyTermOverrides = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+export const setMyTermOverrides = desktopAware("setMyTermOverrides", setMyTermOverridesCloud);
 
 async function requireOrgAdmin(supabase: Db, userId: string, orgId: string) {
   await assertCan(supabase, userId, orgId, "manage_settings");
 }
 
-export const updateOrganization = createServerFn({ method: "POST" })
+const updateOrganizationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -128,8 +132,9 @@ export const updateOrganization = createServerFn({ method: "POST" })
       aiPdfEnabled: data.aiPdfEnabled,
     });
   });
+export const updateOrganization = desktopAware("updateOrganization", updateOrganizationCloud);
 
-export const listOrgMembers = createServerFn({ method: "GET" })
+const listOrgMembersCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -156,8 +161,9 @@ export const listOrgMembers = createServerFn({ method: "GET" })
       isYou: r.user_id === userId,
     }));
   });
+export const listOrgMembers = desktopAware("listOrgMembers", listOrgMembersCloud);
 
-export const updateMemberRole = createServerFn({ method: "POST" })
+const updateMemberRoleCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -206,8 +212,9 @@ export const updateMemberRole = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+export const updateMemberRole = desktopAware("updateMemberRole", updateMemberRoleCloud);
 
-export const createOrganization = createServerFn({ method: "POST" })
+const createOrganizationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -275,10 +282,11 @@ export const createOrganization = createServerFn({ method: "POST" })
 
     return { id: org.id as string };
   });
+export const createOrganization = desktopAware("createOrganization", createOrganizationCloud);
 
 // ---------- Account setup (which accounts the org uses) ----------
 
-export const getAccountSetup = createServerFn({ method: "GET" })
+const getAccountSetupCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -311,8 +319,9 @@ export const getAccountSetup = createServerFn({ method: "GET" })
       };
     });
   });
+export const getAccountSetup = desktopAware("getAccountSetup", getAccountSetupCloud);
 
-export const setAccountEnabled = createServerFn({ method: "POST" })
+const setAccountEnabledCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -403,7 +412,14 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     await auditedWrite(
       supabase,
       data.orgId,
-      [{ table: "accounts", op: "update", values: { is_active: false }, match: { id: target.id } }],
+      [
+        {
+          table: "accounts",
+          op: "update",
+          values: { is_active: false },
+          match: { id: target.id },
+        },
+      ],
       {
         action: "archive",
         entity: "account",
@@ -414,9 +430,10 @@ export const setAccountEnabled = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const setAccountEnabled = desktopAware("setAccountEnabled", setAccountEnabledCloud);
 
 /** Permanently removes an account that was never used. Anything with history is archived instead. */
-export const deleteUnusedAccount = createServerFn({ method: "POST" })
+const deleteUnusedAccountCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ orgId: z.string().uuid(), accountId: z.string().uuid() }).parse(input),
@@ -462,8 +479,9 @@ export const deleteUnusedAccount = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const deleteUnusedAccount = desktopAware("deleteUnusedAccount", deleteUnusedAccountCloud);
 
-export const setRequireMfa = createServerFn({ method: "POST" })
+const setRequireMfaCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid(), enabled: z.boolean() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -474,7 +492,14 @@ export const setRequireMfa = createServerFn({ method: "POST" })
     await auditedWrite(
       supabase,
       data.orgId,
-      [{ table: "organizations", op: "update", values: { require_mfa: data.enabled }, minRows: 1 }],
+      [
+        {
+          table: "organizations",
+          op: "update",
+          values: { require_mfa: data.enabled },
+          minRows: 1,
+        },
+      ],
       {
         action: data.enabled ? "require_mfa_on" : "require_mfa_off",
         entity: "organization",
@@ -485,3 +510,4 @@ export const setRequireMfa = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const setRequireMfa = desktopAware("setRequireMfa", setRequireMfaCloud);

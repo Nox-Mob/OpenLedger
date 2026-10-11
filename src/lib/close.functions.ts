@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -10,7 +11,7 @@ import * as periods from "./services/periods";
 // Auth + permission here; workflow in src/lib/services/settings.ts.
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-export const getBooksStatus = createServerFn({ method: "GET" })
+const getBooksStatusCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -21,8 +22,9 @@ export const getBooksStatus = createServerFn({ method: "GET" })
     );
     return { role, ...status };
   });
+export const getBooksStatus = desktopAware("getBooksStatus", getBooksStatusCloud);
 
-export const setBooksLock = createServerFn({ method: "POST" })
+const setBooksLockCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     // null clears the lock (unlock)
@@ -37,9 +39,10 @@ export const setBooksLock = createServerFn({ method: "POST" })
       data.lockedThrough,
     );
   });
+export const setBooksLock = desktopAware("setBooksLock", setBooksLockCloud);
 
 /** Preview what a year-end close would do: net income for the fiscal year. */
-export const previewYearEndClose = createServerFn({ method: "GET" })
+const previewYearEndCloseCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid(), fiscalYearEnd: isoDate }).parse(input))
   .handler(async ({ data, context }) => {
@@ -50,9 +53,10 @@ export const previewYearEndClose = createServerFn({ method: "GET" })
       data.fiscalYearEnd,
     );
   });
+export const previewYearEndClose = desktopAware("previewYearEndClose", previewYearEndCloseCloud);
 
 /** Record the year-end close (virtual: no closing transaction) and lock the books. */
-export const closeFiscalYear = createServerFn({ method: "POST" })
+const closeFiscalYearCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -73,9 +77,10 @@ export const closeFiscalYear = createServerFn({ method: "POST" })
       retainedEarningsAccountId: data.retainedEarningsAccountId,
     });
   });
+export const closeFiscalYear = desktopAware("closeFiscalYear", closeFiscalYearCloud);
 
 /** Month-end close preview: warnings for unchecked bank/cash/card accounts and open checks. */
-export const previewMonthClose = createServerFn({ method: "GET" })
+const previewMonthCloseCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid(), monthEnd: isoDate }).parse(input))
   .handler(async ({ data, context }) => {
@@ -86,8 +91,9 @@ export const previewMonthClose = createServerFn({ method: "GET" })
       data.monthEnd,
     );
   });
+export const previewMonthClose = desktopAware("previewMonthClose", previewMonthCloseCloud);
 
-export const closeMonth = createServerFn({ method: "POST" })
+const closeMonthCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -101,9 +107,10 @@ export const closeMonth = createServerFn({ method: "POST" })
       userId: context.userId,
     });
   });
+export const closeMonth = desktopAware("closeMonth", closeMonthCloud);
 
 /** Audited reopen (admin or treasurer): a written reason is required and saved in history. */
-export const reopenBooks = createServerFn({ method: "POST" })
+const reopenBooksCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -121,3 +128,4 @@ export const reopenBooks = createServerFn({ method: "POST" })
       userId: context.userId,
     });
   });
+export const reopenBooks = desktopAware("reopenBooks", reopenBooksCloud);

@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import { newId } from "./domain/ledger";
 import { createSupabaseRepositories } from "./adapters/supabase";
 import { postOpeningBalance } from "./services/ledger";
@@ -26,7 +27,7 @@ async function assertNameAvailable(
 
 const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
 
-export const listAccounts = createServerFn({ method: "GET" })
+const listAccountsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -61,8 +62,9 @@ export const listAccounts = createServerFn({ method: "GET" })
       balanceCents: balances.get(a.id) ?? 0,
     }));
   });
+export const listAccounts = desktopAware("listAccounts", listAccountsCloud);
 
-export const createAccount = createServerFn({ method: "POST" })
+const createAccountCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -97,8 +99,9 @@ export const createAccount = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const createAccount = desktopAware("createAccount", createAccountCloud);
 
-export const setOpeningBalance = createServerFn({ method: "POST" })
+const setOpeningBalanceCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -118,6 +121,7 @@ export const setOpeningBalance = createServerFn({ method: "POST" })
       userId: context.userId,
     });
   });
+export const setOpeningBalance = desktopAware("setOpeningBalance", setOpeningBalanceCloud);
 
 type CrudTable = "categories" | "tags" | "projects" | "funds";
 
@@ -155,7 +159,7 @@ function makeCrud(table: CrudTable, extraSchema?: z.ZodRawShape) {
 const categories = makeCrud("categories", {
   type: z.enum(["revenue", "expense"]).default("expense"),
 });
-export const listCategories = createServerFn({ method: "GET" })
+const listCategoriesCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -167,10 +171,11 @@ export const listCategories = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
-export const createCategory = categories.create;
+export const listCategories = desktopAware("listCategories", listCategoriesCloud);
+export const createCategory = desktopAware("createCategory", categories.create);
 
 const tags = makeCrud("tags");
-export const listTags = createServerFn({ method: "GET" })
+const listTagsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -182,10 +187,11 @@ export const listTags = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
-export const createTag = tags.create;
+export const listTags = desktopAware("listTags", listTagsCloud);
+export const createTag = desktopAware("createTag", tags.create);
 
 const projects = makeCrud("projects", { budgetCents: z.number().int().min(0).default(0) });
-export const listProjects = createServerFn({ method: "GET" })
+const listProjectsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -197,10 +203,11 @@ export const listProjects = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
-export const createProject = projects.create;
+export const listProjects = desktopAware("listProjects", listProjectsCloud);
+export const createProject = desktopAware("createProject", projects.create);
 
 const funds = makeCrud("funds", { isRestricted: z.boolean().default(false) });
-export const listFunds = createServerFn({ method: "GET" })
+const listFundsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => orgInput.parse(input))
   .handler(async ({ data, context }) => {
@@ -212,4 +219,5 @@ export const listFunds = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
-export const createFund = funds.create;
+export const listFunds = desktopAware("listFunds", listFundsCloud);
+export const createFund = desktopAware("createFund", funds.create);

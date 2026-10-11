@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { CsvMapping } from "./parsers/csv";
 import type { Json } from "@/integrations/supabase/types";
 import type { Db } from "@/lib/db";
@@ -39,7 +40,7 @@ async function fingerprint(orgId: string, accountId: string, row: Row, rowSeq?: 
 }
 
 /** Returns indexes of rows that already exist (or repeat within the file). */
-export const checkDuplicates = createServerFn({ method: "POST" })
+const checkDuplicatesCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -73,8 +74,9 @@ export const checkDuplicates = createServerFn({ method: "POST" })
     });
     return { duplicates };
   });
+export const checkDuplicates = desktopAware("checkDuplicates", checkDuplicatesCloud);
 
-export const importBankRows = createServerFn({ method: "POST" })
+const importBankRowsCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -204,8 +206,9 @@ export const importBankRows = createServerFn({ method: "POST" })
 
     return { batchId, imported, duplicatesSkipped: duplicates };
   });
+export const importBankRows = desktopAware("importBankRows", importBankRowsCloud);
 
-export const listImportBatches = createServerFn({ method: "GET" })
+const listImportBatchesCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -234,8 +237,9 @@ export const listImportBatches = createServerFn({ method: "GET" })
       postedCount: (b.bank_transactions ?? []).filter((t) => t.transaction_id).length,
     }));
   });
+export const listImportBatches = desktopAware("listImportBatches", listImportBatchesCloud);
 
-export const undoImportBatch = createServerFn({ method: "POST" })
+const undoImportBatchCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ orgId: z.string().uuid(), batchId: z.string().uuid() }).parse(input),
@@ -292,10 +296,11 @@ export const undoImportBatch = createServerFn({ method: "POST" })
     const removed = { length: removedRes?.count ?? 0 };
     return { removed: removed?.length ?? 0 };
   });
+export const undoImportBatch = desktopAware("undoImportBatch", undoImportBatchCloud);
 
 const mappingSchema = z.record(z.string(), z.unknown());
 
-export const listImportProfiles = createServerFn({ method: "GET" })
+const listImportProfilesCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
@@ -312,8 +317,9 @@ export const listImportProfiles = createServerFn({ method: "GET" })
       mapping: r.mapping as unknown as CsvMapping,
     }));
   });
+export const listImportProfiles = desktopAware("listImportProfiles", listImportProfilesCloud);
 
-export const saveImportProfile = createServerFn({ method: "POST" })
+const saveImportProfileCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -369,6 +375,7 @@ export const saveImportProfile = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const saveImportProfile = desktopAware("saveImportProfile", saveImportProfileCloud);
 
 async function pdfUsage(supabase: Db, orgId: string, userId: string) {
   const now = Date.now();
@@ -394,13 +401,14 @@ async function pdfUsage(supabase: Db, orgId: string, userId: string) {
   };
 }
 
-export const getPdfUsage = createServerFn({ method: "GET" })
+const getPdfUsageCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => pdfUsage(context.supabase, data.orgId, context.userId));
+export const getPdfUsage = desktopAware("getPdfUsage", getPdfUsageCloud);
 
 /** AI-assisted extraction of a statement's text. Opt-in per org, acknowledged per upload, rate-limited per person. Result is always reviewed before import. */
-export const extractPdfStatement = createServerFn({ method: "POST" })
+const extractPdfStatementCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -539,8 +547,9 @@ export const extractPdfStatement = createServerFn({ method: "POST" })
       })),
     };
   });
+export const extractPdfStatement = desktopAware("extractPdfStatement", extractPdfStatementCloud);
 
-export const listBankTransactions = createServerFn({ method: "GET" })
+const listBankTransactionsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -574,12 +583,13 @@ export const listBankTransactions = createServerFn({ method: "GET" })
       accountName: r.accounts?.name ?? "",
     }));
   });
+export const listBankTransactions = desktopAware("listBankTransactions", listBankTransactionsCloud);
 
 /**
  * Turn an imported bank row into a real ledger transaction.
  * The bank row is evidence; the ledger transaction is the source of truth.
  */
-export const postBankTransaction = createServerFn({ method: "POST" })
+const postBankTransactionCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -598,3 +608,4 @@ export const postBankTransaction = createServerFn({ method: "POST" })
     await assertCan(supabase, userId, data.orgId, "write");
     return postBankRow(createSupabaseRepositories(supabase), { ...data, userId });
   });
+export const postBankTransaction = desktopAware("postBankTransaction", postBankTransactionCloud);

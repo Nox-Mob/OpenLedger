@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { Db } from "@/lib/db";
 // Member lifecycle: invite links, remove/leave, transfer ownership, delete organization.
 // Each handler checks the caller with the user's own client before any privileged write.
@@ -52,17 +53,18 @@ async function orgRow(supabase: Db, orgId: string) {
   return data as { id: string; name: string; created_by: string };
 }
 
-export const getOrgOwner = createServerFn({ method: "GET" })
+const getOrgOwnerCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
     const org = await orgRow(context.supabase, data.orgId);
     return { ownerId: org.created_by, isOwner: org.created_by === context.userId };
   });
+export const getOrgOwner = desktopAware("getOrgOwner", getOrgOwnerCloud);
 
 // ---------- Invites ----------
 
-export const listInvites = createServerFn({ method: "GET" })
+const listInvitesCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -79,11 +81,16 @@ export const listInvites = createServerFn({ method: "GET" })
       role: r.role as string,
       expiresAt: r.expires_at as string,
       createdAt: r.created_at as string,
-      status: inviteStatus({ expiresAt: r.expires_at, usedAt: r.used_at, revokedAt: r.revoked_at }),
+      status: inviteStatus({
+        expiresAt: r.expires_at,
+        usedAt: r.used_at,
+        revokedAt: r.revoked_at,
+      }),
     }));
   });
+export const listInvites = desktopAware("listInvites", listInvitesCloud);
 
-export const createInvite = createServerFn({ method: "POST" })
+const createInviteCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -126,8 +133,9 @@ export const createInvite = createServerFn({ method: "POST" })
     // The raw token is returned once and never stored.
     return { id, token, expiresAt };
   });
+export const createInvite = desktopAware("createInvite", createInviteCloud);
 
-export const revokeInvite = createServerFn({ method: "POST" })
+const revokeInviteCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid, inviteId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -147,8 +155,9 @@ export const revokeInvite = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const revokeInvite = desktopAware("revokeInvite", revokeInviteCloud);
 
-export const acceptInvite = createServerFn({ method: "POST" })
+const acceptInviteCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ token: z.string().min(16).max(100) }).parse(input))
   .handler(async ({ data, context }) => {
@@ -207,10 +216,11 @@ export const acceptInvite = createServerFn({ method: "POST" })
     );
     return { orgId: invite.org_id, orgName, alreadyMember: false };
   });
+export const acceptInvite = desktopAware("acceptInvite", acceptInviteCloud);
 
 // ---------- Remove, leave, transfer, delete ----------
 
-export const removeMember = createServerFn({ method: "POST" })
+const removeMemberCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid, userId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -238,8 +248,9 @@ export const removeMember = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const removeMember = desktopAware("removeMember", removeMemberCloud);
 
-export const transferOwnership = createServerFn({ method: "POST" })
+const transferOwnershipCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid, toUserId: uuid }).parse(input))
   .handler(async ({ data, context }) => {
@@ -274,8 +285,9 @@ export const transferOwnership = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+export const transferOwnership = desktopAware("transferOwnership", transferOwnershipCloud);
 
-export const deleteOrganization = createServerFn({ method: "POST" })
+const deleteOrganizationCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId: uuid, confirmName: z.string().max(200) }).parse(input))
   .handler(async ({ data, context }) => {
@@ -291,16 +303,18 @@ export const deleteOrganization = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+export const deleteOrganization = desktopAware("deleteOrganization", deleteOrganizationCloud);
 
 // ---------- Delete my account ----------
 
-export const getMyAccountDeletion = createServerFn({ method: "GET" })
+const getMyAccountDeletionCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     return {
       blocker: accountDeletionBlocker(await myMemberships(context.supabase, context.userId)),
     };
   });
+export const getMyAccountDeletion = desktopAware("getMyAccountDeletion", getMyAccountDeletionCloud);
 
 async function myMemberships(supabase: Db, userId: string) {
   const { data, error } = await supabase
@@ -322,7 +336,7 @@ async function myMemberships(supabase: Db, userId: string) {
   );
 }
 
-export const deleteMyAccount = createServerFn({ method: "POST" })
+const deleteMyAccountCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ confirm: z.literal("DELETE") }).parse(input))
   .handler(async ({ context }) => {
@@ -351,3 +365,4 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+export const deleteMyAccount = desktopAware("deleteMyAccount", deleteMyAccountCloud);

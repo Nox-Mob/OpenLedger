@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -34,7 +35,7 @@ const createSchema = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
 });
 
-export const listTransactions = createServerFn({ method: "GET" })
+const listTransactionsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -83,8 +84,9 @@ export const listTransactions = createServerFn({ method: "GET" })
       })),
     }));
   });
+export const listTransactions = desktopAware("listTransactions", listTransactionsCloud);
 
-export const createTransaction = createServerFn({ method: "POST" })
+const createTransactionCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
@@ -102,8 +104,9 @@ export const createTransaction = createServerFn({ method: "POST" })
       idempotencyKey: data.idempotencyKey ?? null,
     });
   });
+export const createTransaction = desktopAware("createTransaction", createTransactionCloud);
 
-export const voidTransaction = createServerFn({ method: "POST" })
+const voidTransactionCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ orgId: z.string().uuid(), transactionId: z.string().uuid() }).parse(input),
@@ -117,3 +120,4 @@ export const voidTransaction = createServerFn({ method: "POST" })
       transactionId: data.transactionId,
     });
   });
+export const voidTransaction = desktopAware("voidTransaction", voidTransactionCloud);
