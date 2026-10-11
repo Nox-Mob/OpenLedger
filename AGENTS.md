@@ -17,7 +17,7 @@
 - DB-enforced immutability: transactions only posted→void; entries only reconciliation_id; bank rows are evidence (FITID/hash+row_seq; link must match amount/account).
 - Void: idempotent, blocked by completed reconciliation, unticks/unlinks in-progress evidence.
 - Reconciliation finish needs difference=0 (DB trigger); completed ones lock entries.
-- Audit rows: every change goes with its history in one DB transaction: ledger RPCs post_transaction_atomic/void_transaction_atomic, and audited_write (src/lib/audited-write.ts; ports take an optional audit arg) for everything else. writeAudit() is only for event-only history with no data change (e.g. backup export). Users have no INSERT on audit_log; the definer helper only works inside audited_write.
+- Audit rows: every change goes with its history in one DB transaction: ledger RPCs post_transaction_atomic/void_transaction_atomic, and audited_write (src/lib/audited-write.ts; ports take an optional audit arg) for everything else. writeAudit() is only for event-only history with no data change (e.g. backup export). Users can't INSERT audit_log; the definer helper works only inside audited_write.
 - Org data: requireSupabaseAuth + assertCan + member RLS; settings/accounts admin-only.
 - Terminology is presentation-only; reports/PDFs use org level only.
 - Accounts: catalog-based; delete only if never used (domain/accounts.ts + DB trigger), otherwise archive. Names unique per org ignoring case/spaces (DB trigger backs it up).
@@ -41,7 +41,7 @@
 - Funds: fund balances and the restricted/unrestricted split are derived from fund-tagged ledger rows in src/lib/domain/funds.ts; releases are a balanced Net Assets to Net Assets transaction (source 'release') so total equity never changes.
 - Members: organizations.created_by is the owner; invite links store only a SHA-256 hash of the token and are claimed atomically before the role is granted.
 - Budgets/exports/history: cloud-only server functions for now (no port yet); budgets table keeps one row per account+period with a stable app-generated ID (update, never replace), and every export escapes formula-looking text via src/lib/export.ts.
-- Org delete relies on deferrable "no action" FKs and a balance trigger that skips deleted transactions; keep new cascading FKs deferrable.
+- Org delete needs deferrable "no action" FKs and a balance trigger skipping deleted transactions; keep new FKs deferrable.
 - Package manager: npm only (package-lock.json, installed with npm ci); no bun.lock, so every install resolves the same tree.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
 - Direct table writes: *.functions.ts never write tables directly (services or audited_write); only cloud-only non-book records may, each marked `// cloud-only-write: <reason>`. Enforced by src/lib/direct-writes.test.ts as its own CI step, so new direct writes fail by name.
