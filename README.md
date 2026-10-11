@@ -11,7 +11,7 @@ Built with React 19 + TanStack Start (Vite), Tailwind CSS v4, and Supabase (Post
 
 ## Public website and release notes
 
-The public website is at `/`; account holders use `/auth` to sign in and `/ledger` for the dashboard. `/get-started` describes the two backend setup paths and offers a development source archive. It is not a desktop installer. The website does not advertise the preview or development demo.
+The public website is at `/`; account holders use `/auth` to sign in and `/ledger` for the dashboard. `/get-started` describes the two backend setup paths and offers a development source archive. It is not a desktop installer. Desktop preview installers (Linux, Windows, macOS) are attached to GitHub releases as drafts first; see [docs/desktop.md](docs/desktop.md). The website does not advertise the preview or development demo.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and [BLUEPRINT.md](BLUEPRINT.md) for the original website and storage design, and [docs/architecture.md](docs/architecture.md) for the current architecture. The future free standalone desktop edition, managed cloud offering, optional donations, and synchronization are goals, not shipped features or pricing commitments.
 
