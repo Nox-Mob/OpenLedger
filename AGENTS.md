@@ -26,8 +26,7 @@
 - Currency: two-decimal only, frozen once transactions exist.
 - Idempotency keys: one per form submit; `bank:<id>`, `opening:<acct>:...`.
 - AI PDF: org opt-in, upload ack, limits, balance or acceptMismatch.
-- Legal acceptance append-only/versioned; U.S.-first; no GDPR claim.
-- Demo login: manual dev seed only.
+- Legal acceptance append-only/versioned; U.S.-first; no GDPR claim. Demo login: manual dev seed only.
 - CI, tests and migration-safety rules: see scripts/ci/AGENTS.md.
 - Server functions: use createServerFn().validator(), never deprecated .inputValidator().
 - Routing: public website owns `/`; the existing authenticated dashboard lives at `/ledger` so public visitors never need a session to read the website.
@@ -36,7 +35,7 @@
 
 - Domain rules: accounting invariants live in pure src/lib/domain/ (no storage imports) and run before every write; DB triggers are a backup, so a future SQLite edition gets the same guarantees.
 - IDs: every new record gets an app-generated UUID (newId()), never a DB default, so identity survives future offline sync.
-- Desktop/SQLite and backup rules: see src/lib/adapters/AGENTS.md and src/lib/domain/AGENTS.md.
+- Desktop/SQLite/backup rules: src/lib/adapters/AGENTS.md, src/lib/domain/AGENTS.md.
 - Storage ports: data access goes through interfaces in src/lib/ports/ using models from src/lib/domain/models.ts (no DB types); adapters implement them so cloud and desktop share app code.
 - Adapters/services: workflows live in src/lib/services/ (ports only); server functions do auth + assertCan, then call a service with createSupabaseRepositories(context.supabase). src/lib/adapters/memory is the reference adapter for tests and future SQLite parity.
 - Funds: fund balances and the restricted/unrestricted split are derived from fund-tagged ledger rows in src/lib/domain/funds.ts; releases are a balanced Net Assets to Net Assets transaction (source 'release') so total equity never changes.
@@ -50,4 +49,4 @@
 - Page states: lists use PageStates.tsx components; read errors with errorMessage() (src/lib/errors.ts), never `catch (e: any)`.
 - Types: no-explicit-any is an error in app code (tests exempt); typed client is `Db`, table-walking backup code uses `UntypedDb` (src/lib/db.ts).
 - Periods: month close/reopen only move books_locked_through (services/periods.ts); moving it back needs a saved reason so no lock change goes unexplained.
-- Edition: isDesktop() in src/lib/edition.ts is the only desktop check (build flag VITE_EDITION=desktop); desktop skips website/sign-in and uses one local admin, so cloud routes stay unchanged.
+- Edition: isDesktop() (src/lib/edition.ts) is the only desktop check; see docs/desktop.md.
