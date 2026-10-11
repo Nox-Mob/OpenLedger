@@ -25,7 +25,7 @@ jobs:
       - name: System libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3 libgl1-mesa-dri at-spi2-core
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with: { workspaces: "./src-tauri -> target" }
@@ -54,7 +54,11 @@ jobs:
           echo "BIN=$bin" >> "$GITHUB_ENV"
       - name: First start creates the local database
         env:
+          # CI machines have no graphics card: force software drawing so the web view starts.
           WEBKIT_DISABLE_COMPOSITING_MODE: "1"
+          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          RUST_BACKTRACE: "1"
         run: |
           rm -rf ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev
           dbus-run-session -- xvfb-run -a "$BIN" > app.log 2>&1 &
@@ -64,8 +68,12 @@ jobs:
             if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1 2>/dev/null; then break; fi
             db=""; sleep 2
           done
+          running=no; pgrep -f "$BIN" >/dev/null && running=yes
           pkill -f "$BIN" || true
+          echo "--- app log (app still running: $running) ---"; cat app.log || true
+          echo "--- app folders ---"; ls -laR ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev 2>&1 || true
           if [ -z "$db" ]; then
+            echo "App still running at the end: $running (no means it crashed on start)" >> "$GITHUB_STEP_SUMMARY"
             echo "### ❌ The desktop app started but did not create its local database with the ledger tables" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"; tail -40 app.log >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
             exit 1
