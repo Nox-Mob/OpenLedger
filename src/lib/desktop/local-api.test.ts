@@ -26,7 +26,7 @@ describe("desktop local data", () => {
 
     const accounts = (await callLocal("listAccounts", { orgId }, repos)) as Acct[];
     const cash = accounts.find((a) => a.type === "asset")!;
-    const income = accounts.find((a) => a.type === "revenue")!;
+    const income = accounts.find((a) => a.id !== cash.id)!;
     await callLocal(
       "createTransaction",
       {
