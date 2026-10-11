@@ -1,9 +1,10 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LEGAL_VERSIONS, missingLegalDocuments } from "./legal";
 
-export const getLegalStatus = createServerFn({ method: "GET" })
+const getLegalStatusCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
@@ -17,8 +18,9 @@ export const getLegalStatus = createServerFn({ method: "GET" })
     }));
     return { missing: missingLegalDocuments(accepted) };
   });
+export const getLegalStatus = desktopAware("getLegalStatus", getLegalStatusCloud);
 
-export const acceptCurrentLegalDocuments = createServerFn({ method: "POST" })
+const acceptCurrentLegalDocumentsCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -29,7 +31,11 @@ export const acceptCurrentLegalDocuments = createServerFn({ method: "POST" })
     const rows = [
       { user_id: context.userId, document_type: "terms", version: LEGAL_VERSIONS.terms },
       { user_id: context.userId, document_type: "privacy", version: LEGAL_VERSIONS.privacy },
-      { user_id: context.userId, document_type: "non_advice", version: LEGAL_VERSIONS.non_advice },
+      {
+        user_id: context.userId,
+        document_type: "non_advice",
+        version: LEGAL_VERSIONS.non_advice,
+      },
     ];
     const { error } = await context.supabase
       .from("legal_acceptances")
@@ -38,3 +44,7 @@ export const acceptCurrentLegalDocuments = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+export const acceptCurrentLegalDocuments = desktopAware(
+  "acceptCurrentLegalDocuments",
+  acceptCurrentLegalDocumentsCloud,
+);

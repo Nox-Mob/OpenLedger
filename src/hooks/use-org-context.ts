@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyOrgs, getMyProfile } from "@/lib/org.functions";
 import { pickCurrentOrg, useCurrentOrgId } from "@/lib/current-org";
 import { getTerms, normalizeTerminology, type OrgType, type Terminology } from "@/lib/terminology";
-
 export function useOrgContext() {
   const currentOrgId = useCurrentOrgId();
   const orgsQuery = useQuery({

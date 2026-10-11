@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -11,7 +12,7 @@ import { auditedWrite } from "./audited-write";
 const isoDate = z.string().regex(/^\d{4}-\d{2}-01$/);
 const period = z.enum(["year", "month"]);
 
-export const budgetVsActual = createServerFn({ method: "GET" })
+const budgetVsActualCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ orgId: z.string().uuid(), periodType: period, periodStart: isoDate }).parse(input),
@@ -55,8 +56,9 @@ export const budgetVsActual = createServerFn({ method: "GET" })
       .filter((l) => l.isActive || l.budgetCents !== null || l.actualCents !== 0);
     return { from, to, lines };
   });
+export const budgetVsActual = desktopAware("budgetVsActual", budgetVsActualCloud);
 
-export const saveBudget = createServerFn({ method: "POST" })
+const saveBudgetCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -120,3 +122,4 @@ export const saveBudget = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+export const saveBudget = desktopAware("saveBudget", saveBudgetCloud);

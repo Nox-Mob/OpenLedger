@@ -1,0 +1,56 @@
+# Desktop install check: builds the Linux package and installs it like a user would.
+# It confirms the package installs, puts a program in /usr/bin and carries the start
+# page. It does not open the app (CI has no screen). Report-only; never changes the repo.
+name: Desktop install check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: Install (Linux)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with: { workspaces: "./src-tauri -> target" }
+      - run: npm ci
+      - name: Build the .deb package
+        run: npx tauri build --bundles deb
+      - name: Desktop start page is in the build
+        run: test -f desktop-dist/index.html || { echo "### ❌ Desktop build has no index.html, the window would be blank" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+      - name: Install the package
+        run: |
+          deb=$(ls src-tauri/target/release/bundle/deb/*.deb | head -1)
+          echo "Installing $deb"
+          sudo apt-get install -y "./$deb"
+          # Ask the installed package for its files; keep only real programs in /usr/bin
+          # (the folder itself is also listed). No `head` here: under pipefail it can
+          # stop the pipe early and fail the step.
+          pkg=$(dpkg-deb -f "$deb" Package)
+          bin=""
+          for f in $(dpkg -L "$pkg"); do
+            case "$f" in /usr/bin/?*) [ -f "$f" ] && [ -x "$f" ] && { bin="$f"; break; } ;; esac
+          done
+          if [ -z "$bin" ]; then
+            echo "### ❌ Installed package $pkg has no program in /usr/bin" >> "$GITHUB_STEP_SUMMARY"
+            dpkg -L "$pkg"
+            exit 1
+          fi
+          echo "Program: $bin"
+          echo "### ✅ $pkg installed; program at $bin" >> "$GITHUB_STEP_SUMMARY"

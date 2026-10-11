@@ -11,11 +11,11 @@
 
 ## Released
 
-- v0.0.7 (2026-10-10), v0.0.6 (2026-10-08), v0.0.5 (2026-10-08), v0.0.4 (2026-10-07), v0.0.3 (2026-10-07), v0.0.2, v0.0.1 (2026-10-01). Details in CHANGELOG.md.
+- v0.1.0 (2026-10-10), v0.0.7 (2026-10-10), v0.0.6 (2026-10-08), v0.0.5 (2026-10-08), v0.0.4 (2026-10-07), v0.0.3 (2026-10-07), v0.0.2, v0.0.1 (2026-10-01). Details in CHANGELOG.md.
 
 ## Future (unscheduled, not assigned to a version)
 
-- Local desktop edition: Tauri + embedded SQLite, offline use. Needs native SQLite driver tests first. Do not advertise desktop installers as available.
+- Local desktop edition: Tauri + embedded SQLite, offline use. v0.1 ships a first preview as draft installers (core books only); members, imports, budgets, funds, backups, exports and history still need local storage.
 - Optional sync between desktop and cloud (chained history log, signed uploads, server re-check).
 - Distribution goal: free local desktop, self-hosted community edition, managed cloud. Cloud pricing and donations undecided.
 

@@ -1,3 +1,4 @@
+import { desktopAware } from "@/lib/desktop/bridge";
 import type { UntypedDb } from "./db";
 import type { Json } from "@/integrations/supabase/types";
 import { createServerFn } from "@tanstack/react-start";
@@ -26,7 +27,7 @@ async function all(
 }
 
 /** Full JSON backup of one organization (admins only). Read through the caller's RLS client. */
-export const exportBackup = createServerFn({ method: "POST" })
+const exportBackupCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId }).parse(input))
   .handler(async ({ data, context }) => {
@@ -52,9 +53,10 @@ export const exportBackup = createServerFn({ method: "POST" })
       tables: Record<string, { [k: string]: Json }[]>;
     };
   });
+export const exportBackup = desktopAware("exportBackup", exportBackupCloud);
 
 /** Every posted and voided transaction line, for spreadsheet export. */
-export const exportTransactions = createServerFn({ method: "GET" })
+const exportTransactionsCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ orgId }).parse(input))
   .handler(async ({ data, context }) => {
@@ -102,9 +104,10 @@ export const exportTransactions = createServerFn({ method: "GET" })
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
   });
+export const exportTransactions = desktopAware("exportTransactions", exportTransactionsCloud);
 
 /** Organization history (audit log), newest first. Admins only. */
-export const listHistory = createServerFn({ method: "GET" })
+const listHistoryCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z
@@ -159,6 +162,7 @@ export const listHistory = createServerFn({ method: "GET" })
       })),
     };
   });
+export const listHistory = desktopAware("listHistory", listHistoryCloud);
 
 const backupText = z
   .string()
@@ -180,7 +184,7 @@ async function verifyText(text: string) {
 }
 
 /** Check a backup without writing anything. Any signed-in user may restore into a new org. */
-export const checkBackupFile = createServerFn({ method: "POST" })
+const checkBackupFileCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) => z.object({ text: backupText }).parse(input))
   .handler(async ({ data }) => {
@@ -194,8 +198,9 @@ export const checkBackupFile = createServerFn({ method: "POST" })
       counts: v.counts,
     };
   });
+export const checkBackupFile = desktopAware("checkBackupFile", checkBackupFileCloud);
 
-export const restoreBackup = createServerFn({ method: "POST" })
+const restoreBackupCloud = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input) =>
     z.object({ text: backupText, confirmName: z.string().max(200) }).parse(input),
@@ -207,9 +212,10 @@ export const restoreBackup = createServerFn({ method: "POST" })
     const { restoreIntoNewOrg } = await import("./restore.server");
     return restoreIntoNewOrg(context.supabase, context.userId, v);
   });
+export const restoreBackup = desktopAware("restoreBackup", restoreBackupCloud);
 
 /** This install's backup fingerprint, so admins can compare it with a file's source. */
-export const getInstallFingerprint = createServerFn({ method: "GET" })
+const getInstallFingerprintCloud = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { getSigningKeys } = await import("./backup-key.server");
@@ -219,3 +225,7 @@ export const getInstallFingerprint = createServerFn({ method: "GET" })
       return { fingerprint: null };
     }
   });
+export const getInstallFingerprint = desktopAware(
+  "getInstallFingerprint",
+  getInstallFingerprintCloud,
+);

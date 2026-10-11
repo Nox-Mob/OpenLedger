@@ -1,6 +1,6 @@
 # OpenLedgerApp architecture
 
-Current as of v0.0.7. One accounting application, several storage deployments. Keep it boring: a single app plus Postgres (cloud, self-hosted) or SQLite (desktop, future). No microservices, queues, caches or extra infrastructure.
+Current as of v0.1.0. One accounting application, several storage deployments. Keep it boring: a single app plus Postgres (cloud, self-hosted) or SQLite (desktop, future). No microservices, queues, caches or extra infrastructure.
 
 ```text
 React screens (src/routes, src/components)
@@ -42,7 +42,8 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 | Signed backups and restore into a new organization                                                     | Implemented and tested (memory adapter roundtrip, tamper rejection)                                                      |
 | Budgets, exports, history viewer                                                                       | Implemented, cloud-only (no port yet)                                                                                    |
 | SQLite adapter                                                                                         | Implemented, partly verified (sql.js only, not a native desktop driver)                                                  |
-| Desktop edition (Tauri), offline use                                                                   | Planned, unscheduled. Do not advertise.                                                                                  |
+| Desktop start flow (no website or sign-in; setup or ledger from the local file)                        | Implemented, run in a native Tauri build on Linux                                                                        |
+| Desktop edition (Tauri), offline use                                                                   | Preview: core books work offline; Linux install checked in CI; draft installers per release                              |
 | Desktop and cloud sync                                                                                 | Not supported                                                                                                            |
 | Multi-currency, payroll, invoicing, bank feeds                                                         | Not supported                                                                                                            |
 

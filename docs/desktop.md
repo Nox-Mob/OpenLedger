@@ -44,3 +44,13 @@ Status: storage layer done and tested; the Tauri shell itself is not built yet.
 - Still cloud-only: member management, sign-in/legal acceptance, file import parsing and
   AI PDF reading, categories/tags/funds setup. These need ports before the desktop UI can use them.
 - Sync between desktop and cloud is not designed yet; app-generated UUIDs keep that possible.
+
+## Startup flow
+
+- `npm run tauri dev` runs `dev:desktop` (`--mode desktop`, which loads `.env.desktop` with `VITE_EDITION=desktop`); `build:desktop` builds a static single-page app, then `scripts/desktop/prepare-dist.mjs` copies it into `desktop-dist/` with `index.html` as the start page (the build only writes `_shell.html`, which left the window blank).
+- `isDesktop()` (`src/lib/edition.ts`) is the only edition check. On desktop, website and sign-in pages redirect via `desktopEntryRedirect`: no local organization opens `/onboarding`, otherwise `/ledger` for the last-used organization.
+- The signed-in layout uses one fixed local user (`LOCAL_USER_ID`) as admin; no sign-in or legal acceptance gate.
+- Organization setup saves through `createOrganizationWithAccounts` with the local SQLite file (`src/lib/desktop/local-repos.ts`).
+- Every exported server function is wrapped with `desktopAware(name, fn)` (`src/lib/desktop/bridge.ts`). On desktop the call goes to `callLocal` in `src/lib/desktop/local-api.ts`, which runs the same `src/lib/services/*` workflow against the local SQLite file; on the web it calls the server as before. Pages need no changes.
+- Answered locally: organizations and settings, account setup, accounts and opening balances, transactions (post, void, list), bank rows (list, post), all reports, books lock, month and year close, reopen, and statement checks.
+- Not yet local (shows "isn't available in the desktop app yet. Nothing was recorded."): members and invites, account deletion, bank file import and PDF reading, budgets, funds and pledges, categories and tags (lists are empty), backups, exports and history. Each needs a port and SQLite tables first.

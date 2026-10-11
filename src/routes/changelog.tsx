@@ -1,8 +1,10 @@
+import { desktopEntryRedirect } from "@/lib/desktop/entry-redirect";
 import { createFileRoute } from "@tanstack/react-router";
 import { WebsiteShell } from "@/components/WebsiteShell";
 import changelog from "../../CHANGELOG.md?raw";
 
 export const Route = createFileRoute("/changelog")({
+  beforeLoad: desktopEntryRedirect,
   head: () => ({
     meta: [
       { title: "Changelog - OpenLedgerApp" },
