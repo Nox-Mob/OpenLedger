@@ -27,107 +27,101 @@ async function assertNameAvailable(
 
 const orgInput = z.object({ orgId: z.string().uuid(), includeArchived: z.boolean().optional() });
 
-export const listAccounts = desktopAware(
-  "listAccounts",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      let query = context.supabase
-        .from("accounts")
-        .select("id, name, type, subtype, is_active")
-        .eq("org_id", data.orgId)
-        .order("type")
-        .order("name");
-      if (!data.includeArchived) query = query.eq("is_active", true);
-      const { data: accounts, error } = await query;
-      if (error) throw new Error(error.message);
+const listAccountsCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    let query = context.supabase
+      .from("accounts")
+      .select("id, name, type, subtype, is_active")
+      .eq("org_id", data.orgId)
+      .order("type")
+      .order("name");
+    if (!data.includeArchived) query = query.eq("is_active", true);
+    const { data: accounts, error } = await query;
+    if (error) throw new Error(error.message);
 
-      const { data: entries, error: eError } = await context.supabase
-        .from("entries")
-        .select("account_id, amount_cents, transactions!inner(org_id, status)")
-        .eq("transactions.org_id", data.orgId)
-        .eq("transactions.status", "posted");
-      if (eError) throw new Error(eError.message);
+    const { data: entries, error: eError } = await context.supabase
+      .from("entries")
+      .select("account_id, amount_cents, transactions!inner(org_id, status)")
+      .eq("transactions.org_id", data.orgId)
+      .eq("transactions.status", "posted");
+    if (eError) throw new Error(eError.message);
 
-      const balances = new Map<string, number>();
-      for (const e of entries ?? []) {
-        balances.set(e.account_id, (balances.get(e.account_id) ?? 0) + e.amount_cents);
-      }
+    const balances = new Map<string, number>();
+    for (const e of entries ?? []) {
+      balances.set(e.account_id, (balances.get(e.account_id) ?? 0) + e.amount_cents);
+    }
 
-      return (accounts ?? []).map((a) => ({
-        id: a.id as string,
-        name: a.name as string,
-        type: a.type as string,
-        subtype: a.subtype as string | null,
-        isActive: a.is_active as boolean,
-        balanceCents: balances.get(a.id) ?? 0,
-      }));
-    }),
-);
+    return (accounts ?? []).map((a) => ({
+      id: a.id as string,
+      name: a.name as string,
+      type: a.type as string,
+      subtype: a.subtype as string | null,
+      isActive: a.is_active as boolean,
+      balanceCents: balances.get(a.id) ?? 0,
+    }));
+  });
+export const listAccounts = desktopAware("listAccounts", listAccountsCloud);
 
-export const createAccount = desktopAware(
-  "createAccount",
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z
-        .object({
-          orgId: z.string().uuid(),
-          name: nameField("Account name"),
-          type: z.enum(["asset", "liability", "equity", "revenue", "expense"]),
-          subtype: z.string().max(60).nullish(),
-        })
-        .parse(input),
-    )
-    .handler(async ({ data, context }) => {
-      await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
-      await assertNameAvailable(context.supabase, "accounts", data.orgId, data.name);
-      const id = newId();
-      await auditedWrite(
-        context.supabase,
-        data.orgId,
-        [
-          {
-            table: "accounts",
-            op: "insert",
-            values: { id, name: data.name.trim(), type: data.type, subtype: data.subtype ?? null },
-          },
-        ],
+const createAccountCloud = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId: z.string().uuid(),
+        name: nameField("Account name"),
+        type: z.enum(["asset", "liability", "equity", "revenue", "expense"]),
+        subtype: z.string().max(60).nullish(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
+    await assertNameAvailable(context.supabase, "accounts", data.orgId, data.name);
+    const id = newId();
+    await auditedWrite(
+      context.supabase,
+      data.orgId,
+      [
         {
-          action: "create",
-          entity: "account",
-          entityId: id,
-          after: { name: data.name, type: data.type },
+          table: "accounts",
+          op: "insert",
+          values: { id, name: data.name.trim(), type: data.type, subtype: data.subtype ?? null },
         },
-      );
-      return { ok: true };
-    }),
-);
+      ],
+      {
+        action: "create",
+        entity: "account",
+        entityId: id,
+        after: { name: data.name, type: data.type },
+      },
+    );
+    return { ok: true };
+  });
+export const createAccount = desktopAware("createAccount", createAccountCloud);
 
-export const setOpeningBalance = desktopAware(
-  "setOpeningBalance",
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z
-        .object({
-          orgId: z.string().uuid(),
-          accountId: z.string().uuid(),
-          equityAccountId: z.string().uuid(),
-          amountCents: z.number().int(),
-          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        })
-        .parse(input),
-    )
-    .handler(async ({ data, context }) => {
-      await assertCan(context.supabase, context.userId, data.orgId, "write");
-      return postOpeningBalance(createSupabaseRepositories(context.supabase), {
-        ...data,
-        userId: context.userId,
-      });
-    }),
-);
+const setOpeningBalanceCloud = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId: z.string().uuid(),
+        accountId: z.string().uuid(),
+        equityAccountId: z.string().uuid(),
+        amountCents: z.number().int(),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "write");
+    return postOpeningBalance(createSupabaseRepositories(context.supabase), {
+      ...data,
+      userId: context.userId,
+    });
+  });
+export const setOpeningBalance = desktopAware("setOpeningBalance", setOpeningBalanceCloud);
 
 type CrudTable = "categories" | "tags" | "projects" | "funds";
 
@@ -165,73 +159,65 @@ function makeCrud(table: CrudTable, extraSchema?: z.ZodRawShape) {
 const categories = makeCrud("categories", {
   type: z.enum(["revenue", "expense"]).default("expense"),
 });
-export const listCategories = desktopAware(
-  "listCategories",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      const { data: rows, error } = await context.supabase
-        .from("categories")
-        .select("*")
-        .eq("org_id", data.orgId)
-        .order("name");
-      if (error) throw new Error(error.message);
-      return rows ?? [];
-    }),
-);
+const listCategoriesCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("categories")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+export const listCategories = desktopAware("listCategories", listCategoriesCloud);
 export const createCategory = desktopAware("createCategory", categories.create);
 
 const tags = makeCrud("tags");
-export const listTags = desktopAware(
-  "listTags",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      const { data: rows, error } = await context.supabase
-        .from("tags")
-        .select("*")
-        .eq("org_id", data.orgId)
-        .order("name");
-      if (error) throw new Error(error.message);
-      return rows ?? [];
-    }),
-);
+const listTagsCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("tags")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+export const listTags = desktopAware("listTags", listTagsCloud);
 export const createTag = desktopAware("createTag", tags.create);
 
 const projects = makeCrud("projects", { budgetCents: z.number().int().min(0).default(0) });
-export const listProjects = desktopAware(
-  "listProjects",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      const { data: rows, error } = await context.supabase
-        .from("projects")
-        .select("*")
-        .eq("org_id", data.orgId)
-        .order("name");
-      if (error) throw new Error(error.message);
-      return rows ?? [];
-    }),
-);
+const listProjectsCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("projects")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+export const listProjects = desktopAware("listProjects", listProjectsCloud);
 export const createProject = desktopAware("createProject", projects.create);
 
 const funds = makeCrud("funds", { isRestricted: z.boolean().default(false) });
-export const listFunds = desktopAware(
-  "listFunds",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => orgInput.parse(input))
-    .handler(async ({ data, context }) => {
-      const { data: rows, error } = await context.supabase
-        .from("funds")
-        .select("*")
-        .eq("org_id", data.orgId)
-        .order("name");
-      if (error) throw new Error(error.message);
-      return rows ?? [];
-    }),
-);
+const listFundsCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => orgInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("funds")
+      .select("*")
+      .eq("org_id", data.orgId)
+      .order("name");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+export const listFunds = desktopAware("listFunds", listFundsCloud);
 export const createFund = desktopAware("createFund", funds.create);

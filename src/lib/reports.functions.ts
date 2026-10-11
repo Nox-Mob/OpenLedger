@@ -10,74 +10,62 @@ import * as reports from "./services/reports";
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const orgId = z.string().uuid();
 
-export const incomeStatement = desktopAware(
-  "incomeStatement",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z.object({ orgId, from: isoDate.optional(), to: isoDate.optional() }).parse(input),
-    )
-    .handler(async ({ data, context }) =>
-      reports.incomeStatement(createSupabaseRepositories(context.supabase), data.orgId, data),
-    ),
-);
+const incomeStatementCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z.object({ orgId, from: isoDate.optional(), to: isoDate.optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) =>
+    reports.incomeStatement(createSupabaseRepositories(context.supabase), data.orgId, data),
+  );
+export const incomeStatement = desktopAware("incomeStatement", incomeStatementCloud);
 
-export const balanceSheet = desktopAware(
-  "balanceSheet",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
-    .handler(async ({ data, context }) =>
-      reports.balanceSheet(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
-    ),
-);
+const balanceSheetCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.balanceSheet(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
+  );
+export const balanceSheet = desktopAware("balanceSheet", balanceSheetCloud);
 
-export const trialBalance = desktopAware(
-  "trialBalance",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
-    .handler(async ({ data, context }) =>
-      reports.trialBalance(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
-    ),
-);
+const trialBalanceCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId, asOf: isoDate.optional() }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.trialBalance(createSupabaseRepositories(context.supabase), data.orgId, data.asOf),
+  );
+export const trialBalance = desktopAware("trialBalance", trialBalanceCloud);
 
-export const projectSummary = desktopAware(
-  "projectSummary",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId }).parse(input))
-    .handler(async ({ data, context }) =>
-      reports.projectSummary(createSupabaseRepositories(context.supabase), data.orgId),
-    ),
-);
+const projectSummaryCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.projectSummary(createSupabaseRepositories(context.supabase), data.orgId),
+  );
+export const projectSummary = desktopAware("projectSummary", projectSummaryCloud);
 
-export const cashHistory = desktopAware(
-  "cashHistory",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId, days: z.number().int().min(7).max(1100) }).parse(input))
-    .handler(async ({ data, context }) =>
-      reports.cashHistory(createSupabaseRepositories(context.supabase), data.orgId, data.days),
-    ),
-);
+const cashHistoryCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId, days: z.number().int().min(7).max(1100) }).parse(input))
+  .handler(async ({ data, context }) =>
+    reports.cashHistory(createSupabaseRepositories(context.supabase), data.orgId, data.days),
+  );
+export const cashHistory = desktopAware("cashHistory", cashHistoryCloud);
 
-export const generalLedger = desktopAware(
-  "generalLedger",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z
-        .object({
-          orgId,
-          from: isoDate,
-          to: isoDate,
-          accountName: z.string().max(200).optional(),
-          fundId: z.string().uuid().optional(),
-        })
-        .parse(input),
-    )
-    .handler(async ({ data, context }) =>
-      reports.generalLedger(createSupabaseRepositories(context.supabase), data.orgId, data),
-    ),
-);
+const generalLedgerCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId,
+        from: isoDate,
+        to: isoDate,
+        accountName: z.string().max(200).optional(),
+        fundId: z.string().uuid().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) =>
+    reports.generalLedger(createSupabaseRepositories(context.supabase), data.orgId, data),
+  );
+export const generalLedger = desktopAware("generalLedger", generalLedgerCloud);

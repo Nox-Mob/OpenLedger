@@ -27,153 +27,142 @@ async function all(
 }
 
 /** Full JSON backup of one organization (admins only). Read through the caller's RLS client. */
-export const exportBackup = desktopAware(
-  "exportBackup",
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId }).parse(input))
-    .handler(async ({ data, context }) => {
-      await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
-      const { readBackupData } = await import("./backup-export.server");
-      const { organization: org, tables } = await readBackupData(context.supabase, data.orgId);
-      const counts = Object.fromEntries(Object.entries(tables).map(([k, v]) => [k, v.length]));
-      await writeAudit({
-        org_id: data.orgId,
-        user_id: context.userId,
-        action: "backup.exported",
-        entity: "organization",
-        entity_id: data.orgId,
-        after: counts,
-      });
-      const { getSigningKeys } = await import("./backup-key.server");
-      const { signBackup } = await import("./domain/backup");
-      const signed = await signBackup(
-        await getSigningKeys(),
-        org,
-        tables,
-        new Date().toISOString(),
-      );
-      return signed as unknown as {
-        manifest: typeof signed.manifest;
-        signature: string;
-        organization: { [k: string]: Json };
-        tables: Record<string, { [k: string]: Json }[]>;
-      };
-    }),
-);
+const exportBackupCloud = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
+    const { readBackupData } = await import("./backup-export.server");
+    const { organization: org, tables } = await readBackupData(context.supabase, data.orgId);
+    const counts = Object.fromEntries(Object.entries(tables).map(([k, v]) => [k, v.length]));
+    await writeAudit({
+      org_id: data.orgId,
+      user_id: context.userId,
+      action: "backup.exported",
+      entity: "organization",
+      entity_id: data.orgId,
+      after: counts,
+    });
+    const { getSigningKeys } = await import("./backup-key.server");
+    const { signBackup } = await import("./domain/backup");
+    const signed = await signBackup(await getSigningKeys(), org, tables, new Date().toISOString());
+    return signed as unknown as {
+      manifest: typeof signed.manifest;
+      signature: string;
+      organization: { [k: string]: Json };
+      tables: Record<string, { [k: string]: Json }[]>;
+    };
+  });
+export const exportBackup = desktopAware("exportBackup", exportBackupCloud);
 
 /** Every posted and voided transaction line, for spreadsheet export. */
-export const exportTransactions = desktopAware(
-  "exportTransactions",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ orgId }).parse(input))
-    .handler(async ({ data, context }) => {
-      await assertCan(context.supabase, context.userId, data.orgId, "read");
-      const db = context.supabase as UntypedDb;
-      const rows = await all((f, to) =>
-        db
-          .from("entries")
-          .select(
-            "id, amount_cents, memo, accounts(name, type), categories(name), projects(name), funds(name), transactions!inner(org_id, transaction_date, description, source, status)",
-          )
-          .eq("transactions.org_id", data.orgId)
-          .order("id")
-          .range(f, to),
-      );
-      type Named = { name?: string; type?: string } | null;
-      type ExportRow = {
-        amount_cents: number;
-        memo: string | null;
-        accounts: Named;
-        categories: Named;
-        projects: Named;
-        funds: Named;
-        transactions: {
-          transaction_date: string;
-          description: string;
-          source: string;
-          status: string;
-        };
+const exportTransactionsCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ orgId }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "read");
+    const db = context.supabase as UntypedDb;
+    const rows = await all((f, to) =>
+      db
+        .from("entries")
+        .select(
+          "id, amount_cents, memo, accounts(name, type), categories(name), projects(name), funds(name), transactions!inner(org_id, transaction_date, description, source, status)",
+        )
+        .eq("transactions.org_id", data.orgId)
+        .order("id")
+        .range(f, to),
+    );
+    type Named = { name?: string; type?: string } | null;
+    type ExportRow = {
+      amount_cents: number;
+      memo: string | null;
+      accounts: Named;
+      categories: Named;
+      projects: Named;
+      funds: Named;
+      transactions: {
+        transaction_date: string;
+        description: string;
+        source: string;
+        status: string;
       };
-      return (rows as unknown as ExportRow[])
-        .map((r) => ({
-          date: r.transactions.transaction_date as string,
-          description: r.transactions.description as string,
-          status: r.transactions.status as string,
-          source: r.transactions.source as string,
-          account: r.accounts?.name ?? "",
-          accountType: r.accounts?.type ?? "",
-          debitCents: r.amount_cents > 0 ? Number(r.amount_cents) : 0,
-          creditCents: r.amount_cents < 0 ? -Number(r.amount_cents) : 0,
-          category: r.categories?.name ?? "",
-          project: r.projects?.name ?? "",
-          fund: r.funds?.name ?? "",
-          memo: r.memo ?? "",
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-    }),
-);
+    };
+    return (rows as unknown as ExportRow[])
+      .map((r) => ({
+        date: r.transactions.transaction_date as string,
+        description: r.transactions.description as string,
+        status: r.transactions.status as string,
+        source: r.transactions.source as string,
+        account: r.accounts?.name ?? "",
+        accountType: r.accounts?.type ?? "",
+        debitCents: r.amount_cents > 0 ? Number(r.amount_cents) : 0,
+        creditCents: r.amount_cents < 0 ? -Number(r.amount_cents) : 0,
+        category: r.categories?.name ?? "",
+        project: r.projects?.name ?? "",
+        fund: r.funds?.name ?? "",
+        memo: r.memo ?? "",
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  });
+export const exportTransactions = desktopAware("exportTransactions", exportTransactionsCloud);
 
 /** Organization history (audit log), newest first. Admins only. */
-export const listHistory = desktopAware(
-  "listHistory",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z
-        .object({
-          orgId,
-          page: z.number().int().min(0).max(10000),
-          entity: z.string().max(40).optional(),
-          kind: z.enum(["change", "ledger", "system"]).optional(),
-        })
-        .parse(input),
-    )
-    .handler(async ({ data, context }) => {
-      await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
-      const size = 50;
-      let q = context.supabase
-        .from("audit_log")
-        .select(
-          "id, user_id, action, entity, entity_id, before, after, recorded_change, created_at, kind",
-          {
-            count: "exact",
-          },
-        )
-        .eq("org_id", data.orgId)
-        .order("created_at", { ascending: false })
-        .range(data.page * size, data.page * size + size - 1);
-      if (data.entity) q = q.eq("entity", data.entity);
-      if (data.kind) q = q.eq("kind", data.kind);
-      const { data: rows, error, count } = await q;
-      if (error) throw new Error(error.message);
-      const ids = [...new Set((rows ?? []).map((r) => r.user_id).filter(Boolean))] as string[];
-      const names = new Map<string, string>();
-      const known = new Set<string>();
-      if (ids.length) {
-        const { data: profiles } = await context.supabase
-          .from("profiles")
-          .select("id, display_name")
-          .in("id", ids);
-        for (const p of profiles ?? []) {
-          known.add(p.id);
-          if (p.display_name) names.set(p.id, p.display_name);
-        }
+const listHistoryCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z
+      .object({
+        orgId,
+        page: z.number().int().min(0).max(10000),
+        entity: z.string().max(40).optional(),
+        kind: z.enum(["change", "ledger", "system"]).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertCan(context.supabase, context.userId, data.orgId, "manage_settings");
+    const size = 50;
+    let q = context.supabase
+      .from("audit_log")
+      .select(
+        "id, user_id, action, entity, entity_id, before, after, recorded_change, created_at, kind",
+        {
+          count: "exact",
+        },
+      )
+      .eq("org_id", data.orgId)
+      .order("created_at", { ascending: false })
+      .range(data.page * size, data.page * size + size - 1);
+    if (data.entity) q = q.eq("entity", data.entity);
+    if (data.kind) q = q.eq("kind", data.kind);
+    const { data: rows, error, count } = await q;
+    if (error) throw new Error(error.message);
+    const ids = [...new Set((rows ?? []).map((r) => r.user_id).filter(Boolean))] as string[];
+    const names = new Map<string, string>();
+    const known = new Set<string>();
+    if (ids.length) {
+      const { data: profiles } = await context.supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", ids);
+      for (const p of profiles ?? []) {
+        known.add(p.id);
+        if (p.display_name) names.set(p.id, p.display_name);
       }
-      return {
-        total: count ?? 0,
-        pageSize: size,
-        rows: (rows ?? []).map((r) => ({
-          ...r,
-          who: r.user_id
-            ? (names.get(r.user_id) ??
-              (known.has(r.user_id) ? `User ${r.user_id.slice(0, 8)}` : "Deleted user"))
-            : "System",
-        })),
-      };
-    }),
-);
+    }
+    return {
+      total: count ?? 0,
+      pageSize: size,
+      rows: (rows ?? []).map((r) => ({
+        ...r,
+        who: r.user_id
+          ? (names.get(r.user_id) ??
+            (known.has(r.user_id) ? `User ${r.user_id.slice(0, 8)}` : "Deleted user"))
+          : "System",
+      })),
+    };
+  });
+export const listHistory = desktopAware("listHistory", listHistoryCloud);
 
 const backupText = z
   .string()
@@ -195,51 +184,48 @@ async function verifyText(text: string) {
 }
 
 /** Check a backup without writing anything. Any signed-in user may restore into a new org. */
-export const checkBackupFile = desktopAware(
-  "checkBackupFile",
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) => z.object({ text: backupText }).parse(input))
-    .handler(async ({ data }) => {
-      const v = await verifyText(data.text);
-      const m = v.backup.manifest;
-      return {
-        orgName: m.orgName,
-        exportedAt: m.exportedAt,
-        sameInstall: v.sameInstall,
-        installFingerprint: v.installFingerprint,
-        counts: v.counts,
-      };
-    }),
-);
+const checkBackupFileCloud = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ text: backupText }).parse(input))
+  .handler(async ({ data }) => {
+    const v = await verifyText(data.text);
+    const m = v.backup.manifest;
+    return {
+      orgName: m.orgName,
+      exportedAt: m.exportedAt,
+      sameInstall: v.sameInstall,
+      installFingerprint: v.installFingerprint,
+      counts: v.counts,
+    };
+  });
+export const checkBackupFile = desktopAware("checkBackupFile", checkBackupFileCloud);
 
-export const restoreBackup = desktopAware(
-  "restoreBackup",
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .validator((input) =>
-      z.object({ text: backupText, confirmName: z.string().max(200) }).parse(input),
-    )
-    .handler(async ({ data, context }) => {
-      const v = await verifyText(data.text);
-      if (data.confirmName.trim() !== v.backup.manifest.orgName.trim())
-        throw new Error("Type the organization name exactly as shown to confirm.");
-      const { restoreIntoNewOrg } = await import("./restore.server");
-      return restoreIntoNewOrg(context.supabase, context.userId, v);
-    }),
-);
+const restoreBackupCloud = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) =>
+    z.object({ text: backupText, confirmName: z.string().max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const v = await verifyText(data.text);
+    if (data.confirmName.trim() !== v.backup.manifest.orgName.trim())
+      throw new Error("Type the organization name exactly as shown to confirm.");
+    const { restoreIntoNewOrg } = await import("./restore.server");
+    return restoreIntoNewOrg(context.supabase, context.userId, v);
+  });
+export const restoreBackup = desktopAware("restoreBackup", restoreBackupCloud);
 
 /** This install's backup fingerprint, so admins can compare it with a file's source. */
+const getInstallFingerprintCloud = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { getSigningKeys } = await import("./backup-key.server");
+    try {
+      return { fingerprint: (await getSigningKeys()).fingerprint };
+    } catch {
+      return { fingerprint: null };
+    }
+  });
 export const getInstallFingerprint = desktopAware(
   "getInstallFingerprint",
-  createServerFn({ method: "GET" })
-    .middleware([requireSupabaseAuth])
-    .handler(async () => {
-      const { getSigningKeys } = await import("./backup-key.server");
-      try {
-        return { fingerprint: (await getSigningKeys()).fingerprint };
-      } catch {
-        return { fingerprint: null };
-      }
-    }),
+  getInstallFingerprintCloud,
 );
