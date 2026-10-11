@@ -34,7 +34,21 @@ dist-ssr
 # Environment files (never commit real values)
 .env.*
 !.env.example
+!.env.desktop
 
 # npm is the only package manager; the editor may recreate this
 bun.lock
 bun.lockb
+
+# Build, test and local-run leftovers (never part of a release)
+coverage
+test-results.xml
+*.tsbuildinfo
+.eslintcache
+src-tauri/target
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+supabase/.temp
+supabase/.branches
