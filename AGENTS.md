@@ -40,7 +40,7 @@
 - Adapters/services: workflows live in src/lib/services/ (ports only); server functions do auth + assertCan, then call a service with createSupabaseRepositories(context.supabase). src/lib/adapters/memory is the reference adapter for tests and future SQLite parity.
 - Funds: fund balances and the restricted/unrestricted split are derived from fund-tagged ledger rows in src/lib/domain/funds.ts; releases are a balanced Net Assets to Net Assets transaction (source 'release') so total equity never changes.
 - Members: organizations.created_by is the owner; invite links store only a SHA-256 hash of the token and are claimed atomically before the role is granted.
-- Budgets/exports/history: cloud-only server functions for now (no port yet); budgets table keeps one row per account+period with a stable app-generated ID (update, never replace), and every export escapes formula-looking text via src/lib/export.ts.
+- Budgets/exports/history: cloud-only server functions (no port yet); one budget row per account+period, updated in place; exports escape formula-like text via src/lib/export.ts.
 - Org delete needs deferrable "no action" FKs and a balance trigger skipping deleted transactions; keep new FKs deferrable.
 - Package manager: npm only (package-lock.json, installed with npm ci); no bun.lock, so every install resolves the same tree.
 - Permissions: CAPABILITIES in src/lib/permissions.ts is the only role table; permissions.test.ts pins every cell so changes are deliberate.
