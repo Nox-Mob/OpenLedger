@@ -140,7 +140,8 @@ const HANDLERS: Record<string, Handler> = {
       repos.transactions.ledgerRows(d.orgId),
     ]);
     const balances = new Map<Id, number>();
-    for (const r of rows) balances.set(r.accountId, (balances.get(r.accountId) ?? 0) + r.amountCents);
+    for (const r of rows)
+      balances.set(r.accountId, (balances.get(r.accountId) ?? 0) + r.amountCents);
     return accounts
       .slice()
       .sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name))
@@ -155,9 +156,16 @@ const HANDLERS: Record<string, Handler> = {
   },
   createAccount: async (
     repos,
-    d: OrgIn & { name: string; type: "asset" | "liability" | "equity" | "revenue" | "expense"; subtype?: string | null },
+    d: OrgIn & {
+      name: string;
+      type: "asset" | "liability" | "equity" | "revenue" | "expense";
+      subtype?: string | null;
+    },
   ) => {
-    const dup = duplicateName(d.name, await repos.accounts.list(d.orgId, { includeArchived: true }));
+    const dup = duplicateName(
+      d.name,
+      await repos.accounts.list(d.orgId, { includeArchived: true }),
+    );
     if (dup) throw new Error(dup);
     await repos.accounts.create([
       {
@@ -221,13 +229,16 @@ const HANDLERS: Record<string, Handler> = {
   createTransaction: async (
     repos,
     d: Omit<ledger.PostTransactionInput, "userId"> & { idempotencyKey?: string | null },
-  ) => ledger.postTransaction(repos, { ...d, userId: me, idempotencyKey: d.idempotencyKey ?? null }),
+  ) =>
+    ledger.postTransaction(repos, { ...d, userId: me, idempotencyKey: d.idempotencyKey ?? null }),
   voidTransaction: async (repos, d: OrgIn & { transactionId: Id }) =>
     ledger.voidTransaction(repos, { ...d, userId: me }),
 
   // ---------- Bank rows ----------
   listBankTransactions: async (repos, d: OrgIn & { accountId?: Id }) => {
-    const names = new Map((await repos.accounts.list(d.orgId, { includeArchived: true })).map((a) => [a.id, a.name]));
+    const names = new Map(
+      (await repos.accounts.list(d.orgId, { includeArchived: true })).map((a) => [a.id, a.name]),
+    );
     return (await repos.bank.listUnmatched(d.orgId, d.accountId)).map((r) => ({
       id: r.id,
       date: r.bankDate,
@@ -293,7 +304,13 @@ const HANDLERS: Record<string, Handler> = {
   getReconciliation: async (repos, d: { id: Id }) =>
     recon.getReconciliation(repos, await recon.locateReconciliation(repos, d.id)),
   setCleared: async (repos, d: { id: Id; entryIds: Id[]; cleared: boolean }) =>
-    recon.setCleared(repos, await recon.locateReconciliation(repos, d.id), d.entryIds, d.cleared, me),
+    recon.setCleared(
+      repos,
+      await recon.locateReconciliation(repos, d.id),
+      d.entryIds,
+      d.cleared,
+      me,
+    ),
   acceptMatches: async (repos, d: { id: Id }) =>
     recon.acceptMatches(repos, await recon.locateReconciliation(repos, d.id), me),
   completeReconciliation: async (repos, d: { id: Id }) =>
