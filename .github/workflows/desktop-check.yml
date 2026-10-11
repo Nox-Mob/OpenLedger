@@ -1,0 +1,67 @@
+# Desktop install check: builds the Linux package, installs it like a user would,
+# starts the app with no screen attached, and confirms the local SQLite file is
+# created with the ledger tables. Report-only; it never changes the repo.
+name: Desktop install check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: Install and first start (Linux)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11 sqlite3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with: { workspaces: "./src-tauri -> target" }
+      - run: npm ci
+      - name: Build the .deb package
+        run: npx tauri build --bundles deb
+      - name: Install the package
+        run: |
+          deb=$(ls src-tauri/target/release/bundle/deb/*.deb | head -1)
+          echo "Installing $deb"
+          sudo apt-get install -y "./$deb"
+          bin=$(dpkg -c "$deb" | awk '{print $6}' | grep '^./usr/bin/' | head -1 | sed 's|^\.||')
+          test -x "$bin" || { echo "### ❌ Installed package has no program in /usr/bin" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          echo "BIN=$bin" >> "$GITHUB_ENV"
+      - name: First start creates the local database
+        env:
+          WEBKIT_DISABLE_COMPOSITING_MODE: "1"
+        run: |
+          rm -rf ~/.config/com.openledgerapp.dev ~/.local/share/com.openledgerapp.dev
+          dbus-run-session -- xvfb-run -a "$BIN" > app.log 2>&1 &
+          db=""
+          for i in $(seq 1 60); do
+            db=$(find ~/.config ~/.local/share -name openledgerapp.db 2>/dev/null | head -1)
+            if [ -n "$db" ] && sqlite3 "$db" "SELECT 1 FROM sqlite_master WHERE name='organizations'" | grep -q 1; then break; fi
+            db=""; sleep 2
+          done
+          pkill -f "$BIN" || true
+          if [ -z "$db" ]; then
+            echo "### ❌ The desktop app started but did not create its local database with the ledger tables" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"; tail -40 app.log >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "Database: $db"
+          tables=$(sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+          echo "$tables"
+          for t in organizations accounts transactions entries; do
+            echo "$tables" | grep -qx "$t" || { echo "### ❌ Local database is missing table $t" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          done
+          echo "### ✅ Installed, started, and created the local database" >> "$GITHUB_STEP_SUMMARY"
