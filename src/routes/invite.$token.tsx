@@ -1,3 +1,4 @@
+import { desktopEntryRedirect } from "@/lib/desktop/entry-redirect";
 import { errorMessage } from "@/lib/errors";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { acceptInvite } from "@/lib/members.functions";
 import { PENDING_INVITE_KEY } from "@/lib/invite-link";
 
 export const Route = createFileRoute("/invite/$token")({
+  beforeLoad: desktopEntryRedirect,
   head: () => ({
     meta: [
       { title: "Join Organization - OpenLedgerApp" },

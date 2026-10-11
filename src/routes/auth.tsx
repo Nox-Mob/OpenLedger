@@ -1,3 +1,4 @@
+import { desktopEntryRedirect } from "@/lib/desktop/entry-redirect";
 import { errorMessage } from "@/lib/errors";
 import { PENDING_INVITE_KEY } from "@/lib/invite-link";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -8,6 +9,7 @@ import { lovable } from "@/integrations/lovable";
 import { MfaCodeForm } from "@/components/MfaCodeForm";
 
 export const Route = createFileRoute("/auth")({
+  beforeLoad: desktopEntryRedirect,
   head: () => ({
     meta: [
       { title: "Sign In - OpenLedgerApp" },
