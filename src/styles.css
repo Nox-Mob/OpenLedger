@@ -131,8 +131,20 @@
   --sidebar-border: oklch(0.35 0.02 70);
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* Native dropdown lists follow the theme instead of the system's white menu. */
+select option,
+select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+
 .dark {
   /* High-contrast dark theme: bright text on deep surfaces */
+  color-scheme: dark;
   --background: oklch(0.17 0.012 70);
   --foreground: oklch(0.96 0.008 90);
   --card: oklch(0.21 0.015 70);
