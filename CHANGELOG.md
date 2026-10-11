@@ -4,7 +4,7 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-10-11
+## [0.1.0] - 2026-10-10
 
 ### Added
 
