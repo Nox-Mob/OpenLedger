@@ -8,6 +8,20 @@ Notable changes to OpenLedgerApp are recorded here. This project follows the str
 
 - Desktop start: the desktop app skips the public website, sign-in and legal acceptance. First launch opens organization setup, which saves to the local file; later launches open the ledger for the last-used organization. Run with `npm run tauri dev` (uses the new `dev:desktop` and `build:desktop` scripts).
 - Desktop data: pages read and save through the shared workflows against the local file instead of the cloud: accounts, transactions, bank rows, reports, books close and reopen, and statement checks. Features not yet stored locally say so and record nothing.
+- Desktop release workflow: on main, after every CI check and the desktop install check pass, builds Linux, Windows and macOS (Apple Silicon and Intel) installers into a draft GitHub release for manual testing. macOS builds are unsigned.
+- Desktop install check: builds and installs the Linux package, starts the app with no screen and confirms the local database is created with the ledger tables. Runs on pull requests to main and before every desktop release.
+
+### Changed
+
+- Releases are now two steps: prepare and wait for GitHub checks, then bump the version, date the changelog and update the architecture doc.
+- The desktop app reads its version from package.json.
+- CI run groups include the workflow name so the release workflow and normal CI no longer cancel each other.
+- `.gitignore` now skips test results, caches, the desktop build folder and local database files; the public `.env.desktop` setting is tracked so GitHub builds the desktop edition.
+
+### Fixed
+
+- Dropdown menus (currency, fiscal year and others) showed white text on white in dark mode.
+- Desktop build failed because of a malformed permissions file.
 
 ## [0.0.7] - 2026-10-10
 

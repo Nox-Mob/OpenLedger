@@ -42,8 +42,8 @@ Status labels used below: **Implemented and tested**, **Implemented, partly veri
 | Signed backups and restore into a new organization                                                     | Implemented and tested (memory adapter roundtrip, tamper rejection)                                                      |
 | Budgets, exports, history viewer                                                                       | Implemented, cloud-only (no port yet)                                                                                    |
 | SQLite adapter                                                                                         | Implemented, partly verified (sql.js only, not a native desktop driver)                                                  |
-| Desktop start flow (no website or sign-in; setup or ledger from the local file)                         | Implemented, not yet run in a native Tauri build here                                                                    |
-| Desktop edition (Tauri), offline use                                                                   | Planned, unscheduled. Do not advertise.                                                                                  |
+| Desktop start flow (no website or sign-in; setup or ledger from the local file)                        | Implemented, run in a native Tauri build on Linux                                                                        |
+| Desktop edition (Tauri), offline use                                                                   | Preview: core books work offline; Linux install checked in CI; draft installers per release                              |
 | Desktop and cloud sync                                                                                 | Not supported                                                                                                            |
 | Multi-currency, payroll, invoicing, bank feeds                                                         | Not supported                                                                                                            |
 
